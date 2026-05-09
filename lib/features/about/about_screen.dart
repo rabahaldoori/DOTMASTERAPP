@@ -74,10 +74,19 @@ class _AboutScreenState extends State<AboutScreen> {
         backgroundColor: _navy,
         foregroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Row(children: [
+            const SizedBox(width: 12),
+            const Icon(Icons.arrow_back_ios_new_rounded,
+                size: 18, color: Colors.white),
+            const SizedBox(width: 4),
+            Text('Back', style: GoogleFonts.inter(
+                fontSize: 15, fontWeight: FontWeight.w600,
+                color: Colors.white)),
+          ]),
         ),
+        leadingWidth: 90,
         title: Text('About', style: GoogleFonts.inter(
             fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white)),
         systemOverlayStyle: SystemUiOverlayStyle.light,
@@ -188,27 +197,6 @@ class _AboutScreenState extends State<AboutScreen> {
                   ]),
                 ),
                 const SizedBox(height: 28),
-
-                // ── Return button ─────────────────────────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                    label: Text('Back to Profile',
-                        style: GoogleFonts.inter(
-                            fontSize: 15, fontWeight: FontWeight.w700)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _navy,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
-                      elevation: 0,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
 
                 // ── Copyright footer ──────────────────────────────────────────
                 Text(_copyright,
