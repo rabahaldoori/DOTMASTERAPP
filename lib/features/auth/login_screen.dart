@@ -211,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen>
                 opacity: _fade,
                 child: SlideTransition(
                   position: _slide,
-                  child: Column(children: [
+                   child: Column(children: [
                     const SizedBox(height: 0),
 
                     // ── Logo block ─────────────────────────────────────────
@@ -446,7 +446,7 @@ class _LogoBlock extends StatelessWidget {
     Stack(alignment: Alignment.center, children: [
       // Soft glow behind animation
       Container(
-        width: 190, height: 190,
+        width: 150, height: 150,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(colors: [
@@ -456,13 +456,13 @@ class _LogoBlock extends StatelessWidget {
       // Lottie animation
       Lottie.asset(
         'assets/images/truck_orange.json',
-        width: 200,
-        height: 200,
+        width: 155,
+        height: 155,
         fit: BoxFit.contain,
         repeat: true,
       ),
     ]),
-    const SizedBox(height: 10),
+    const SizedBox(height: 4),
     Text('DOT MASTER', style: GoogleFonts.inter(
         fontSize: 30, fontWeight: FontWeight.w900, color: _white,
         letterSpacing: -0.5)),
