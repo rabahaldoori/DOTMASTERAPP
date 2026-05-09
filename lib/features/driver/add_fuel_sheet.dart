@@ -169,10 +169,14 @@ class _AddFuelSheetState extends State<AddFuelSheet> {
 
     final src = await showModalBottomSheet<ImageSource>(
       context: context,
+      useSafeArea: true,   // respects the bottom nav bar + home indicator
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => SafeArea(child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          top: 8,
+          bottom: MediaQuery.of(ctx).padding.bottom + 8,
+        ),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(margin: const EdgeInsets.only(bottom: 8), width: 36, height: 4,
             decoration: BoxDecoration(color: Colors.grey.shade300,
@@ -193,7 +197,7 @@ class _AddFuelSheetState extends State<AddFuelSheet> {
                 style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
             onTap: () => Navigator.pop(context, ImageSource.gallery)),
         ]),
-      )),
+      ),
     );
     if (src == null) return;
     final picked = await ImagePicker().pickImage(source: src, imageQuality: 80);
