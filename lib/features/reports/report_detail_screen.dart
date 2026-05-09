@@ -32,9 +32,10 @@ class ReportDetailScreen extends StatefulWidget {
 
 class _ReportDetailScreenState extends State<ReportDetailScreen> {
   Map?   _detail;
-  bool   _loading      = true;
-  bool   _downloading  = false;
+  bool   _loading        = true;
+  bool   _downloading    = false;
   bool   _downloadingCsv = false;
+  bool   _showAllJuris   = false;
   String? _error;
 
   @override
@@ -236,44 +237,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('MILES BY JURISDICTION', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.8)),
-                    // ── Copy All button ────────────────────────────────
-                    GestureDetector(
-                      onTap: () {
-                        final buf = StringBuffer();
-                        buf.writeln('STATE\tMILES\tGALLONS\tTAX');
-                        for (final j in jurisdictions) {
-                          final jj = j as Map;
-                          buf.writeln(
-                            '${jj['jurisdiction'] ?? jj['state'] ?? ''}'  '\t'
-                            '${_n(jj['total_miles']).toStringAsFixed(0)} mi'  '\t'
-                            '${_n(jj['gallons_purchased']).toStringAsFixed(1)}'  '\t'
-                            '\$${_n(jj['tax_due']).toStringAsFixed(2)}',
-                          );
-                        }
-                        Clipboard.setData(ClipboardData(text: buf.toString()));
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                          content: Text('${jurisdictions.length} rows copied to clipboard',
-                            style: GoogleFonts.inter(fontSize: 13, color: Colors.white)),
-                          backgroundColor: _navy,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          duration: const Duration(seconds: 2),
-                        ));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: _blue.withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _blue.withOpacity(0.20)),
-                        ),
-                        child: Row(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.copy_rounded, size: 12, color: _blue),
-                          const SizedBox(width: 5),
-                          Text('Copy All', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: _blue)),
-                        ]),
-                      ),
-                    ),
+                    Text('${jurisdictions.length} states', style: GoogleFonts.inter(fontSize: 10, color: _grey)),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -281,7 +245,9 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border)),
                   child: Column(children: [
                     // Header row
-                    Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), decoration: BoxDecoration(color: const Color(0xFFF8FAFF), borderRadius: const BorderRadius.vertical(top: Radius.circular(16))),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: const BoxDecoration(color: Color(0xFFF8FAFF), borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
                       child: Row(children: [
                         Expanded(flex: 2, child: Text('STATE', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
                         Expanded(child: Text('MILES', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
@@ -289,52 +255,68 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                         Expanded(child: Text('TAX', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
                       ]),
                     ),
-                    ...jurisdictions.asMap().entries.map((e) {
-                      final j = e.value as Map;
-                      final jMiles = _n(j['total_miles']);
-                      final jGal   = _n(j['gallons_purchased']);
-                      final jTax   = _n(j['tax_due']);
-                      final stateName = j['jurisdiction'] ?? j['state'] ?? '—';
-                      // bar width proportional to miles
-                      final pct = miles > 0 ? (jMiles / miles).clamp(0.0, 1.0) : 0.0;
-                      // Row text to copy on tap
-                      final rowText = '$stateName\t${jMiles.toStringAsFixed(0)} mi\t${jGal.toStringAsFixed(1)} gal\t\$${jTax.toStringAsFixed(2)}';
-                      return GestureDetector(
-                        onLongPress: () {
-                          Clipboard.setData(ClipboardData(text: rowText));
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('$stateName row copied',
-                              style: GoogleFonts.inter(fontSize: 13, color: Colors.white)),
-                            backgroundColor: _navy,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            duration: const Duration(seconds: 1),
-                          ));
-                        },
+                    // ── Animated collapsible rows ────────────────────
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 280),
+                      curve: Curves.easeInOut,
+                      child: Column(
+                        children: (_showAllJuris
+                            ? jurisdictions
+                            : jurisdictions.take(4).toList())
+                          .asMap().entries.map((e) {
+                            final j         = e.value as Map;
+                            final jMiles    = _n(j['total_miles']);
+                            final jGal      = _n(j['gallons_purchased']);
+                            final jTax      = _n(j['tax_due']);
+                            final stateName = j['jurisdiction'] ?? j['state'] ?? '—';
+                            final pct       = miles > 0 ? (jMiles / miles).clamp(0.0, 1.0) : 0.0;
+                            return Container(
+                              decoration: BoxDecoration(border: Border(top: BorderSide(color: _border, width: 0.5))),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Row(children: [
+                                  Expanded(flex: 2, child: Text(stateName, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: _navy))),
+                                  Expanded(child: Text('${jMiles.toStringAsFixed(0)} mi', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, color: _navy))),
+                                  Expanded(child: Text(jGal > 0 ? jGal.toStringAsFixed(1) : '—', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, color: _grey))),
+                                  Expanded(child: Text('\$${jTax.toStringAsFixed(2)}', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: jTax > 0 ? _blue : _grey))),
+                                ]),
+                                const SizedBox(height: 5),
+                                ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct, minHeight: 4, backgroundColor: _border, valueColor: AlwaysStoppedAnimation(_navy))),
+                              ]),
+                            );
+                          }).toList(),
+                      ),
+                    ),
+                    // ── Show All / Hide button ───────────────────────
+                    if (jurisdictions.length > 4)
+                      GestureDetector(
+                        onTap: () => setState(() => _showAllJuris = !_showAllJuris),
                         child: Container(
-                          decoration: BoxDecoration(border: Border(top: BorderSide(color: _border, width: 0.5))),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Row(children: [
-                              Expanded(flex: 2, child: Row(children: [
-                                Text(stateName, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: _navy)),
-                                const SizedBox(width: 6),
-                                Icon(Icons.copy_rounded, size: 10, color: _grey.withOpacity(0.5)),
-                              ])),
-                              Expanded(child: Text('${jMiles.toStringAsFixed(0)} mi', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, color: _navy))),
-                              Expanded(child: Text(jGal > 0 ? jGal.toStringAsFixed(1) : '—', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, color: _grey))),
-                              Expanded(child: Text('\$${jTax.toStringAsFixed(2)}', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: jTax > 0 ? _blue : _grey))),
-                            ]),
-                            const SizedBox(height: 5),
-                            ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct, minHeight: 4, backgroundColor: _border, valueColor: AlwaysStoppedAnimation(_navy))),
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0F4FF),
+                            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                            border: Border(top: BorderSide(color: _border, width: 0.5)),
+                          ),
+                          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                            Icon(
+                              _showAllJuris ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                              size: 16, color: _blue,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              _showAllJuris ? 'Hide' : 'Show All ${jurisdictions.length} States',
+                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: _blue),
+                            ),
                           ]),
                         ),
-                      );
-                    }),
+                      ),
                   ]),
                 ),
                 const SizedBox(height: 20),
               ],
+
 
               // ── Summary row ─────────────────────────────────────────
               Container(
