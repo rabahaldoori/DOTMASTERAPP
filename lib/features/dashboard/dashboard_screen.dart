@@ -126,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             title: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(children: [
-                Image.asset('assets/images/logo.png', width: 28, height: 28, fit: BoxFit.contain),
+                Image.asset('assets/images/logo.png', width: 38, height: 38, fit: BoxFit.contain),
                 const SizedBox(width: 8),
                 Text('DOT Master', style: GoogleFonts.inter(
                     fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
