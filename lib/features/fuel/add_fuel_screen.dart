@@ -107,15 +107,17 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
   Future<void> _pickReceipt() async {
     final src = await showModalBottomSheet<ImageSource>(
       context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => SafeArea(child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(top: 8, bottom: MediaQuery.of(ctx).padding.bottom + 8),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(margin: const EdgeInsets.only(bottom: 8), width: 36, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-          ListTile(leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.camera_alt_outlined, color: _blue, size: 18)), title: Text('Take Photo', style: GoogleFonts.inter(fontWeight: FontWeight.w600)), onTap: () => Navigator.pop(context, ImageSource.camera)),
-          ListTile(leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _sky.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.photo_library_outlined, color: _sky, size: 18)), title: Text('Choose from Gallery', style: GoogleFonts.inter(fontWeight: FontWeight.w600)), onTap: () => Navigator.pop(context, ImageSource.gallery)),
+          ListTile(leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.camera_alt_outlined, color: _blue, size: 18)), title: Text('Take Photo', style: GoogleFonts.inter(fontWeight: FontWeight.w600)), onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.camera)),
+          ListTile(leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _sky.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.photo_library_outlined, color: _sky, size: 18)), title: Text('Choose from Gallery', style: GoogleFonts.inter(fontWeight: FontWeight.w600)), onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.gallery)),
         ]),
-      )),
+      ),
     );
     if (src == null) return;
     final picked = await ImagePicker().pickImage(source: src, imageQuality: 80);
@@ -218,9 +220,12 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
           ),
         ],
       ),
-      body: Form(
-        key: _form,
-        child: ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 90), children: [
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Form(
+          key: _form,
+          child: ListView(padding: const EdgeInsets.fromLTRB(16, 20, 16, 90), children: [
 
           // ── Total banner ──────────────────────────────────────────────
           AnimatedContainer(
@@ -344,7 +349,8 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
             ),
           ),
         ]),
-      ),
+        ),
+      ),   // GestureDetector
     );
   }
 }
