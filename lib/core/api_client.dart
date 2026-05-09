@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
+import 'biometric_service.dart';
 
 class ApiClient {
   static const _storage = FlutterSecureStorage();
@@ -50,7 +51,18 @@ class ApiClient {
         data: {'refresh': refresh},
       );
       if (res.statusCode == 200) {
-        await _storage.write(key: 'access_token', value: res.data['access']);
+        final newAccess   = res.data['access']   as String?;
+        final newRefresh  = res.data['refresh']  as String?;  // may be null if no rotation
+        if (newAccess != null) {
+          await _storage.write(key: 'access_token', value: newAccess);
+          _dio.options.headers['Authorization'] = 'Bearer $newAccess';
+        }
+        if (newRefresh != null) {
+          // Persist rotated refresh token so the next silent refresh works
+          await _storage.write(key: 'refresh_token', value: newRefresh);
+          // Keep biometric token in sync — prevents stale token on Face ID / fingerprint login
+          await BiometricService().syncRefreshToken(newRefresh);
+        }
         return true;
       }
     } catch (_) {}
