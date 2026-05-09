@@ -363,7 +363,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     ];
 
-    final openIndex = ValueNotifier<int?>( null);
+    // Support contact info — loaded from API
+    String supportEmail    = 'support@dotmaster.app';
+    String supportPhone    = '+1 (800) DOT-MASTER';
+    String supportDialable = '+18003681234';
+    String waLabel         = 'Chat with us on WhatsApp';
+    bool contactLoading    = true;
+    final openIndex        = ValueNotifier<int?>(null);
+
+    // Load contact info immediately before showing the sheet
+    ApiClient.getLegalContent().then((res) {
+      supportEmail    = (res.data['support_email']          ?? supportEmail).toString();
+      supportPhone    = (res.data['support_phone']          ?? supportPhone).toString();
+      supportDialable = (res.data['support_phone_dialable'] ?? supportDialable).toString();
+      waLabel         = (res.data['support_whatsapp_label'] ?? waLabel).toString();
+      contactLoading  = false;
+    }).catchError((_) {
+      contactLoading = false;
+    });
 
     showModalBottomSheet(
       context: context,
@@ -377,8 +394,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (_, scrollCtrl) => ValueListenableBuilder<int?>(
-          valueListenable: openIndex,
+        builder: (_, scrollCtrl) => StatefulBuilder(
+          builder: (ctx, setS) {
+            // Once API loaded, trigger re-render of this subtree
+            if (contactLoading) {
+              ApiClient.getLegalContent().then((res) {
+                if (ctx.mounted) setS(() {
+                  supportEmail    = (res.data['support_email']          ?? supportEmail).toString();
+                  supportPhone    = (res.data['support_phone']          ?? supportPhone).toString();
+                  supportDialable = (res.data['support_phone_dialable'] ?? supportDialable).toString();
+                  waLabel         = (res.data['support_whatsapp_label'] ?? waLabel).toString();
+                  contactLoading  = false;
+                });
+              }).catchError((_) {
+                if (ctx.mounted) setS(() => contactLoading = false);
+              });
+            }
+            return ValueListenableBuilder<int?>(
+              valueListenable: openIndex,
           builder: (ctx, open, _) => Column(children: [
             // ── Header (sticky) ────────────────────────────────────────────
             Padding(
@@ -412,16 +445,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 controller: scrollCtrl,
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
                 children: [
-                  // Contact tiles
+                  // Contact tiles — loaded from backend
                   _SupportContactTile(
                     icon: Icons.email_outlined,
                     color: _blue,
                     title: 'Email Support',
-                    subtitle: 'support@dotmaster.app',
+                    subtitle: supportEmail,
                     onTap: () async {
                       final uri = Uri(
                         scheme: 'mailto',
-                        path: 'support@dotmaster.app',
+                        path: supportEmail,
                         queryParameters: {
                           'subject': 'DOT Master Support Request',
                         },
@@ -434,9 +467,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.phone_outlined,
                     color: _green,
                     title: 'Call Support',
-                    subtitle: '+1 (800) DOT-MASTER',
+                    subtitle: supportPhone,
                     onTap: () async {
-                      final uri = Uri(scheme: 'tel', path: '+18003681234');
+                      final uri = Uri(scheme: 'tel', path: supportDialable);
                       if (await canLaunchUrl(uri)) launchUrl(uri);
                     },
                   ),
@@ -445,10 +478,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     icon: Icons.chat_bubble_outline_rounded,
                     color: const Color(0xFF25D366),
                     title: 'WhatsApp Support',
-                    subtitle: 'Chat with us on WhatsApp',
+                    subtitle: waLabel,
                     onTap: () async {
+                      final waNum = supportDialable.replaceAll('+', '');
                       final uri = Uri.parse(
-                          'https://wa.me/18003681234?text=Hello%2C%20I%20need%20help%20with%20DOT%20Master');
+                          'https://wa.me/$waNum?text=Hello%2C%20I%20need%20help%20with%20DOT%20Master');
                       if (await canLaunchUrl(uri)) {
                         launchUrl(uri, mode: LaunchMode.externalApplication);
                       }
@@ -521,7 +555,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // Version info footer
                   Center(child: Text(
-                    'DOT Master v1.0.0  •  support@dotmaster.app',
+                    'DOT Master v1.0.0  •  $supportEmail',
                     style: GoogleFonts.inter(
                         fontSize: 11, color: const Color(0xFFCBD5E1)),
                   )),
@@ -529,7 +563,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ]),
-        ),
+          ); // ValueListenableBuilder
+        },
+      ), // StatefulBuilder
       ),
     );
   }
