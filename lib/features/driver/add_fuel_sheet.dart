@@ -337,11 +337,14 @@ class _AddFuelSheetState extends State<AddFuelSheet> {
         ],
       ),
       // ── Body ────────────────────────────────────────────────────────────
-      body: Form(
-        key: _form,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 90),
-          children: [
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Form(
+          key: _form,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 90),
+            children: [
 
             // Total banner
             AnimatedContainer(
@@ -593,6 +596,7 @@ class _AddFuelSheetState extends State<AddFuelSheet> {
           ],
         ),
       ),
+    ),   // GestureDetector
     );
   }
 }
