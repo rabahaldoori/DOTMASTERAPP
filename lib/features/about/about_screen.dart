@@ -189,6 +189,27 @@ class _AboutScreenState extends State<AboutScreen> {
                 ),
                 const SizedBox(height: 28),
 
+                // ── Return button ─────────────────────────────────────────────
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+                    label: Text('Back to Profile',
+                        style: GoogleFonts.inter(
+                            fontSize: 15, fontWeight: FontWeight.w700)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _navy,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
                 // ── Copyright footer ──────────────────────────────────────────
                 Text(_copyright,
                     textAlign: TextAlign.center,
