@@ -1186,7 +1186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       iconColor: _grey,
                       label: 'About DOT Comply',
                       trailing: 'v1.0.0',
-                      onTap: () {},
+                      onTap: () => context.push('/about'),
                     ),
                   ]),
                   const SizedBox(height: 16),

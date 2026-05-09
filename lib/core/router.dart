@@ -18,6 +18,7 @@ import '../features/driver/driver_duty_screen.dart';
 import '../features/driver/driver_profile_screen.dart';
 import '../features/driver/driver_scaffold.dart';
 import '../features/driver/driver_notifications_screen.dart';
+import '../features/about/about_screen.dart';
 import '../features/driver/inspection/inspection_checklist_screen.dart';
 import '../features/driver/inspection/issue_report_screen.dart';
 import '../features/driver/inspection/review_submit_screen.dart';
@@ -89,6 +90,7 @@ final router = GoRouter(
         GoRoute(path: '/reports',     builder: (_, __) => const ReportsScreen()),
         GoRoute(path: '/truck',       builder: (_, __) => const TruckScreen()),
         GoRoute(path: '/profile',     builder: (_, __) => const ProfileScreen()),
+        GoRoute(path: '/about',       builder: (_, __) => const AboutScreen()),
         GoRoute(path: '/maintenance', builder: (_, __) => const AdminMaintenanceScreen()),
         GoRoute(
           path: '/maintenance/add',
