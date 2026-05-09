@@ -358,7 +358,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                 label: Text(_downloadingCsv ? 'Downloading…' : 'Download & Share CSV', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: _navy)),
               )),
 
-              const SizedBox(height: 80),
+              // Bottom spacer — clears the bottom nav bar + device home indicator
+              SizedBox(height: 80 + MediaQuery.of(context).padding.bottom),
             ]),
           )),
         ],
