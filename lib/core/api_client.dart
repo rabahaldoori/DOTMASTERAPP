@@ -230,6 +230,13 @@ class ApiClient {
   /// Quick role check — used by router to choose correct shell.
   static Future<String?> getUserRole() => _storage.read(key: 'user_role');
 
+  /// Returns stored refresh token (null if no session saved).
+  static Future<String?> getRefreshToken() => _storage.read(key: 'refresh_token');
+
+  /// Refreshes the access token using the stored refresh token.
+  /// Returns true on success, false if expired/missing.
+  static Future<bool> refreshAccessToken() => _refreshToken();
+
   // ── Duty / HOS ─────────────────────────────────────────────────────────────
   static Future<Response> getDutyStatus() => _dio.get('/api/duty/status/');
 

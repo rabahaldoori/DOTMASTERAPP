@@ -58,9 +58,21 @@ class _LoginScreenState extends State<LoginScreen>
         if (mounted) setState(() => _error = 'Biometric authentication not available on this device.');
         return;
       }
+
       setState(() { _bioLoading = true; _error = null; });
+
+      // Check a saved session exists before prompting biometrics
+      final refreshToken = await ApiClient.getRefreshToken();
+      if (refreshToken == null) {
+        setState(() {
+          _bioLoading = false;
+          _error = 'No saved session. Please sign in with your password first.';
+        });
+        return;
+      }
+
       final authenticated = await _auth.authenticate(
-        localizedReason: 'Sign in with Face ID or fingerprint',
+        localizedReason: 'Sign in to DOT Master with Face ID or fingerprint',
         options: const AuthenticationOptions(
           biometricOnly: true,
           stickyAuth: true,
@@ -70,15 +82,29 @@ class _LoginScreenState extends State<LoginScreen>
         setState(() => _bioLoading = false);
         return;
       }
-      // Use stored token to log in
+
+      // Refresh the access token
+      final refreshed = await ApiClient.refreshAccessToken();
+      if (!refreshed) {
+        if (mounted) setState(() => _error = 'Session expired. Please sign in with your password.');
+        return;
+      }
+
+      // Fetch fresh profile to restore user state
+      try {
+        final profile = await ApiClient.getProfile();
+        final profileData = profile.data as Map<String, dynamic>?;
+        if (profileData != null) await ApiClient.saveUser(profileData);
+      } catch (_) {} // non-fatal — role already stored
+
       final role = await ApiClient.getUserRole();
       if (role != null && mounted) {
         context.go(role == 'driver' ? '/driver-dashboard' : '/dashboard');
       } else {
-        if (mounted) setState(() => _error = 'No saved session. Please sign in with your password first.');
+        if (mounted) setState(() => _error = 'Could not restore session. Please sign in again.');
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Biometric authentication failed.');
+      if (mounted) setState(() => _error = 'Biometric authentication failed. Try again.');
     } finally {
       if (mounted) setState(() => _bioLoading = false);
     }
@@ -456,14 +482,14 @@ class _LogoBlock extends StatelessWidget {
       // Lottie animation
       Lottie.asset(
         'assets/images/truck_orange.json',
-        width: 155,
-        height: 155,
+        width: 190,
+        height: 190,
         fit: BoxFit.contain,
         repeat: true,
       ),
     ]),
     const SizedBox(height: 4),
-    Text('DOT MASTER', style: GoogleFonts.inter(
+    Text('DOT Comply', style: GoogleFonts.inter(
         fontSize: 30, fontWeight: FontWeight.w900, color: _white,
         letterSpacing: -0.5)),
     const SizedBox(height: 6),
