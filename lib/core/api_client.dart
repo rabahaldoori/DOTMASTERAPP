@@ -221,7 +221,17 @@ class ApiClient {
         'company': await _storage.read(key: 'company_name'),
       };
 
-  static Future<void> logout() => _storage.deleteAll();
+  static Future<void> logout() async {
+    // Only clear auth tokens — biometric prefs (SharedPreferences) are preserved
+    await Future.wait([
+      _storage.delete(key: 'access_token'),
+      _storage.delete(key: 'refresh_token'),
+      _storage.delete(key: 'user_name'),
+      _storage.delete(key: 'user_email'),
+      _storage.delete(key: 'user_role'),
+      _storage.delete(key: 'company_name'),
+    ]);
+  }
 
   static Future<bool> get isLoggedIn async {
     final token = await _storage.read(key: 'access_token');

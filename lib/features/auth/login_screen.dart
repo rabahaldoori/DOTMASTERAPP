@@ -176,10 +176,16 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  /// Show Face ID opt-in dialog after first successful password login.
+  /// Show biometric opt-in dialog after first successful password login.
   Future<void> _promptFaceIdEnrollment() async {
+    // Skip if already enabled — never re-ask someone who said yes
+    final alreadyEnabled = await ApiClient.getFaceIdEnabled();
+    if (alreadyEnabled) return;
+
+    // Skip if already asked (they said "Not Now")
     final alreadyAsked = await ApiClient.getFaceIdAsked();
     if (alreadyAsked) return;
+
     final canCheck = await _auth.canCheckBiometrics;
     final supported = await _auth.isDeviceSupported();
     if (!canCheck && !supported) return;
