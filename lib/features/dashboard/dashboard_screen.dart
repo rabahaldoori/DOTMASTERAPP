@@ -122,14 +122,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white.withOpacity(0.15)),
                 ),
-                child: Row(children: [
-                  const Icon(Icons.local_shipping_rounded,
-                      color: Colors.white, size: 14),
-                  const SizedBox(width: 6),
-                  Text(_companyName, style: GoogleFonts.inter(
-                      fontSize: 13, fontWeight: FontWeight.w800,
-                      color: Colors.white)),
-                ]),
+                child: Text(_companyName, style: GoogleFonts.inter(
+                    fontSize: 13, fontWeight: FontWeight.w800,
+                    color: Colors.white)),
               ),
               const Spacer(),
               _avatarUrl.isNotEmpty
