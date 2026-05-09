@@ -150,7 +150,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Change password
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context, rootNavigator: true).pop();
+                  _showChangePassword(context);
+                },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Row(children: [
@@ -273,6 +276,167 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ]),
         ),
+      ),
+    );
+  }
+
+  // ── Change Password sheet ────────────────────────────────────────────────────
+  void _showChangePassword(BuildContext context) {
+    final oldCtrl  = TextEditingController();
+    final newCtrl  = TextEditingController();
+    final confCtrl = TextEditingController();
+    bool oldObscure  = true;
+    bool newObscure  = true;
+    bool confObscure = true;
+    bool loading   = false;
+    String? errorMsg;
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) {
+          Future<void> submit() async {
+            final old  = oldCtrl.text.trim();
+            final nw   = newCtrl.text.trim();
+            final conf = confCtrl.text.trim();
+            if (old.isEmpty || nw.isEmpty || conf.isEmpty) {
+              setS(() => errorMsg = 'Please fill in all fields.');
+              return;
+            }
+            if (nw.length < 8) {
+              setS(() => errorMsg = 'New password must be at least 8 characters.');
+              return;
+            }
+            if (nw != conf) {
+              setS(() => errorMsg = 'Passwords do not match.');
+              return;
+            }
+            setS(() { loading = true; errorMsg = null; });
+            try {
+              await ApiClient.changePassword(old, nw);
+              if (ctx.mounted) {
+                Navigator.of(ctx, rootNavigator: true).pop();
+                HapticFeedback.lightImpact();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text('Password changed successfully!',
+                      style: GoogleFonts.inter(color: Colors.white)),
+                  backgroundColor: _green,
+                  behavior: SnackBarBehavior.floating,
+                  margin: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ));
+              }
+            } catch (e) {
+              String msg = 'Failed to change password. Please try again.';
+              if (e.toString().contains('400') ||
+                  e.toString().toLowerCase().contains('incorrect') ||
+                  e.toString().toLowerCase().contains('invalid') ||
+                  e.toString().toLowerCase().contains('wrong')) {
+                msg = 'Current password is incorrect.';
+              }
+              setS(() { loading = false; errorMsg = msg; });
+            }
+          }
+
+          return Padding(
+            padding: EdgeInsets.only(
+                left: 20, right: 20, top: 0,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              _SheetHandle(),
+              Row(children: [
+                Container(width: 36, height: 36,
+                  decoration: BoxDecoration(
+                      color: const Color(0xFF7C3AED).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.lock_outline_rounded,
+                      color: Color(0xFF7C3AED), size: 20)),
+                const SizedBox(width: 12),
+                Text('Change Password', style: GoogleFonts.inter(
+                    fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+              ]),
+              const SizedBox(height: 20),
+
+              // Error banner
+              if (errorMsg != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                      color: _red.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _red.withOpacity(0.25))),
+                  child: Row(children: [
+                    Icon(Icons.error_outline_rounded,
+                        color: _red, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(errorMsg!, style: GoogleFonts.inter(
+                        fontSize: 13, color: _red,
+                        fontWeight: FontWeight.w500))),
+                  ]),
+                ),
+                const SizedBox(height: 14),
+              ],
+
+              // Current password
+              _PwdField(
+                controller: oldCtrl,
+                label: 'Current Password',
+                obscure: oldObscure,
+                onToggle: () => setS(() => oldObscure = !oldObscure),
+              ),
+              const SizedBox(height: 12),
+
+              // New password
+              _PwdField(
+                controller: newCtrl,
+                label: 'New Password',
+                obscure: newObscure,
+                onToggle: () => setS(() => newObscure = !newObscure),
+              ),
+              const SizedBox(height: 12),
+
+              // Confirm password
+              _PwdField(
+                controller: confCtrl,
+                label: 'Confirm New Password',
+                obscure: confObscure,
+                onToggle: () => setS(() => confObscure = !confObscure),
+              ),
+              const SizedBox(height: 20),
+
+              // Submit button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: loading ? null : submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _navy,
+                    disabledBackgroundColor: _navy.withOpacity(0.5),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    elevation: 2,
+                  ),
+                  child: loading
+                      ? const SizedBox(width: 20, height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : Text('Update Password', style: GoogleFonts.inter(
+                          fontSize: 15, fontWeight: FontWeight.w800,
+                          color: Colors.white)),
+                ),
+              ),
+            ]),
+          );
+        },
       ),
     );
   }
@@ -882,6 +1046,50 @@ class _InfoCell extends StatelessWidget {
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF031634))),
       ],
+    ),
+  );
+}
+
+// ── Password input field ──────────────────────────────────────────────────────
+class _PwdField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final bool obscure;
+  final VoidCallback onToggle;
+  const _PwdField({
+    required this.controller,
+    required this.label,
+    required this.obscure,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFE2E8F0)),
+    ),
+    child: TextField(
+      controller: controller,
+      obscureText: obscure,
+      style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF031634)),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.inter(
+            fontSize: 13, color: const Color(0xFF94A3B8)),
+        prefixIcon: const Icon(Icons.lock_outline_rounded,
+            size: 18, color: Color(0xFF94A3B8)),
+        suffixIcon: IconButton(
+          icon: Icon(
+              obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              size: 18, color: const Color(0xFF94A3B8)),
+          onPressed: onToggle,
+        ),
+        border: InputBorder.none,
+        contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14, vertical: 14),
+      ),
     ),
   );
 }

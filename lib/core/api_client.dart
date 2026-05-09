@@ -374,4 +374,12 @@ class ApiClient {
       options: Options(contentType: 'multipart/form-data'),
     );
   }
+
+  // ── Change password ──────────────────────────────────────────────────────────
+  /// POST /api/auth/change-password/ with {old_password, new_password}
+  static Future<Response> changePassword(String oldPassword, String newPassword) =>
+      _dio.post('/api/auth/change-password/', data: {
+        'old_password': oldPassword,
+        'new_password': newPassword,
+      });
 }
