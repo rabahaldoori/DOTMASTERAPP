@@ -235,25 +235,11 @@ class _AppLogoHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(children: [
-    Container(
-      width: 96, height: 96,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0453CD), Color(0xFF0369A1)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: _blue.withOpacity(0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: const Icon(Icons.local_shipping_rounded,
-          color: Colors.white, size: 52),
+    Image.asset(
+      'assets/images/logo.png',
+      width: 110,
+      height: 110,
+      fit: BoxFit.contain,
     ),
     const SizedBox(height: 16),
     Text(appName,
