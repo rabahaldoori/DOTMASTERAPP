@@ -169,7 +169,8 @@ class _AddFuelSheetState extends State<AddFuelSheet> {
 
     final src = await showModalBottomSheet<ImageSource>(
       context: context,
-      useSafeArea: true,   // respects the bottom nav bar + home indicator
+      useRootNavigator: true,  // renders above the app's bottom nav bar
+      useSafeArea: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
@@ -187,7 +188,7 @@ class _AddFuelSheetState extends State<AddFuelSheet> {
                   borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.camera_alt_outlined, color: _blue, size: 18)),
             title: Text('Take Photo', style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-            onTap: () => Navigator.pop(context, ImageSource.camera)),
+            onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.camera)),
           ListTile(
             leading: Container(width: 36, height: 36,
               decoration: BoxDecoration(color: _sky.withOpacity(0.1),
@@ -195,7 +196,7 @@ class _AddFuelSheetState extends State<AddFuelSheet> {
               child: const Icon(Icons.photo_library_outlined, color: _sky, size: 18)),
             title: Text('Choose from Gallery',
                 style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
-            onTap: () => Navigator.pop(context, ImageSource.gallery)),
+            onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.gallery)),
         ]),
       ),
     );
