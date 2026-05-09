@@ -333,7 +333,14 @@ class _FuelCard extends StatelessWidget {
         ? DateFormat('MMM dd').format(DateTime.tryParse(rawDate) ?? DateTime.now())
         : rawDate;
 
-    return Container(
+    final id = fuel['id']?.toString() ?? '0';
+
+    return GestureDetector(
+      onTap: () => context.push(
+        '/fuel/$id',
+        extra: Map<String, dynamic>.from(fuel),
+      ),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -404,8 +411,9 @@ class _FuelCard extends StatelessWidget {
             ),
           ]),
         ]),
-      ),
-    );
+      ),      // Padding
+    ),       // Container
+    );       // GestureDetector
   }
 }
 

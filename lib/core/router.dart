@@ -4,6 +4,7 @@ import '../features/auth/login_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/fuel/fuel_logs_screen.dart';
 import '../features/fuel/add_fuel_screen.dart';
+import '../features/fuel/fuel_detail_screen.dart';
 import '../features/trips/trips_screen.dart';
 import '../features/trips/trip_detail_screen.dart';
 import '../features/reports/reports_screen.dart';
@@ -64,6 +65,13 @@ final router = GoRouter(
         GoRoute(path: '/dashboard',   builder: (_, __) => const DashboardScreen()),
         GoRoute(path: '/fuel',        builder: (_, __) => const FuelLogsScreen()),
         GoRoute(path: '/fuel/add',    builder: (_, __) => const AddFuelScreen()),
+        GoRoute(
+          path: '/fuel/:id',
+          builder: (_, state) {
+            final fuel = (state.extra as Map<String, dynamic>?) ?? {};
+            return FuelDetailScreen(fuel: fuel);
+          },
+        ),
         GoRoute(
           path: '/trips',
           builder: (_, __) => const TripsScreen(),
