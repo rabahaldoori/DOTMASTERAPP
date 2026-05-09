@@ -382,4 +382,22 @@ class ApiClient {
         'old_password': oldPassword,
         'new_password': newPassword,
       });
+
+  // ── Notification preferences ─────────────────────────────────────────────────
+  /// GET /api/auth/notification-preferences/
+  static Future<Response> getNotificationPrefs() =>
+      _dio.get('/api/auth/notification-preferences/');
+
+  /// PATCH /api/auth/notification-preferences/ with any of { push, email, sms }
+  static Future<Response> updateNotificationPrefs({
+    bool? push,
+    bool? email,
+    bool? sms,
+  }) {
+    final data = <String, dynamic>{};
+    if (push  != null) data['push']  = push;
+    if (email != null) data['email'] = email;
+    if (sms   != null) data['sms']   = sms;
+    return _dio.patch('/api/auth/notification-preferences/', data: data);
+  }
 }

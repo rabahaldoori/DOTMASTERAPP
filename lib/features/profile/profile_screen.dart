@@ -216,9 +216,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Notification Settings sheet ──────────────────────────────────────────────
   void _showNotifications(BuildContext context) {
-    bool _push  = true;
-    bool _email = true;
-    bool _sms   = false;
+    // Mutable state — starts as defaults; will be overwritten once API loads
+    bool push  = true;
+    bool email = true;
+    bool sms   = false;
+    bool loading = true;
+
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -227,55 +230,105 @@ class _ProfileScreenState extends State<ProfileScreen> {
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setS) => Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            _SheetHandle(),
-            Row(children: [
-              Container(width: 36, height: 36,
-                decoration: BoxDecoration(color: _cyan.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(10)),
-                child: Icon(Icons.notifications_outlined,
-                    color: _cyan, size: 20)),
-              const SizedBox(width: 12),
-              Text('Notification Settings', style: GoogleFonts.inter(
-                  fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+        builder: (ctx, setS) {
+          // Load prefs from backend the first time
+          if (loading) {
+            ApiClient.getNotificationPrefs().then((res) {
+              if (ctx.mounted) {
+                setS(() {
+                  push    = res.data['push']  ?? true;
+                  email   = res.data['email'] ?? true;
+                  sms     = res.data['sms']   ?? false;
+                  loading = false;
+                });
+              }
+            }).catchError((_) {
+              if (ctx.mounted) setS(() => loading = false);
+            });
+          }
+
+          Future<void> toggle({bool? newPush, bool? newEmail, bool? newSms}) async {
+            // Optimistic UI update
+            setS(() {
+              if (newPush  != null) push  = newPush;
+              if (newEmail != null) email = newEmail;
+              if (newSms   != null) sms   = newSms;
+            });
+            HapticFeedback.selectionClick();
+            try {
+              await ApiClient.updateNotificationPrefs(
+                push:  newPush,
+                email: newEmail,
+                sms:   newSms,
+              );
+            } catch (_) {
+              // Revert on failure
+              setS(() {
+                if (newPush  != null) push  = !newPush;
+                if (newEmail != null) email = !newEmail;
+                if (newSms   != null) sms   = !newSms;
+              });
+            }
+          }
+
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              _SheetHandle(),
+              Row(children: [
+                Container(width: 36, height: 36,
+                  decoration: BoxDecoration(color: _cyan.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Icon(Icons.notifications_outlined,
+                      color: _cyan, size: 20)),
+                const SizedBox(width: 12),
+                Text('Notification Settings', style: GoogleFonts.inter(
+                    fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+              ]),
+              const SizedBox(height: 8),
+              Text('Choose which notifications you want to receive.',
+                  style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+              const SizedBox(height: 16),
+              if (loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(child: CircularProgressIndicator(
+                      color: Color(0xFF0453CD), strokeWidth: 2)),
+                )
+              else ...[
+                _SheetToggleRow(
+                  icon: Icons.notifications_active_outlined,
+                  iconColor: _cyan,
+                  label: 'Push Notifications',
+                  subtitle: 'Alerts, reminders & updates',
+                  value: push,
+                  onChanged: (v) => toggle(newPush: v),
+                ),
+                Container(height: 1, color: const Color(0xFFF1F5F9),
+                    margin: const EdgeInsets.symmetric(vertical: 4)),
+                _SheetToggleRow(
+                  icon: Icons.email_outlined,
+                  iconColor: _blue,
+                  label: 'Email Notifications',
+                  subtitle: 'Reports & important alerts',
+                  value: email,
+                  onChanged: (v) => toggle(newEmail: v),
+                ),
+                Container(height: 1, color: const Color(0xFFF1F5F9),
+                    margin: const EdgeInsets.symmetric(vertical: 4)),
+                _SheetToggleRow(
+                  icon: Icons.sms_outlined,
+                  iconColor: _green,
+                  label: 'SMS Notifications',
+                  subtitle: 'Text message alerts',
+                  value: sms,
+                  onChanged: (v) => toggle(newSms: v),
+                  last: true,
+                ),
+              ],
             ]),
-            const SizedBox(height: 8),
-            Text('Choose which notifications you want to receive.',
-                style: GoogleFonts.inter(fontSize: 13, color: _grey)),
-            const SizedBox(height: 16),
-            _SheetToggleRow(
-              icon: Icons.notifications_active_outlined,
-              iconColor: _cyan,
-              label: 'Push Notifications',
-              subtitle: 'Alerts, reminders & updates',
-              value: _push,
-              onChanged: (v) => setS(() => _push = v),
-            ),
-            Container(height: 1, color: const Color(0xFFF1F5F9),
-                margin: const EdgeInsets.symmetric(vertical: 4)),
-            _SheetToggleRow(
-              icon: Icons.email_outlined,
-              iconColor: _blue,
-              label: 'Email Notifications',
-              subtitle: 'Reports & important alerts',
-              value: _email,
-              onChanged: (v) => setS(() => _email = v),
-            ),
-            Container(height: 1, color: const Color(0xFFF1F5F9),
-                margin: const EdgeInsets.symmetric(vertical: 4)),
-            _SheetToggleRow(
-              icon: Icons.sms_outlined,
-              iconColor: _green,
-              label: 'SMS Notifications',
-              subtitle: 'Text message alerts',
-              value: _sms,
-              onChanged: (v) => setS(() => _sms = v),
-              last: true,
-            ),
-          ]),
-        ),
+          );
+        },
       ),
     );
   }
