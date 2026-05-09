@@ -85,8 +85,8 @@ class _DashboardChartsWidgetState extends State<DashboardChartsWidget> {
           stat2Label: 'Total Miles',
           stat2Value: '${_commas(_totalMiles.round())} mi',
           stat2Color: const Color(0xFF34D399),
-          spots1: _toSpots(_dailyTrips, 'count'),
-          spots2: _toSpots(_dailyTrips, 'miles'),
+          spots1: _normalize(_toSpots(_dailyTrips, 'count')),
+          spots2: _normalize(_toSpots(_dailyTrips, 'miles')),
           labels: _dateLabels(_dailyTrips),
         ),
         const SizedBox(height: 16),
@@ -104,8 +104,8 @@ class _DashboardChartsWidgetState extends State<DashboardChartsWidget> {
           stat2Label: 'Gallons',
           stat2Value: '${_commas(_totalGallons.round())} gal',
           stat2Color: const Color(0xFFF87171),
-          spots1: _toSpots(_dailyFuel, 'cost'),
-          spots2: _toSpots(_dailyFuel, 'gallons'),
+          spots1: _normalize(_toSpots(_dailyFuel, 'cost')),
+          spots2: _normalize(_toSpots(_dailyFuel, 'gallons')),
           labels: _dateLabels(_dailyFuel),
         ),
       ],
@@ -115,6 +115,15 @@ class _DashboardChartsWidgetState extends State<DashboardChartsWidget> {
   List<FlSpot> _toSpots(List<Map<String, dynamic>> data, String key) =>
       List.generate(data.length, (i) =>
           FlSpot(i.toDouble(), (data[i][key] as num).toDouble()));
+
+  /// Scale a series to 0–100 so two datasets with different magnitudes
+  /// (e.g. trip counts 0–10 and miles 0–10 000) can share one Y axis.
+  List<FlSpot> _normalize(List<FlSpot> spots) {
+    if (spots.isEmpty) return spots;
+    final maxVal = spots.map((s) => s.y).reduce((a, b) => a > b ? a : b);
+    if (maxVal == 0) return spots.map((s) => FlSpot(s.x, 0)).toList();
+    return spots.map((s) => FlSpot(s.x, (s.y / maxVal) * 100)).toList();
+  }
 
   List<String> _dateLabels(List<Map<String, dynamic>> data) =>
       data.map((r) {
@@ -204,11 +213,8 @@ class _ChartCardState extends State<_ChartCard>
   @override
   void dispose() { _anim.dispose(); super.dispose(); }
 
-  double get _maxY1 => widget.spots1.isEmpty ? 1
-      : (widget.spots1.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.25).clamp(1, double.infinity);
-
-  double get _maxY2 => widget.spots2.isEmpty ? 1
-      : (widget.spots2.map((s) => s.y).reduce((a, b) => a > b ? a : b) * 1.25).clamp(1, double.infinity);
+  // Spots are pre-normalized to 0-100, so Y axis is always fixed.
+  static const double _maxY = 100;
 
   @override
   Widget build(BuildContext context) {
@@ -270,22 +276,15 @@ class _ChartCardState extends State<_ChartCard>
                     LineChartData(
                       gridData: FlGridData(
                         show: true,
-                        horizontalInterval: _maxY1 / 4,
+                        horizontalInterval: _maxY / 4,
                         getDrawingHorizontalLine: (_) => FlLine(
                           color: Colors.white.withOpacity(0.05), strokeWidth: 1,
                         ),
                         drawVerticalLine: false,
                       ),
                       titlesData: FlTitlesData(
-                        leftTitles: AxisTitles(sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 32,
-                          interval: _maxY1 / 4,
-                          getTitlesWidget: (v, _) => Text(
-                            _shortNum(v),
-                            style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 9),
-                          ),
-                        )),
+                        // Y labels hidden — values are normalized 0-100; real numbers shown below.
+                        leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         topTitles:   const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         bottomTitles: AxisTitles(sideTitles: SideTitles(
@@ -314,7 +313,7 @@ class _ChartCardState extends State<_ChartCard>
                         _line(widget.spots2, widget.secondColor),
                       ],
                       minY: 0,
-                      maxY: _maxY1,
+                      maxY: _maxY,
                     ),
                     duration: const Duration(milliseconds: 600),
                     curve: Curves.easeInOut,
@@ -374,10 +373,7 @@ class _ChartCardState extends State<_ChartCard>
     ),
   );
 
-  String _shortNum(double v) {
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
-    return v.toInt().toString();
-  }
+
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
