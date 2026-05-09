@@ -94,7 +94,7 @@ class _TripsScreenState extends State<TripsScreen> {
           slivers: [
             // ── Header ────────────────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 165,
+              expandedHeight: 170,
               pinned: true,
               backgroundColor: _navy,
               foregroundColor: Colors.white,
@@ -257,8 +257,8 @@ class _TripsScreenState extends State<TripsScreen> {
   }
 
   Widget _headerDiv() => Container(
-      width: 1, height: 36, color: Colors.white12,
-      margin: const EdgeInsets.symmetric(horizontal: 4));
+      width: 1, height: 32, color: Colors.white12,
+      margin: const EdgeInsets.symmetric(horizontal: 2));
 }
 
 // ── Header stat ──────────────────────────────────────────────────────────────
@@ -272,12 +272,20 @@ class _HeaderStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Expanded(
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(icon, size: 16, color: color.withOpacity(0.7)),
-      const SizedBox(height: 4),
-      Text(value, style: GoogleFonts.inter(fontSize: 18,
-          fontWeight: FontWeight.w800, color: color)),
-      Text(label, style: GoogleFonts.inter(fontSize: 9,
-          color: Colors.white38, letterSpacing: 0.3)),
+      Icon(icon, size: 14, color: color.withOpacity(0.7)),
+      const SizedBox(height: 3),
+      // FittedBox auto-shrinks the value if the column is too narrow
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(value, style: GoogleFonts.inter(fontSize: 15,
+            fontWeight: FontWeight.w800, color: color)),
+      ),
+      const SizedBox(height: 1),
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(label, style: GoogleFonts.inter(fontSize: 9,
+            color: Colors.white38, letterSpacing: 0.3)),
+      ),
     ]),
   );
 }
