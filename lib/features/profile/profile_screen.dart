@@ -398,7 +398,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _MenuItem(
                       icon: Icons.info_outline_rounded,
                       iconColor: _grey,
-                      label: 'About IFTATrack',
+                      label: 'About DOT Comply',
                       trailing: 'v1.0.0',
                       onTap: () {},
                     ),

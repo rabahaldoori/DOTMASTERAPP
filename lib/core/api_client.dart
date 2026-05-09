@@ -237,6 +237,20 @@ class ApiClient {
   /// Returns true on success, false if expired/missing.
   static Future<bool> refreshAccessToken() => _refreshToken();
 
+  // ── Face ID preference ──────────────────────────────────────────────────────
+  static Future<bool> getFaceIdEnabled() async =>
+      (await _storage.read(key: 'faceid_enabled')) == 'true';
+
+  static Future<void> setFaceIdEnabled(bool value) =>
+      _storage.write(key: 'faceid_enabled', value: value ? 'true' : 'false');
+
+  /// Whether the Face ID setup prompt has been shown before.
+  static Future<bool> getFaceIdAsked() async =>
+      (await _storage.read(key: 'faceid_asked')) == 'true';
+
+  static Future<void> setFaceIdAsked() =>
+      _storage.write(key: 'faceid_asked', value: 'true');
+
   // ── Duty / HOS ─────────────────────────────────────────────────────────────
   static Future<Response> getDutyStatus() => _dio.get('/api/duty/status/');
 

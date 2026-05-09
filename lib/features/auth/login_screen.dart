@@ -30,6 +30,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _remember = false;
   bool _loading  = false;
   bool _bioLoading = false;
+  bool _faceIdEnabled = false;   // shows Face ID button only after user opts in
   String? _error;
   final _auth = LocalAuthentication();
 
@@ -45,6 +46,12 @@ class _LoginScreenState extends State<LoginScreen>
     _slide = Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero)
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic));
     _anim.forward();
+    _checkFaceIdEnabled();
+  }
+
+  Future<void> _checkFaceIdEnabled() async {
+    final val = await ApiClient.getFaceIdEnabled();
+    if (mounted) setState(() => _faceIdEnabled = val);
   }
 
   @override
@@ -136,7 +143,11 @@ class _LoginScreenState extends State<LoginScreen>
             );
           }
         } catch (_) {}
-        if (mounted) context.go(role == 'driver' ? '/driver-dashboard' : '/dashboard');
+        if (mounted) {
+          // Prompt Face ID enrollment on first login (if biometrics available)
+          await _promptFaceIdEnrollment();
+          if (mounted) context.go(role == 'driver' ? '/driver-dashboard' : '/dashboard');
+        }
       }
     } catch (e) {
       setState(() {
@@ -144,6 +155,91 @@ class _LoginScreenState extends State<LoginScreen>
       });
     } finally {
       if (mounted) setState(() { _loading = false; });
+    }
+  }
+
+  /// Show Face ID opt-in dialog after first successful password login.
+  Future<void> _promptFaceIdEnrollment() async {
+    final alreadyAsked = await ApiClient.getFaceIdAsked();
+    if (alreadyAsked) return;
+    final canCheck = await _auth.canCheckBiometrics;
+    final supported = await _auth.isDeviceSupported();
+    if (!canCheck && !supported) return;
+
+    await ApiClient.setFaceIdAsked();
+    if (!mounted) return;
+
+    final enabled = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(28),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0D2952),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.10)),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.4),
+                blurRadius: 40, offset: const Offset(0, 16))],
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 64, height: 64,
+              decoration: BoxDecoration(
+                color: _blue.withOpacity(0.15),
+                shape: BoxShape.circle,
+                border: Border.all(color: _blue.withOpacity(0.4)),
+              ),
+              child: const Icon(Icons.face_unlock_outlined, color: _cyan, size: 32),
+            ),
+            const SizedBox(height: 16),
+            Text('Enable Face ID?', style: GoogleFonts.inter(
+                fontSize: 20, fontWeight: FontWeight.w800, color: _white)),
+            const SizedBox(height: 8),
+            Text(
+              'Sign in faster next time using Face ID.\nYou can change this anytime in your profile.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(fontSize: 13, color: Colors.white54, height: 1.5),
+            ),
+            const SizedBox(height: 24),
+            Row(children: [
+              Expanded(child: GestureDetector(
+                onTap: () => Navigator.pop(ctx, false),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                  ),
+                  child: Center(child: Text('Not Now', style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white60))),
+                ),
+              )),
+              const SizedBox(width: 12),
+              Expanded(child: GestureDetector(
+                onTap: () => Navigator.pop(ctx, true),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: const LinearGradient(
+                        colors: [Color(0xFF0A5FE8), Color(0xFF031DAA)]),
+                    boxShadow: [BoxShadow(color: _blue.withOpacity(0.4),
+                        blurRadius: 14, offset: const Offset(0, 4))],
+                  ),
+                  child: Center(child: Text('Enable', style: GoogleFonts.inter(
+                      fontSize: 14, fontWeight: FontWeight.w700, color: _white))),
+                ),
+              )),
+            ]),
+          ]),
+        ),
+      ),
+    );
+
+    if (enabled == true) {
+      await ApiClient.setFaceIdEnabled(true);
     }
   }
 
@@ -360,28 +456,27 @@ class _LoginScreenState extends State<LoginScreen>
                       ]),
                     ),
 
-                    const SizedBox(height: 28),
-
-                    // OR divider
-                    Row(children: [
-                      Expanded(child: Container(height: 1,
-                          color: Colors.white.withOpacity(0.08))),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Text('OR', style: GoogleFonts.inter(
-                            fontSize: 10, color: Colors.white30,
-                            fontWeight: FontWeight.w600, letterSpacing: 1)),
+                    // OR divider + Face ID — only shown after user opts in
+                    if (_faceIdEnabled) ...[
+                      const SizedBox(height: 28),
+                      Row(children: [
+                        Expanded(child: Container(height: 1,
+                            color: Colors.white.withOpacity(0.08))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: Text('OR', style: GoogleFonts.inter(
+                              fontSize: 10, color: Colors.white30,
+                              fontWeight: FontWeight.w600, letterSpacing: 1)),
+                        ),
+                        Expanded(child: Container(height: 1,
+                            color: Colors.white.withOpacity(0.08))),
+                      ]),
+                      const SizedBox(height: 20),
+                      _FaceIdButton(
+                        loading: _bioLoading,
+                        onTap: _biometricLogin,
                       ),
-                      Expanded(child: Container(height: 1,
-                          color: Colors.white.withOpacity(0.08))),
-                    ]),
-                    const SizedBox(height: 20),
-
-                    // Face ID button
-                    _FaceIdButton(
-                      loading: _bioLoading,
-                      onTap: _biometricLogin,
-                    ),
+                    ],
 
                     const SizedBox(height: 36),
                   ]),
