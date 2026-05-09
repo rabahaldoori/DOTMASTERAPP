@@ -67,8 +67,11 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _checkFaceIdEnabled() async {
-    final val = await ApiClient.getFaceIdEnabled();
-    if (mounted) setState(() => _faceIdEnabled = val);
+    final enabled = await ApiClient.getFaceIdEnabled();
+    if (!enabled) return; // user never opted in
+    // Only show button if there's a saved session to restore
+    final hasSession = (await ApiClient.getRefreshToken()) != null;
+    if (mounted) setState(() => _faceIdEnabled = hasSession);
   }
 
   @override
