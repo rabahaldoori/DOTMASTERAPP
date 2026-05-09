@@ -154,7 +154,7 @@ class _LoginScreenState extends State<LoginScreen>
             const SizedBox(height: 20),
             _GlassField(
               controller: emailCtrl,
-              hint: 'driver@fleet.com',
+              hint: 'driver@dotmaster.app',
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
             ),
