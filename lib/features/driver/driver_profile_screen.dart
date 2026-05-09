@@ -233,7 +233,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
       body: CustomScrollView(slivers: [
         // ── SliverAppBar ───────────────────────────────────────────────────────
         SliverAppBar(
-          expandedHeight: 220,
+          expandedHeight: 255,
           pinned: true,
           backgroundColor: _navy,
           systemOverlayStyle: SystemUiOverlayStyle.light,
@@ -262,7 +262,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
                     colors: [_navy, Color(0xFF0A2347)])),
               child: SafeArea(child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, kToolbarHeight + 4, 0, 16),
+                padding: const EdgeInsets.fromLTRB(0, kToolbarHeight + 2, 0, 10),
                 child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
                   Stack(alignment: Alignment.center, children: [
                     Container(width: 80, height: 80,
@@ -282,8 +282,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                               : const Icon(Icons.camera_alt_rounded, size: 12, color: Colors.white)))),
                   ]),
-                  const SizedBox(height: 8),
-                  Text(name.toUpperCase(), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
+                  const SizedBox(height: 6),
+                  Text(name.toUpperCase(), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
                   const SizedBox(height: 2),
                   Text(email, style: GoogleFonts.inter(fontSize: 11, color: Colors.white54)),
                   const SizedBox(height: 6),
