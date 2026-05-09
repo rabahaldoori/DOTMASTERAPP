@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:lottie/lottie.dart';
 import '../../core/api_client.dart';
+import '../../core/biometric_service.dart';
 import '../../core/theme.dart';
 import '../../core/onesignal_service.dart';
 
@@ -26,14 +27,16 @@ class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   final _emailCtrl = TextEditingController();
   final _passCtrl  = TextEditingController();
-  bool _obscure  = true;
-  bool _remember = false;
-  bool _loading  = false;
+  bool _obscure    = true;
+  bool _remember   = false;
+  bool _loading    = false;
   bool _bioLoading = false;
-  bool _faceIdEnabled = false;
-  BiometricType? _biometricType;   // face, fingerprint, or null
+  bool _bioVisible = false;          // show button only when canAuthenticate()
+  String? _biometricName;            // 'Face ID' | 'Fingerprint' | null
+  BiometricType? _biometricType;
   String? _error;
-  final _auth = LocalAuthentication();
+
+  final _bio = BiometricService();   // singleton — mirrors fly365
 
   late final AnimationController _anim;
   late final Animation<double>   _fade;
@@ -47,83 +50,81 @@ class _LoginScreenState extends State<LoginScreen>
     _slide = Tween<Offset>(begin: const Offset(0, 0.12), end: Offset.zero)
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic));
     _anim.forward();
-    _checkFaceIdEnabled();
-    _detectBiometricType();
+    _initBiometric();
   }
 
-  Future<void> _detectBiometricType() async {
+  Future<void> _initBiometric() async {
     try {
-      final types = await _auth.getAvailableBiometrics();
-      BiometricType? detected;
+      final types = await _bio.getAvailableBiometrics();
+      final name  = _bio.getBiometricName(types);
+      BiometricType? type;
       if (types.contains(BiometricType.face)) {
-        detected = BiometricType.face;
-      } else if (types.contains(BiometricType.fingerprint) ||
-                 types.contains(BiometricType.strong) ||
-                 types.contains(BiometricType.weak)) {
-        detected = BiometricType.fingerprint;
+        type = BiometricType.face;
+      } else if (types.any((t) => t == BiometricType.fingerprint ||
+                                   t == BiometricType.strong ||
+                                   t == BiometricType.weak)) {
+        type = BiometricType.fingerprint;
       }
-      if (mounted) setState(() => _biometricType = detected);
+      // Show button only if user has enabled biometrics AND a biometric token exists
+      final canAuth = await _bio.canAuthenticate();
+      if (mounted) setState(() {
+        _biometricName = name;
+        _biometricType = type;
+        _bioVisible    = canAuth;
+      });
     } catch (_) {}
-  }
-
-  Future<void> _checkFaceIdEnabled() async {
-    final enabled = await ApiClient.getFaceIdEnabled();
-    if (!enabled) return; // user never opted in
-    // Only show button if there's a saved session to restore
-    final hasSession = (await ApiClient.getRefreshToken()) != null;
-    if (mounted) setState(() => _faceIdEnabled = hasSession);
   }
 
   @override
   void dispose() { _anim.dispose(); super.dispose(); }
 
+  // ── Biometric Login ────────────────────────────────────────────────────────
+
   Future<void> _biometricLogin() async {
+    if (_bioLoading) return;
+    setState(() { _bioLoading = true; _error = null; });
     try {
-      final canCheck = await _auth.canCheckBiometrics;
-      final isDeviceSupported = await _auth.isDeviceSupported();
-      if (!canCheck && !isDeviceSupported) {
-        if (mounted) setState(() => _error = 'Biometric authentication not available on this device.');
-        return;
-      }
-
-      setState(() { _bioLoading = true; _error = null; });
-
-      // Check a saved session exists before prompting biometrics
-      final refreshToken = await ApiClient.getRefreshToken();
-      if (refreshToken == null) {
-        setState(() {
-          _bioLoading = false;
-          _error = 'No saved session. Please sign in with your password first.';
-        });
-        return;
-      }
-
-      final authenticated = await _auth.authenticate(
-        localizedReason: 'Sign in to DOT Master',
-        options: const AuthenticationOptions(
-          biometricOnly: false,   // allows Face ID, fingerprint, and passcode fallback
-          stickyAuth: true,
-          useErrorDialogs: true,
-        ),
+      // Verify the user with hardware biometric / passcode
+      final authenticated = await _bio.authenticate(
+        reason: 'Sign in to DOT Master with ${_biometricName ?? "biometrics"}',
       );
       if (!authenticated) {
         setState(() => _bioLoading = false);
         return;
       }
 
-      // Refresh the access token
-      final refreshed = await ApiClient.refreshAccessToken();
-      if (!refreshed) {
-        if (mounted) setState(() => _error = 'Session expired. Please sign in with your password.');
+      // Use the dedicated biometric refresh token (survives logout)
+      final bioRefreshToken = await _bio.getStoredRefreshToken();
+      if (bioRefreshToken == null) {
+        setState(() {
+          _bioLoading = false;
+          _bioVisible = false;
+          _error = 'Session expired. Please sign in with your password.';
+        });
         return;
       }
 
-      // Fetch fresh profile to restore user state
+      // Exchange biometric refresh token for a new access token
+      final refreshed = await ApiClient.refreshWithToken(bioRefreshToken);
+      if (!refreshed) {
+        setState(() {
+          _bioLoading = false;
+          _bioVisible = false;
+          _error = 'Session expired. Please sign in with your password.';
+        });
+        return;
+      }
+
+      // Sync the new refresh token back into the biometric store
+      final newRefresh = await ApiClient.getRefreshToken();
+      if (newRefresh != null) await _bio.syncRefreshToken(newRefresh);
+
+      // Restore user profile
       try {
         final profile = await ApiClient.getProfile();
-        final profileData = profile.data as Map<String, dynamic>?;
-        if (profileData != null) await ApiClient.saveUser(profileData);
-      } catch (_) {} // non-fatal — role already stored
+        final data = profile.data as Map<String, dynamic>?;
+        if (data != null) await ApiClient.saveUser(data);
+      } catch (_) {}
 
       final role = await ApiClient.getUserRole();
       if (role != null && mounted) {
@@ -165,8 +166,8 @@ class _LoginScreenState extends State<LoginScreen>
           }
         } catch (_) {}
         if (mounted) {
-          // Prompt Face ID enrollment on first login (if biometrics available)
-          await _promptFaceIdEnrollment();
+          final refreshToken = res.data['refresh'] as String? ?? '';
+          await _promptFaceIdEnrollment(_emailCtrl.text.trim(), refreshToken);
           if (mounted) context.go(role == 'driver' ? '/driver-dashboard' : '/dashboard');
         }
       }
@@ -180,28 +181,22 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   /// Show biometric opt-in dialog after first successful password login.
-  Future<void> _promptFaceIdEnrollment() async {
-    // Skip if already enabled — never re-ask someone who said yes
-    final alreadyEnabled = await ApiClient.getFaceIdEnabled();
-    if (alreadyEnabled) return;
+  Future<void> _promptFaceIdEnrollment(String email, String refreshToken) async {
+    // Skip if already enabled
+    if (await _bio.isEnabled()) return;
+    // Skip if already asked (user said "Not Now" before)
+    if (await _bio.wasAsked()) return;
+    // Skip if hardware unavailable
+    if (!await _bio.isAvailable()) return;
 
-    // Skip if already asked (they said "Not Now")
-    final alreadyAsked = await ApiClient.getFaceIdAsked();
-    if (alreadyAsked) return;
-
-    final canCheck = await _auth.canCheckBiometrics;
-    final supported = await _auth.isDeviceSupported();
-    if (!canCheck && !supported) return;
-
-    await ApiClient.setFaceIdAsked();
+    await _bio.markAsked();
     if (!mounted) return;
 
-    // Determine label/icon based on available biometric
-    final isFace = _biometricType == BiometricType.face;
-    final bioLabel = isFace ? 'Face ID' : 'Fingerprint';
+    final isFace  = _biometricType == BiometricType.face;
+    final bioLabel = _biometricName ?? (isFace ? 'Face ID' : 'Fingerprint');
     final bioIcon  = isFace ? Icons.face_unlock_outlined : Icons.fingerprint_rounded;
 
-    final enabled = await showDialog<bool>(
+    final wantsEnable = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => Dialog(
@@ -270,8 +265,11 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
 
-    if (enabled == true) {
-      await ApiClient.setFaceIdEnabled(true);
+    if (wantsEnable == true && mounted) {
+      // BiometricService.enable() verifies biometric hardware works,
+      // then stores username + dedicated refresh token (survives logout)
+      final success = await _bio.enable(email, refreshToken);
+      if (success && mounted) setState(() => _bioVisible = true);
     }
   }
 
@@ -488,8 +486,8 @@ class _LoginScreenState extends State<LoginScreen>
                       ]),
                     ),
 
-                    // OR divider + Face ID — only shown after user opts in
-                    if (_faceIdEnabled) ...[
+                    // OR divider + biometric button — only shown when canAuthenticate()
+                    if (_bioVisible) ...[
                       const SizedBox(height: 28),
                       Row(children: [
                         Expanded(child: Container(height: 1,

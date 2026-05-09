@@ -245,8 +245,31 @@ class ApiClient {
   static Future<String?> getRefreshToken() => _storage.read(key: 'refresh_token');
 
   /// Refreshes the access token using the stored refresh token.
-  /// Returns true on success, false if expired/missing.
   static Future<bool> refreshAccessToken() => _refreshToken();
+
+  /// Refreshes the access token using an explicit refresh token.
+  /// Used by biometric login to pass the dedicated biometric_refresh_token.
+  static Future<bool> refreshWithToken(String refreshToken) async {
+    try {
+      final res = await Dio(BaseOptions(baseUrl: baseUrl)).post(
+        '/api/token/refresh/',
+        data: {'refresh': refreshToken},
+      );
+      if (res.statusCode == 200) {
+        final newAccess  = res.data['access']  as String?;
+        final newRefresh = res.data['refresh'] as String?;
+        if (newAccess != null) {
+          await _storage.write(key: 'access_token', value: newAccess);
+          _dio.options.headers['Authorization'] = 'Bearer $newAccess';
+        }
+        if (newRefresh != null) {
+          await _storage.write(key: 'refresh_token', value: newRefresh);
+        }
+        return true;
+      }
+      return false;
+    } catch (_) { return false; }
+  }
 
   // ── Face ID preference (SharedPreferences — persists across debug reinstalls) ─
   static Future<bool> getFaceIdEnabled() async {
