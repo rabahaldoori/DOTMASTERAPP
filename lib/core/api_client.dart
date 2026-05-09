@@ -400,4 +400,9 @@ class ApiClient {
     if (sms   != null) data['sms']   = sms;
     return _dio.patch('/api/auth/notification-preferences/', data: data);
   }
+
+  // ── Legal content (public) ────────────────────────────────────────────────────
+  /// GET /api/auth/legal/ — returns privacy_policy and terms_of_service
+  static Future<Response> getLegalContent() =>
+      _dio.get('/api/auth/legal/');
 }

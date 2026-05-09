@@ -182,7 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Privacy policy
               GestureDetector(
-                onTap: () {},
+                onTap: () => _showPrivacyPolicy(context),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   child: Row(children: [
@@ -326,6 +326,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   last: true,
                 ),
               ],
+            ]),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Privacy Policy sheet ─────────────────────────────────────────────────────
+  void _showPrivacyPolicy(BuildContext context) {
+    String content = '';
+    bool loading = true;
+    String? error;
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) {
+          if (loading && error == null) {
+            ApiClient.getLegalContent().then((res) {
+              if (ctx.mounted) setS(() {
+                content = (res.data['privacy_policy'] ?? '').toString().trim();
+                loading = false;
+              });
+            }).catchError((e) {
+              if (ctx.mounted) setS(() {
+                error = 'Unable to load Privacy Policy. Please try again.';
+                loading = false;
+              });
+            });
+          }
+
+          return DraggableScrollableSheet(
+            initialChildSize: 0.85,
+            minChildSize: 0.4,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (_, scrollCtrl) => Column(children: [
+              // Handle + header (non-scrolling)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: Column(children: [
+                  _SheetHandle(),
+                  Row(children: [
+                    Container(width: 36, height: 36,
+                      decoration: BoxDecoration(
+                          color: _green.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Icon(Icons.privacy_tip_outlined,
+                          color: _green, size: 20)),
+                    const SizedBox(width: 12),
+                    Text('Privacy Policy', style: GoogleFonts.inter(
+                        fontSize: 17, fontWeight: FontWeight.w700,
+                        color: _navy)),
+                  ]),
+                  const SizedBox(height: 16),
+                  Container(height: 1, color: const Color(0xFFF1F5F9)),
+                ]),
+              ),
+              // Content (scrollable)
+              Expanded(
+                child: loading
+                    ? const Center(child: CircularProgressIndicator(
+                        color: Color(0xFF0453CD), strokeWidth: 2))
+                    : error != null
+                        ? Center(child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(error!,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.inter(
+                                    fontSize: 13, color: _grey)),
+                          ))
+                        : content.isEmpty
+                            ? Center(child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.article_outlined,
+                                      size: 48, color: const Color(0xFFCBD5E1)),
+                                  const SizedBox(height: 12),
+                                  Text('Privacy Policy not set yet.',
+                                      style: GoogleFonts.inter(
+                                          fontSize: 14, color: _grey)),
+                                  const SizedBox(height: 6),
+                                  Text('Ask your administrator to add it\nin Platform Settings.',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.inter(
+                                          fontSize: 12, color: const Color(0xFFCBD5E1))),
+                                ],
+                              ))
+                            : ListView(
+                                controller: scrollCtrl,
+                                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                                children: [
+                                  SelectableText(
+                                    content,
+                                    style: GoogleFonts.inter(
+                                        fontSize: 13.5,
+                                        color: const Color(0xFF334155),
+                                        height: 1.75),
+                                  ),
+                                ],
+                              ),
+              ),
             ]),
           );
         },
