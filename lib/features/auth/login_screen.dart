@@ -30,7 +30,8 @@ class _LoginScreenState extends State<LoginScreen>
   bool _remember = false;
   bool _loading  = false;
   bool _bioLoading = false;
-  bool _faceIdEnabled = false;   // shows Face ID button only after user opts in
+  bool _faceIdEnabled = false;
+  BiometricType? _biometricType;   // face, fingerprint, or null
   String? _error;
   final _auth = LocalAuthentication();
 
@@ -47,6 +48,22 @@ class _LoginScreenState extends State<LoginScreen>
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic));
     _anim.forward();
     _checkFaceIdEnabled();
+    _detectBiometricType();
+  }
+
+  Future<void> _detectBiometricType() async {
+    try {
+      final types = await _auth.getAvailableBiometrics();
+      BiometricType? detected;
+      if (types.contains(BiometricType.face)) {
+        detected = BiometricType.face;
+      } else if (types.contains(BiometricType.fingerprint) ||
+                 types.contains(BiometricType.strong) ||
+                 types.contains(BiometricType.weak)) {
+        detected = BiometricType.fingerprint;
+      }
+      if (mounted) setState(() => _biometricType = detected);
+    } catch (_) {}
   }
 
   Future<void> _checkFaceIdEnabled() async {
@@ -79,10 +96,11 @@ class _LoginScreenState extends State<LoginScreen>
       }
 
       final authenticated = await _auth.authenticate(
-        localizedReason: 'Sign in to DOT Master with Face ID or fingerprint',
+        localizedReason: 'Sign in to DOT Master',
         options: const AuthenticationOptions(
-          biometricOnly: true,
+          biometricOnly: false,   // allows Face ID, fingerprint, and passcode fallback
           stickyAuth: true,
+          useErrorDialogs: true,
         ),
       );
       if (!authenticated) {
@@ -169,6 +187,11 @@ class _LoginScreenState extends State<LoginScreen>
     await ApiClient.setFaceIdAsked();
     if (!mounted) return;
 
+    // Determine label/icon based on available biometric
+    final isFace = _biometricType == BiometricType.face;
+    final bioLabel = isFace ? 'Face ID' : 'Fingerprint';
+    final bioIcon  = isFace ? Icons.face_unlock_outlined : Icons.fingerprint_rounded;
+
     final enabled = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -191,14 +214,14 @@ class _LoginScreenState extends State<LoginScreen>
                 shape: BoxShape.circle,
                 border: Border.all(color: _blue.withOpacity(0.4)),
               ),
-              child: const Icon(Icons.face_unlock_outlined, color: _cyan, size: 32),
+              child: Icon(bioIcon, color: _cyan, size: 32),
             ),
             const SizedBox(height: 16),
-            Text('Enable Face ID?', style: GoogleFonts.inter(
+            Text('Enable $bioLabel?', style: GoogleFonts.inter(
                 fontSize: 20, fontWeight: FontWeight.w800, color: _white)),
             const SizedBox(height: 8),
             Text(
-              'Sign in faster next time using Face ID.\nYou can change this anytime in your profile.',
+              'Sign in faster next time using $bioLabel.\nYou can change this anytime in your profile.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(fontSize: 13, color: Colors.white54, height: 1.5),
             ),
@@ -391,7 +414,7 @@ class _LoginScreenState extends State<LoginScreen>
                         const SizedBox(height: 8),
                         _GlassField(
                           controller: _emailCtrl,
-                          hint: 'driver@fleet.com',
+                          hint: 'driver@dotmaster.app',
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                         ),
@@ -475,6 +498,7 @@ class _LoginScreenState extends State<LoginScreen>
                       _FaceIdButton(
                         loading: _bioLoading,
                         onTap: _biometricLogin,
+                        biometricType: _biometricType,
                       ),
                     ],
 
@@ -698,55 +722,64 @@ class _SignInButton extends StatelessWidget {
 class _FaceIdButton extends StatelessWidget {
   final bool loading;
   final VoidCallback onTap;
-  const _FaceIdButton({required this.loading, required this.onTap});
+  final BiometricType? biometricType;
+  const _FaceIdButton({required this.loading, required this.onTap, this.biometricType});
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: loading ? null : () { HapticFeedback.lightImpact(); onTap(); },
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 15),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-            color: loading
-                ? _cyan.withOpacity(0.60)
-                : Colors.white.withOpacity(0.12),
-            width: 1.5),
-        boxShadow: loading
-            ? [BoxShadow(color: _cyan.withOpacity(0.15), blurRadius: 12)]
-            : [],
-      ),
-      child: loading
-          ? const Center(
-              child: SizedBox(
-                  width: 22, height: 22,
-                  child: CircularProgressIndicator(
-                      color: _cyan, strokeWidth: 2)))
-          : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              // Face ID image — white tint
-              ColorFiltered(
-                colorFilter: const ColorFilter.mode(
-                    Colors.white, BlendMode.srcIn),
+  Widget build(BuildContext context) {
+    final isFace = biometricType != BiometricType.fingerprint;
+    final label  = isFace ? 'Sign in with Face ID' : 'Sign in with Fingerprint';
+
+    return GestureDetector(
+      onTap: loading ? null : () { HapticFeedback.lightImpact(); onTap(); },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 15),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: loading
+                  ? _cyan.withOpacity(0.60)
+                  : Colors.white.withOpacity(0.12),
+              width: 1.5),
+          boxShadow: loading
+              ? [BoxShadow(color: _cyan.withOpacity(0.15), blurRadius: 12)]
+              : [],
+        ),
+        child: loading
+            ? const Center(
                 child: SizedBox(
-                  width: 26, height: 26,
-                  child: Image.asset(
-                    'assets/images/face-id.png',
-                    fit: BoxFit.contain,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text('Sign in with Face ID',
-                  style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white)),
-            ]),
-    ),
-  );
+                    width: 22, height: 22,
+                    child: CircularProgressIndicator(
+                        color: _cyan, strokeWidth: 2)))
+            : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                if (isFace)
+                  ColorFiltered(
+                    colorFilter: const ColorFilter.mode(
+                        Colors.white, BlendMode.srcIn),
+                    child: SizedBox(
+                      width: 26, height: 26,
+                      child: Image.asset(
+                        'assets/images/face-id.png',
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  )
+                else
+                  const Icon(Icons.fingerprint_rounded,
+                      color: Colors.white, size: 26),
+                const SizedBox(width: 10),
+                Text(label,
+                    style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white)),
+              ]),
+      ),
+    );
+  }
 }
 
 // ── Face ID custom painter ─────────────────────────────────────────────────────
