@@ -55,18 +55,28 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _initBiometric() async {
     try {
+      // getAvailableBiometrics = enrolled biometrics; may be empty on some devices
+      // even though they support biometrics (e.g. not set up yet in iOS Settings)
       final types = await _bio.getAvailableBiometrics();
-      final name  = _bio.getBiometricName(types);
+
+      // Detect type: prefer face, fall back to fingerprint/strong/weak
       BiometricType? type;
       if (types.contains(BiometricType.face)) {
         type = BiometricType.face;
-      } else if (types.any((t) => t == BiometricType.fingerprint ||
-                                   t == BiometricType.strong ||
-                                   t == BiometricType.weak)) {
+      } else if (types.any((t) =>
+          t == BiometricType.fingerprint ||
+          t == BiometricType.strong ||
+          t == BiometricType.weak)) {
         type = BiometricType.fingerprint;
+      } else {
+        // Fallback: check device hardware support directly
+        final deviceSupported = await _bio.isAvailable();
+        if (deviceSupported) type = BiometricType.fingerprint; // generic
       }
-      // Show button only if user has enabled biometrics AND a biometric token exists
+
+      final name    = _bio.getBiometricName(types.isNotEmpty ? types : (type != null ? [type] : []));
       final canAuth = await _bio.canAuthenticate();
+
       if (mounted) setState(() {
         _biometricName = name;
         _biometricType = type;

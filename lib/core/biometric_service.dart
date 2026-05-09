@@ -33,9 +33,12 @@ class BiometricService {
 
   // ── Availability ────────────────────────────────────────────────────────────
 
+  /// True if the device supports ANY biometric (Face ID or fingerprint).
+  /// Uses isDeviceSupported() — works even when no biometric enrolled yet
+  /// (OS will offer passcode fallback via biometricOnly: false).
   Future<bool> isAvailable() async {
     try {
-      return await _localAuth.canCheckBiometrics && await _localAuth.isDeviceSupported();
+      return await _localAuth.isDeviceSupported();
     } catch (_) { return false; }
   }
 
@@ -43,12 +46,19 @@ class BiometricService {
     try { return await _localAuth.getAvailableBiometrics(); } catch (_) { return []; }
   }
 
+  /// Human-readable label — auto-detects Face ID vs Fingerprint.
   String getBiometricName(List<BiometricType> types) {
     if (types.contains(BiometricType.face))        return 'Face ID';
     if (types.contains(BiometricType.fingerprint)) return 'Fingerprint';
     if (types.contains(BiometricType.strong) || types.contains(BiometricType.weak))
-      return 'Biometric Authentication';
-    return 'Biometric Authentication';
+      return 'Biometric Login';
+    return 'Biometric Login';
+  }
+
+  /// Icon key — 'face' for Face ID devices, 'fingerprint' for all others.
+  /// Use this so the login button automatically shows the right icon.
+  String getBiometricIconKey(List<BiometricType> types) {
+    return types.contains(BiometricType.face) ? 'face' : 'fingerprint';
   }
 
   // ── Preferences ─────────────────────────────────────────────────────────────
