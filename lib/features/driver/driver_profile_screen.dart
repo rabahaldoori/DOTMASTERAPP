@@ -504,172 +504,76 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     return Scaffold(
       backgroundColor: _bg,
       body: CustomScrollView(slivers: [
-        // ── Premium SliverAppBar ────────────────────────────────────────────
+        // ── SliverAppBar ───────────────────────────────────────────────────────
         SliverAppBar(
-          expandedHeight: 280,
+          expandedHeight: 255,
           pinned: true,
           backgroundColor: _navy,
           systemOverlayStyle: SystemUiOverlayStyle.light,
           automaticallyImplyLeading: false,
-          titleSpacing: 0,
-          // ── Collapsed bar ──────────────────────────────────────────────────
-          title: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(children: [
-              // Mini avatar
-              Container(
-                width: 32, height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
-                ),
-                child: ClipOval(child: photoUrl != null
-                    ? Image.network(photoUrl, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _avatarFallback(initials))
-                    : _avatarFallback(initials)),
-              ),
-              const SizedBox(width: 10),
-              Expanded(child: Text(name, style: GoogleFonts.inter(
-                  fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
-                overflow: TextOverflow.ellipsis)),
-              GestureDetector(onTap: _logout,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: _red.withOpacity(0.15),
+          titleSpacing: 16,
+          title: Row(children: [
+            Container(padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white.withOpacity(0.15))),
+              child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 14)),
+            const SizedBox(width: 8),
+            Text('My Profile', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+            const Spacer(),
+            GestureDetector(onTap: _logout,
+              child: Container(padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(color: _red.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: _red.withOpacity(0.30))),
-                  child: const Icon(Icons.logout_rounded, color: _red, size: 16))),
-            ]),
-          ),
-          // ── Expanded background ─────────────────────────────────────────────
+                child: const Icon(Icons.logout_rounded, color: _red, size: 16))),
+          ]),
           flexibleSpace: FlexibleSpaceBar(
             collapseMode: CollapseMode.parallax,
-            background: Stack(children: [
-              // Gradient base
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    colors: [Color(0xFF031634), Color(0xFF0A2347), Color(0xFF0D3060)],
-                  ),
-                ),
-              ),
-              // Decorative circles
-              Positioned(top: -40, right: -40,
-                child: Container(width: 180, height: 180,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _blue.withOpacity(0.12)))),
-              Positioned(bottom: 30, left: -30,
-                child: Container(width: 120, height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.04)))),
-              Positioned(top: 60, right: 60,
-                child: Container(width: 60, height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _blue.withOpacity(0.08)))),
-              // Content
-              SafeArea(child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 8, 20, 0),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  // ── Avatar row ───────────────────────────────────────────────
-                  Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                    // Avatar with ring + camera
-                    Stack(children: [
-                      Container(
-                        width: 76, height: 76,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [_blue.withOpacity(0.6), const Color(0xFF0369A1)]),
-                          border: Border.all(color: Colors.white.withOpacity(0.35), width: 2.5),
-                          boxShadow: [BoxShadow(color: _blue.withOpacity(0.4), blurRadius: 16, offset: const Offset(0, 6))],
-                        ),
-                        child: ClipOval(child: photoUrl != null
-                            ? Image.network(photoUrl, fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => _avatarFallback(initials))
-                            : _avatarFallback(initials)),
-                      ),
-                      Positioned(bottom: 0, right: 0,
-                        child: GestureDetector(onTap: _uploading ? null : _pickAndUpload,
-                          child: Container(width: 24, height: 24,
-                            decoration: BoxDecoration(
-                              color: _uploading ? _grey : _blue,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4)]),
-                            child: _uploading
-                                ? const Padding(padding: EdgeInsets.all(3),
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                : const Icon(Icons.camera_alt_rounded, size: 12, color: Colors.white)))),
-                    ]),
-                    const SizedBox(width: 16),
-                    // Name + role + status
-                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(name, style: GoogleFonts.inter(
-                          fontSize: 20, fontWeight: FontWeight.w800,
-                          color: Colors.white, letterSpacing: 0.2)),
-                      const SizedBox(height: 3),
-                      Text(email, style: GoogleFonts.inter(
-                          fontSize: 11, color: Colors.white.withOpacity(0.55)),
-                          overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 8),
-                      Row(children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _green.withOpacity(0.18),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: _green.withOpacity(0.5))),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Container(width: 5, height: 5,
-                                decoration: const BoxDecoration(color: _green, shape: BoxShape.circle)),
-                            const SizedBox(width: 5),
-                            Text('ACTIVE', style: GoogleFonts.inter(
-                                fontSize: 9, fontWeight: FontWeight.w800, color: _green)),
-                          ])),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white.withOpacity(0.15))),
-                          child: Text('DRIVER', style: GoogleFonts.inter(
-                              fontSize: 9, fontWeight: FontWeight.w700,
-                              color: Colors.white.withOpacity(0.8)))),
-                      ]),
-                    ])),
+            background: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    colors: [_navy, Color(0xFF0A2347)])),
+              child: SafeArea(child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, kToolbarHeight + 2, 0, 10),
+                child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  Stack(alignment: Alignment.center, children: [
+                    Container(width: 80, height: 80,
+                      decoration: BoxDecoration(shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.3), width: 2.5)),
+                      child: ClipOval(child: photoUrl != null
+                          ? Image.network(photoUrl, fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _avatarFallback(initials))
+                          : _avatarFallback(initials))),
+                    Positioned(bottom: 0, right: 0,
+                      child: GestureDetector(onTap: _uploading ? null : _pickAndUpload,
+                        child: Container(width: 24, height: 24,
+                          decoration: BoxDecoration(color: _uploading ? _grey : _blue,
+                              shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 2)),
+                          child: _uploading
+                              ? const Padding(padding: EdgeInsets.all(3),
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.camera_alt_rounded, size: 12, color: Colors.white)))),
                   ]),
-                  const SizedBox(height: 16),
-                  // ── CDL quick-info strip ──────────────────────────────────────
+                  const SizedBox(height: 6),
+                  Text(name.toUpperCase(), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
+                  const SizedBox(height: 2),
+                  Text(email, style: GoogleFonts.inter(fontSize: 11, color: Colors.white54)),
+                  const SizedBox(height: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.07),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white.withOpacity(0.10))),
-                    child: Row(children: [
-                      _MiniStat(icon: Icons.badge_outlined,
-                          label: 'CDL',
-                          value: (p?['cdl_number'] ?? '—').toString()),
-                      _VertDivider(),
-                      _MiniStat(icon: Icons.map_outlined,
-                          label: 'State',
-                          value: (p?['cdl_state'] ?? '—').toString()),
-                      _VertDivider(),
-                      _MiniStat(icon: Icons.event_outlined,
-                          label: 'Expires',
-                          value: cdlExpiryStr != null ? _fmt(cdlExpiryStr) : '—',
-                          warn: cdlWarn),
-                    ]),
-                  ),
+                      color: _green.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: _green.withOpacity(0.45))),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Container(width: 5, height: 5, decoration: const BoxDecoration(color: _green, shape: BoxShape.circle)),
+                      const SizedBox(width: 5),
+                      Text('ACTIVE', style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w700, color: _green)),
+                    ])),
                 ]),
               )),
-            ]),
+            ),
           ),
         ),
 
@@ -975,28 +879,4 @@ class _DPwdField extends StatelessWidget {
       focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0453CD), width: 1.5)),
     ),
   );
-}
-
-class _MiniStat extends StatelessWidget {
-  final IconData icon;
-  final String label, value;
-  final bool warn;
-  const _MiniStat({required this.icon, required this.label, required this.value, this.warn = false});
-  @override
-  Widget build(BuildContext context) => Expanded(child: Column(children: [
-    Icon(icon, size: 14, color: warn ? Colors.orange : Colors.white.withOpacity(0.6)),
-    const SizedBox(height: 3),
-    Text(label, style: GoogleFonts.inter(fontSize: 9, color: Colors.white.withOpacity(0.45), fontWeight: FontWeight.w500)),
-    const SizedBox(height: 2),
-    Text(value, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700,
-        color: warn ? Colors.orange : Colors.white),
-        overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
-  ]));
-}
-
-class _VertDivider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 1, height: 32, margin: const EdgeInsets.symmetric(horizontal: 8),
-    color: Colors.white.withOpacity(0.12));
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import 'dashboard_charts_widget.dart';
@@ -97,6 +98,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return _userName.isNotEmpty ? _userName[0].toUpperCase() : 'A';
   }
 
+  String _greeting() {
+    final h = DateTime.now().hour;
+    if (h < 12) return 'Good Morning ☀️';
+    if (h < 17) return 'Good Afternoon 🌤';
+    return 'Good Evening 🌙';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -107,99 +115,125 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: CustomScrollView(slivers: [
           // ── Pinned header ─────────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 210,
+            expandedHeight: 245,
             pinned: true,
+            stretch: true,
             backgroundColor: _navy,
             systemOverlayStyle: SystemUiOverlayStyle.light,
             automaticallyImplyLeading: false,
-            titleSpacing: 16,
-            // ── Collapsed: logo pill + avatar ───────────────────────────
-            title: Row(children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.10),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white.withOpacity(0.15)),
-                ),
-                child: Text(_companyName, style: GoogleFonts.inter(
-                    fontSize: 13, fontWeight: FontWeight.w800,
-                    color: Colors.white)),
-              ),
-              const Spacer(),
-              _avatarUrl.isNotEmpty
-                ? CircleAvatar(
-                    radius: 17,
-                    backgroundColor: _blue,
-                    backgroundImage: NetworkImage(_avatarUrl),
-                    onBackgroundImageError: (_, __) {},
-                  )
-                : CircleAvatar(
-                    radius: 17,
-                    backgroundColor: _blue,
-                    child: Text(_initials, style: GoogleFonts.inter(
-                        color: Colors.white, fontWeight: FontWeight.w800,
-                        fontSize: 13)),
+            titleSpacing: 0,
+            // ── Collapsed bar ───────────────────────────────────────────────────
+            title: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(children: [
+                Image.asset('assets/images/logo.png', width: 28, height: 28, fit: BoxFit.contain),
+                const SizedBox(width: 8),
+                Text('DOT Master', style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
+                const Spacer(),
+                Container(
+                  width: 36, height: 36,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white.withOpacity(0.15)),
                   ),
-            ]),
-            // ── Expanded: greeting + stats strip ────────────────────────
+                  child: Stack(alignment: Alignment.center, children: [
+                    const Icon(Icons.notifications_outlined, color: Colors.white, size: 18),
+                    Positioned(top: 7, right: 7,
+                      child: Container(width: 6, height: 6,
+                        decoration: const BoxDecoration(color: Color(0xFFF97316), shape: BoxShape.circle))),
+                  ]),
+                ),
+                const SizedBox(width: 10),
+                Stack(children: [
+                  CircleAvatar(
+                    radius: 17, backgroundColor: _blue,
+                    backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
+                    child: _avatarUrl.isEmpty ? Text(_initials, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12)) : null,
+                  ),
+                  Positioned(bottom: 0, right: 0,
+                    child: Container(width: 8, height: 8,
+                      decoration: BoxDecoration(color: const Color(0xFF22C55E), shape: BoxShape.circle,
+                        border: Border.all(color: _navy, width: 1.5)))),
+                ]),
+              ]),
+            ),
+            // ── Expanded hero ───────────────────────────────────────────────────
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.parallax,
+              stretchModes: const [StretchMode.zoomBackground],
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    colors: [_navy, _navy2]),
+                    colors: [Color(0xFF031634), Color(0xFF0A2347), Color(0xFF0453CD)],
+                    stops: [0.0, 0.55, 1.0],
+                  ),
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 6, 16, 0),
+                    padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 4, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        Text('Admin Dashboard', style: GoogleFonts.inter(
-                            fontSize: 10, fontWeight: FontWeight.w600,
-                            color: _cyan, letterSpacing: 1.2)),
-                        const SizedBox(height: 3),
-                        Text('Welcome, $_userName', style: GoogleFonts.inter(
-                            fontSize: 18, fontWeight: FontWeight.w800,
-                            color: Colors.white)),
-                        const SizedBox(height: 14),
-                        // ── Stats strip ──────────────────────────────────
+                        Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                          Stack(children: [
+                            CircleAvatar(
+                              radius: 28, backgroundColor: _blue,
+                              backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
+                              child: _avatarUrl.isEmpty ? Text(_initials, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20)) : null,
+                            ),
+                            Positioned(bottom: 1, right: 1,
+                              child: Container(width: 11, height: 11,
+                                decoration: BoxDecoration(color: const Color(0xFF22C55E), shape: BoxShape.circle,
+                                  border: Border.all(color: _navy, width: 2)))),
+                          ]),
+                          const SizedBox(width: 14),
+                          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(_greeting(), style: GoogleFonts.inter(
+                                fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white54, letterSpacing: 0.3)),
+                            const SizedBox(height: 2),
+                            Text(_userName.isNotEmpty ? _userName : 'Admin',
+                                style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                            const SizedBox(height: 2),
+                            Text(_companyName, style: GoogleFonts.inter(
+                                fontSize: 11, color: _cyan.withOpacity(0.9), fontWeight: FontWeight.w600)),
+                          ])),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.10),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white.withOpacity(0.15)),
+                            ),
+                            child: Text(DateFormat('EEE, MMM d').format(DateTime.now()),
+                                style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                          ),
+                        ]),
+                        const SizedBox(height: 16),
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.06),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: Colors.white.withOpacity(0.10)),
+                            color: Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withOpacity(0.12)),
                           ),
                           child: IntrinsicHeight(
                             child: Row(children: [
-                              _HeaderStat(
-                                icon: Icons.route_rounded,
-                                value: '${(_data?['totalMiles'] ?? 0.0).toStringAsFixed(0)}',
-                                label: 'Miles',
-                              ),
-                              VerticalDivider(width: 1,
-                                  color: Colors.white.withOpacity(0.12)),
-                              _HeaderStat(
-                                icon: Icons.local_shipping_rounded,
-                                value: '${_data?['tripCount'] ?? 0}',
-                                label: 'Trips',
-                              ),
-                              VerticalDivider(width: 1,
-                                  color: Colors.white.withOpacity(0.12)),
-                              _HeaderStat(
-                                icon: Icons.local_gas_station_rounded,
-                                value: '\$${(_data?['totalCost'] ?? 0.0).toStringAsFixed(0)}',
-                                label: 'Fuel Spend',
-                              ),
+                              _HeaderStat(icon: Icons.route_rounded, color: _cyan,
+                                value: '${(_data?["totalMiles"] ?? 0.0).toStringAsFixed(0)}', label: 'Miles'),
+                              VerticalDivider(width: 1, color: Colors.white.withOpacity(0.12)),
+                              _HeaderStat(icon: Icons.local_shipping_rounded, color: const Color(0xFF22C55E),
+                                value: '${_data?["tripCount"] ?? 0}', label: 'Trips'),
+                              VerticalDivider(width: 1, color: Colors.white.withOpacity(0.12)),
+                              _HeaderStat(icon: Icons.local_gas_station_rounded, color: const Color(0xFFF97316),
+                                value: '\$${(_data?["totalCost"] ?? 0.0).toStringAsFixed(0)}', label: 'Fuel'),
                             ]),
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
                       ],
                     ),
                   ),
@@ -812,13 +846,16 @@ class _GradBtn extends StatelessWidget {
 class _HeaderStat extends StatelessWidget {
   final IconData icon;
   final String value, label;
-  const _HeaderStat({required this.icon, required this.value, required this.label});
+  final Color color;
+  const _HeaderStat({required this.icon, required this.value, required this.label, this.color = const Color(0xFF06B6D4)});
 
   @override
   Widget build(BuildContext context) => Expanded(
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Icon(icon, size: 13, color: const Color(0xFF06B6D4)),
-      const SizedBox(height: 4),
+      Container(width: 28, height: 28,
+        decoration: BoxDecoration(color: color.withOpacity(0.18), shape: BoxShape.circle),
+        child: Icon(icon, size: 14, color: color)),
+      const SizedBox(height: 5),
       Text(value, style: GoogleFonts.inter(
           fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white)),
       Text(label, style: GoogleFonts.inter(
