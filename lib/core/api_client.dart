@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/constants.dart';
 
 class ApiClient {
@@ -237,19 +238,27 @@ class ApiClient {
   /// Returns true on success, false if expired/missing.
   static Future<bool> refreshAccessToken() => _refreshToken();
 
-  // ── Face ID preference ──────────────────────────────────────────────────────
-  static Future<bool> getFaceIdEnabled() async =>
-      (await _storage.read(key: 'faceid_enabled')) == 'true';
+  // ── Face ID preference (SharedPreferences — persists across debug reinstalls) ─
+  static Future<bool> getFaceIdEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('faceid_enabled') ?? false;
+  }
 
-  static Future<void> setFaceIdEnabled(bool value) =>
-      _storage.write(key: 'faceid_enabled', value: value ? 'true' : 'false');
+  static Future<void> setFaceIdEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('faceid_enabled', value);
+  }
 
   /// Whether the Face ID setup prompt has been shown before.
-  static Future<bool> getFaceIdAsked() async =>
-      (await _storage.read(key: 'faceid_asked')) == 'true';
+  static Future<bool> getFaceIdAsked() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('faceid_asked') ?? false;
+  }
 
-  static Future<void> setFaceIdAsked() =>
-      _storage.write(key: 'faceid_asked', value: 'true');
+  static Future<void> setFaceIdAsked() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('faceid_asked', true);
+  }
 
   // ── Duty / HOS ─────────────────────────────────────────────────────────────
   static Future<Response> getDutyStatus() => _dio.get('/api/duty/status/');
