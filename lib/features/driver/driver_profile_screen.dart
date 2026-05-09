@@ -106,6 +106,279 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     }
   }
 
+  // ── Personal Information ────────────────────────────────────────────────────
+  void _showPersonalInfo() {
+    final p       = _profile;
+    final name    = p?['full_name'] ?? '—';
+    final email   = p?['email']    ?? '—';
+    final phone   = p?['phone']    ?? '—';
+    final company = p?['company_name'] ?? '—';
+    final cdl     = p?['cdl_number']  ?? '—';
+    final state   = p?['cdl_state']   ?? '—';
+    showModalBottomSheet(
+      context: context, useRootNavigator: true,
+      useSafeArea: true, isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _DSheetHandle(),
+          Row(children: [
+            Container(width: 36, height: 36,
+              decoration: BoxDecoration(color: _blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.person_outline_rounded, color: _blue, size: 20)),
+            const SizedBox(width: 12),
+            Text('Personal Information', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+          ]),
+          const SizedBox(height: 20),
+          GridView.count(
+            crossAxisCount: 2, shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 2.2, crossAxisSpacing: 12, mainAxisSpacing: 12,
+            children: [
+              _DInfoCell(icon: Icons.badge_outlined,    label: 'Full Name', value: name.toString()),
+              _DInfoCell(icon: Icons.email_outlined,    label: 'Email',     value: email.toString()),
+              _DInfoCell(icon: Icons.phone_outlined,    label: 'Phone',     value: phone.toString()),
+              _DInfoCell(icon: Icons.business_outlined, label: 'Company',   value: company.toString()),
+              _DInfoCell(icon: Icons.badge_rounded,     label: 'CDL #',     value: cdl.toString()),
+              _DInfoCell(icon: Icons.map_outlined,      label: 'CDL State', value: state.toString()),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ]),
+      ),
+    );
+  }
+
+  // ── Security & Privacy ───────────────────────────────────────────────────────
+  void _showSecurity() {
+    showModalBottomSheet(
+      context: context, useRootNavigator: true,
+      useSafeArea: true, isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setS) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          _DSheetHandle(),
+          Row(children: [
+            Container(width: 36, height: 36,
+              decoration: BoxDecoration(color: const Color(0xFF7C3AED).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF7C3AED), size: 20)),
+            const SizedBox(width: 12),
+            Text('Security & Privacy', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+          ]),
+          const SizedBox(height: 20),
+          // Change Password
+          GestureDetector(
+            onTap: () { Navigator.of(context, rootNavigator: true).pop(); _showChangePassword(); },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Row(children: [
+                Container(width: 36, height: 36,
+                  decoration: BoxDecoration(color: _grey.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.key_outlined, size: 18, color: _grey)),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Change Password', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)),
+                  Text('Update your login password', style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                ])),
+                const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFCBD5E1)),
+              ]),
+            ),
+          ),
+          Container(height: 1, color: const Color(0xFFF1F5F9), margin: const EdgeInsets.symmetric(vertical: 4)),
+          // Privacy Policy
+          GestureDetector(
+            onTap: () => _showPrivacyPolicy(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              child: Row(children: [
+                Container(width: 36, height: 36,
+                  decoration: BoxDecoration(color: _green.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(Icons.privacy_tip_outlined, size: 18, color: _green)),
+                const SizedBox(width: 12),
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text('Privacy Policy', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)),
+                  Text('How we handle your data', style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                ])),
+                const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFCBD5E1)),
+              ]),
+            ),
+          ),
+        ]),
+      )),
+    );
+  }
+
+  // ── Change Password ───────────────────────────────────────────────────────────
+  void _showChangePassword() {
+    final oldCtrl  = TextEditingController();
+    final newCtrl  = TextEditingController();
+    final confCtrl = TextEditingController();
+    bool oldObs = true, newObs = true, confObs = true;
+    bool loading = false;
+    String? errorMsg;
+    showModalBottomSheet(
+      context: context, useRootNavigator: true,
+      useSafeArea: true, isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
+        Future<void> submit() async {
+          final old = oldCtrl.text.trim(), nw = newCtrl.text.trim(), conf = confCtrl.text.trim();
+          if (old.isEmpty || nw.isEmpty || conf.isEmpty) { setS(() => errorMsg = 'Please fill in all fields.'); return; }
+          if (nw.length < 8) { setS(() => errorMsg = 'Password must be at least 8 characters.'); return; }
+          if (nw != conf) { setS(() => errorMsg = 'Passwords do not match.'); return; }
+          setS(() { loading = true; errorMsg = null; });
+          try {
+            await ApiClient.changePassword(old, nw);
+            if (ctx.mounted) {
+              Navigator.of(ctx, rootNavigator: true).pop();
+              HapticFeedback.lightImpact();
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Password changed!', style: GoogleFonts.inter(color: Colors.white)),
+                backgroundColor: _green, behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
+            }
+          } catch (e) {
+            String msg = 'Failed. Please try again.';
+            if (e.toString().toLowerCase().contains('incorrect') || e.toString().toLowerCase().contains('wrong')) msg = 'Current password is incorrect.';
+            setS(() { loading = false; errorMsg = msg; });
+          }
+        }
+        return Padding(
+          padding: EdgeInsets.only(left: 20, right: 20, top: 0, bottom: MediaQuery.of(ctx).viewInsets.bottom + 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            _DSheetHandle(),
+            Row(children: [
+              Container(width: 36, height: 36,
+                decoration: BoxDecoration(color: const Color(0xFF7C3AED).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF7C3AED), size: 20)),
+              const SizedBox(width: 12),
+              Text('Change Password', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+            ]),
+            const SizedBox(height: 20),
+            if (errorMsg != null) ...[
+              Container(
+                width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(color: _red.withOpacity(0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: _red.withOpacity(0.25))),
+                child: Row(children: [
+                  Icon(Icons.error_outline_rounded, color: _red, size: 16), const SizedBox(width: 8),
+                  Expanded(child: Text(errorMsg!, style: GoogleFonts.inter(fontSize: 13, color: _red, fontWeight: FontWeight.w500))),
+                ])),
+              const SizedBox(height: 14),
+            ],
+            _DPwdField(controller: oldCtrl, label: 'Current Password', obscure: oldObs, onToggle: () => setS(() => oldObs = !oldObs)),
+            const SizedBox(height: 12),
+            _DPwdField(controller: newCtrl, label: 'New Password', obscure: newObs, onToggle: () => setS(() => newObs = !newObs)),
+            const SizedBox(height: 12),
+            _DPwdField(controller: confCtrl, label: 'Confirm New Password', obscure: confObs, onToggle: () => setS(() => confObs = !confObs)),
+            const SizedBox(height: 20),
+            SizedBox(width: double.infinity, height: 52,
+              child: ElevatedButton(
+                onPressed: loading ? null : submit,
+                style: ElevatedButton.styleFrom(backgroundColor: _navy,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+                child: loading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : Text('Update Password', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+              )),
+          ]),
+        );
+      }),
+    );
+  }
+
+  // ── Privacy Policy ───────────────────────────────────────────────────────────
+  void _showPrivacyPolicy() {
+    String content = ''; bool loading = true; String? error;
+    showModalBottomSheet(
+      context: context, useRootNavigator: true,
+      useSafeArea: true, isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
+        if (loading && error == null) {
+          ApiClient.getLegalContent().then((res) {
+            if (ctx.mounted) setS(() { content = (res.data['privacy_policy'] ?? '').toString().trim(); loading = false; });
+          }).catchError((e) { if (ctx.mounted) setS(() { error = 'Unable to load.'; loading = false; }); });
+        }
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85, minChildSize: 0.4, maxChildSize: 0.95, expand: false,
+          builder: (_, scrollCtrl) => Column(children: [
+            Padding(padding: const EdgeInsets.fromLTRB(20, 0, 20, 0), child: Column(children: [
+              _DSheetHandle(),
+              Row(children: [
+                Container(width: 36, height: 36,
+                  decoration: BoxDecoration(color: _green.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
+                  child: Icon(Icons.privacy_tip_outlined, color: _green, size: 20)),
+                const SizedBox(width: 12),
+                Text('Privacy Policy', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+              ]),
+              const SizedBox(height: 16),
+              Container(height: 1, color: const Color(0xFFF1F5F9)),
+            ])),
+            Expanded(child: loading
+                ? const Center(child: CircularProgressIndicator(color: _blue, strokeWidth: 2))
+                : error != null ? Center(child: Text(error!, style: GoogleFonts.inter(fontSize: 13, color: _grey)))
+                : content.isEmpty ? Center(child: Text('Privacy Policy not set yet.', style: GoogleFonts.inter(fontSize: 14, color: _grey)))
+                : ListView(controller: scrollCtrl, padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                    children: [SelectableText(content, style: GoogleFonts.inter(fontSize: 13.5, color: const Color(0xFF334155), height: 1.75))])),
+          ]),
+        );
+      }),
+    );
+  }
+
+  // ── Notification Settings ────────────────────────────────────────────────────
+  void _showNotifications() {
+    bool push = true, email = true, sms = false, loading = true;
+    showModalBottomSheet(
+      context: context, useRootNavigator: true,
+      useSafeArea: true, isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
+        if (loading) {
+          ApiClient.getNotificationPrefs().then((res) {
+            if (ctx.mounted) setS(() { push = res.data['push'] ?? true; email = res.data['email'] ?? true; sms = res.data['sms'] ?? false; loading = false; });
+          }).catchError((_) { if (ctx.mounted) setS(() => loading = false); });
+        }
+        Future<void> toggle({bool? newPush, bool? newEmail, bool? newSms}) async {
+          setS(() { if (newPush != null) push = newPush; if (newEmail != null) email = newEmail; if (newSms != null) sms = newSms; });
+          HapticFeedback.selectionClick();
+          try { await ApiClient.updateNotificationPrefs(push: newPush, email: newEmail, sms: newSms); }
+          catch (_) { setS(() { if (newPush != null) push = !newPush; if (newEmail != null) email = !newEmail; if (newSms != null) sms = !newSms; }); }
+        }
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            _DSheetHandle(),
+            Row(children: [
+              Container(width: 36, height: 36,
+                decoration: BoxDecoration(color: const Color(0xFF06B6D4).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.notifications_outlined, color: Color(0xFF06B6D4), size: 20)),
+              const SizedBox(width: 12),
+              Text('Notification Settings', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+            ]),
+            const SizedBox(height: 8),
+            Text('Choose which notifications you want to receive.', style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+            const SizedBox(height: 16),
+            if (loading)
+              const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: CircularProgressIndicator(color: _blue, strokeWidth: 2)))
+            else ...[
+              _DToggleRow(icon: Icons.notifications_active_outlined, iconColor: const Color(0xFF06B6D4),
+                  label: 'Push Notifications', subtitle: 'Alerts, reminders & updates', value: push, onChanged: (v) => toggle(newPush: v)),
+              Container(height: 1, color: const Color(0xFFF1F5F9), margin: const EdgeInsets.symmetric(vertical: 4)),
+              _DToggleRow(icon: Icons.email_outlined, iconColor: _blue,
+                  label: 'Email Notifications', subtitle: 'Reports & important alerts', value: email, onChanged: (v) => toggle(newEmail: v)),
+              Container(height: 1, color: const Color(0xFFF1F5F9), margin: const EdgeInsets.symmetric(vertical: 4)),
+              _DToggleRow(icon: Icons.sms_outlined, iconColor: _green,
+                  label: 'SMS Notifications', subtitle: 'Text message alerts', value: sms, onChanged: (v) => toggle(newSms: v)),
+            ],
+          ]),
+        );
+      }),
+    );
+  }
+
   void _showHelpSupport() {
     const faqs = [
       (q: 'How do I log fuel?', a: 'Go to the Fuel tab and tap + to add a new fuel purchase.'),
@@ -359,13 +632,13 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             const SizedBox(height: 8),
             _DCard(children: [
               _DMenuItem(icon: Icons.person_outline_rounded, iconColor: _blue,
-                  label: 'Personal Information', onTap: () {}),
+                  label: 'Personal Information', onTap: _showPersonalInfo),
               const _DDivider(),
               _DMenuItem(icon: Icons.lock_outline_rounded, iconColor: const Color(0xFF8B5CF6),
-                  label: 'Security & Privacy', onTap: () {}),
+                  label: 'Security & Privacy', onTap: _showSecurity),
               const _DDivider(),
               _DMenuItem(icon: Icons.notifications_outlined, iconColor: const Color(0xFF06B6D4),
-                  label: 'Notification Settings', onTap: () {}),
+                  label: 'Notification Settings', onTap: _showNotifications),
             ]),
             const SizedBox(height: 20),
 
@@ -519,4 +792,91 @@ class _SupportTile extends StatelessWidget {
         const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFFCBD5E1)),
       ]),
     ));
+}
+
+// ── Sheet helper widgets ───────────────────────────────────────────────────────
+
+class _DSheetHandle extends StatelessWidget {
+  const _DSheetHandle();
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    const SizedBox(height: 12),
+    Container(width: 36, height: 4,
+        decoration: BoxDecoration(color: const Color(0xFFCBD5E1), borderRadius: BorderRadius.circular(2))),
+    const SizedBox(height: 20),
+  ]);
+}
+
+class _DToggleRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label, subtitle;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  const _DToggleRow({required this.icon, required this.iconColor, required this.label,
+      required this.subtitle, required this.value, required this.onChanged});
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Row(children: [
+      Container(width: 36, height: 36,
+          decoration: BoxDecoration(color: iconColor.withOpacity(0.10), borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, size: 18, color: iconColor)),
+      const SizedBox(width: 12),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF031634))),
+        Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B))),
+      ])),
+      Switch.adaptive(value: value, onChanged: onChanged, activeColor: _blue),
+    ]),
+  );
+}
+
+class _DInfoCell extends StatelessWidget {
+  final IconData icon;
+  final String label, value;
+  const _DInfoCell({required this.icon, required this.label, required this.value});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8EDF5))),
+    child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
+      Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+      const SizedBox(height: 5),
+      Text(label, style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w500)),
+      const SizedBox(height: 3),
+      Text(value, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF031634))),
+    ]),
+  );
+}
+
+class _DPwdField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final bool obscure;
+  final VoidCallback onToggle;
+  const _DPwdField({required this.controller, required this.label, required this.obscure, required this.onToggle});
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: controller,
+    obscureText: obscure,
+    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF0F172A)),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B)),
+      suffixIcon: IconButton(
+          icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              size: 18, color: const Color(0xFF94A3B8)),
+          onPressed: onToggle),
+      filled: true,
+      fillColor: const Color(0xFFF8FAFC),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0453CD), width: 1.5)),
+    ),
+  );
 }
