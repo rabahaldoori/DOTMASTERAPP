@@ -69,7 +69,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   int get _filed  => _reports.where((r) => r['status'] == 'filed').length;
   int get _drafts => _reports.where((r) => (r['status'] ?? '') == 'draft').length;
-  double get _totalTax => _reports.fold(0, (s, r) => s + _n(r['total_tax_due']));
+  double get _totalTax => _reports.fold(0, (s, r) => s + _n(r['net_tax_due']));
   double get _totalMi  => _reports.fold(0, (s, r) => s + _n(r['total_miles']));
 
   @override
@@ -550,10 +550,10 @@ class _ReportCardState extends State<_ReportCard> {
 
     final quarter  = widget.report['quarter'] as int? ?? 1;
     final year     = widget.report['year'] as int? ?? DateTime.now().year;
-    final taxDue   = _n(widget.report['total_tax_due']);
+    final taxDue   = _n(widget.report['net_tax_due']);
     final miles    = _n(widget.report['total_miles']);
-    final juris    = (widget.report['jurisdictions'] as List?)?.length ?? (widget.report['jurisdiction_count'] as int? ?? 0);
-    final netTax   = _n(widget.report['net_tax'] ?? widget.report['total_tax_due']);
+    final juris    = (widget.report['lines'] as List?)?.length ?? (widget.report['jurisdiction_count'] as int? ?? 0);
+    final netTax   = _n(widget.report['net_tax_due']);
 
     final Color statusColor = isFiled ? _green : isReady ? _blue : _amber;
     final String statusLabel = isFiled ? 'FILED' : isReady ? 'READY TO FILE' : 'DRAFT';
