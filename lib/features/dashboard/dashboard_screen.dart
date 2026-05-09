@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
+import 'dashboard_charts_widget.dart';
 
 const _navy  = Color(0xFF031634);
 const _navy2 = Color(0xFF0A2347);
@@ -280,6 +281,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ]),
                 const SizedBox(height: 8),
                 _ActiveTripCard(trip: _data?['activeTrip']),
+                const SizedBox(height: 24),
+
+                // ── Charts ──────────────────────────────────────────────────
+                const DashboardChartsWidget(),
                 const SizedBox(height: 24),
 
                 // ── Recent fuel logs ────────────────────────────────────────

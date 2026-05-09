@@ -72,6 +72,7 @@ class ApiEndpoints {
   // ── Dashboard / Reports ────────────────────────────────────────────────────
   static const String dashboardSummary       = "$apiUrl/dashboard/summary/";
   static const String dashboardIftaCurrent   = "$apiUrl/dashboard/ifta-current-quarter/";
+  static const String dashboardCharts        = "$apiUrl/dashboard/charts/";
 
   // ── IFTA Reports ───────────────────────────────────────────────────────────
   static const String iftaReports       = "$apiUrl/ifta/reports/";

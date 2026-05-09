@@ -140,6 +140,7 @@ class ApiClient {
   // ── Dashboard ─────────────────────────────────────────────────────────────
   static Future<Response> getDashboardSummary() => _dio.get(ApiEndpoints.dashboardSummary);
   static Future<Response> getIftaCurrentQuarter() => _dio.get(ApiEndpoints.dashboardIftaCurrent);
+  static Future<Response> getDashboardCharts() => _dio.get(ApiEndpoints.dashboardCharts);
 
   // ── IFTA Reports ──────────────────────────────────────────────────────────
   static Future<Response> getIftaReports() => _dio.get(ApiEndpoints.iftaReports);
