@@ -364,12 +364,21 @@ class _SumChip extends StatelessWidget {
 }
 
 // ── Miles by Jurisdiction chart ───────────────────────────────────────────────
-class _JurisdictionChart extends StatelessWidget {
+class _JurisdictionChart extends StatefulWidget {
   final List<Map> jurisdictions; final double totalMiles;
   const _JurisdictionChart({required this.jurisdictions, required this.totalMiles});
   @override
+  State<_JurisdictionChart> createState() => _JurisdictionChartState();
+}
+
+class _JurisdictionChartState extends State<_JurisdictionChart> {
+  bool _showAll = false;
+
+  @override
   Widget build(BuildContext context) {
-    final sorted = [...jurisdictions]..sort((a, b) => _n(b['miles']).compareTo(_n(a['miles'])));
+    final sorted  = [...widget.jurisdictions]..sort((a, b) => _n(b['miles']).compareTo(_n(a['miles'])));
+    final visible = _showAll ? sorted : sorted.take(4).toList();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border)),
@@ -380,24 +389,56 @@ class _JurisdictionChart extends StatelessWidget {
           Text('Current quarter', style: GoogleFonts.inter(fontSize: 10, color: _grey)),
         ]),
         const SizedBox(height: 14),
-        ...sorted.map((j) {
-          final miles  = _n(j['miles']);
-          final tax    = _n(j['tax_due']);
-          final pct    = totalMiles > 0 ? (miles / totalMiles).clamp(0.0, 1.0) : 0.0;
-          final state  = j['state']?.toString() ?? '??';
-          return Padding(padding: const EdgeInsets.only(bottom: 10), child:
-            Row(children: [
-              SizedBox(width: 28, child: Text(state, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: _navy))),
-              const SizedBox(width: 8),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct, minHeight: 8, backgroundColor: _border, valueColor: const AlwaysStoppedAnimation(_navy))),
-              ])),
-              const SizedBox(width: 8),
-              SizedBox(width: 60, child: Text('${miles.toStringAsFixed(0)} mi', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 11, color: _grey))),
-              SizedBox(width: 48, child: Text('\$${tax.toStringAsFixed(2)}', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: tax > 0 ? _blue : _grey))),
-            ]),
-          );
-        }),
+        // ── Animated rows ─────────────────────────────────────────────
+        AnimatedSize(
+          duration: const Duration(milliseconds: 280),
+          curve: Curves.easeInOut,
+          child: Column(
+            children: visible.map((j) {
+              final miles  = _n(j['miles']);
+              final tax    = _n(j['tax_due']);
+              final pct    = widget.totalMiles > 0 ? (miles / widget.totalMiles).clamp(0.0, 1.0) : 0.0;
+              final state  = j['state']?.toString() ?? '??';
+              return Padding(padding: const EdgeInsets.only(bottom: 10), child:
+                Row(children: [
+                  SizedBox(width: 28, child: Text(state, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: _navy))),
+                  const SizedBox(width: 8),
+                  Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct, minHeight: 8, backgroundColor: _border, valueColor: const AlwaysStoppedAnimation(_navy)))),
+                  const SizedBox(width: 8),
+                  SizedBox(width: 60, child: Text('${miles.toStringAsFixed(0)} mi', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 11, color: _grey))),
+                  SizedBox(width: 48, child: Text('\$${tax.toStringAsFixed(2)}', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: tax > 0 ? _blue : _grey))),
+                ]),
+              );
+            }).toList(),
+          ),
+        ),
+        // ── Show All / Hide button ────────────────────────────────────
+        if (sorted.length > 4) ...[
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () => setState(() => _showAll = !_showAll),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0F4FF),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _border),
+              ),
+              child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(
+                  _showAll ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                  size: 16, color: _blue,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  _showAll ? 'Hide' : 'Show All ${sorted.length} States',
+                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: _blue),
+                ),
+              ]),
+            ),
+          ),
+        ],
       ]),
     );
   }
