@@ -86,12 +86,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
             ]),
             const SizedBox(height: 20),
-            _SheetInfoRow(icon: Icons.badge_outlined,     label: 'Full Name',  value: name.isEmpty   ? '—' : name),
-            _SheetInfoRow(icon: Icons.email_outlined,     label: 'Email',      value: email.isEmpty  ? '—' : email),
-            _SheetInfoRow(icon: Icons.phone_outlined,     label: 'Phone',      value: phone.isEmpty  ? '—' : phone),
-            _SheetInfoRow(icon: Icons.work_outline,       label: 'Role',       value: role.isEmpty   ? '—' : role),
-            _SheetInfoRow(icon: Icons.business_outlined,  label: 'Company',    value: company.isEmpty? '—' : company,
-                last: true),
+            // 2-column grid of info fields
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              childAspectRatio: 2.2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              children: [
+                _InfoCell(icon: Icons.badge_outlined,    label: 'Full Name',  value: name.isEmpty    ? '—' : name),
+                _InfoCell(icon: Icons.email_outlined,    label: 'Email',      value: email.isEmpty   ? '—' : email),
+                _InfoCell(icon: Icons.phone_outlined,    label: 'Phone',      value: phone.isEmpty   ? '—' : phone),
+                _InfoCell(icon: Icons.work_outline,      label: 'Role',       value: role.isEmpty    ? '—' : role),
+                _InfoCell(icon: Icons.business_outlined, label: 'Company',    value: company.isEmpty ? '—' : company),
+              ],
+            ),
           ]),
         );
       },
@@ -770,28 +780,29 @@ class _SheetInfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(children: [
     Padding(
-      padding: const EdgeInsets.symmetric(vertical: 13),
-      child: Row(children: [
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Column(children: [
         Container(
-          width: 34, height: 34,
+          width: 38, height: 38,
           decoration: BoxDecoration(
               color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(9)),
-          child: Icon(icon, size: 17, color: const Color(0xFF64748B))),
-        const SizedBox(width: 12),
-        Expanded(child: Text(label, style: GoogleFonts.inter(
-            fontSize: 13, color: const Color(0xFF64748B),
-            fontWeight: FontWeight.w500))),
-        Flexible(child: Text(value,
-            textAlign: TextAlign.right,
+              borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, size: 18, color: const Color(0xFF64748B))),
+        const SizedBox(height: 8),
+        Text(label, style: GoogleFonts.inter(
+            fontSize: 11, color: const Color(0xFF94A3B8),
+            fontWeight: FontWeight.w500, letterSpacing: 0.3)),
+        const SizedBox(height: 4),
+        Text(value,
+            textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF031634)))),
+                color: const Color(0xFF031634))),
       ]),
     ),
     if (!last)
-      Container(height: 1, color: const Color(0xFFF8FAFC)),
+      Container(height: 1, color: const Color(0xFFF1F5F9)),
   ]);
 }
 
@@ -836,5 +847,41 @@ class _SheetToggleRow extends StatelessWidget {
         activeColor: const Color(0xFF0453CD),
       ),
     ]),
+  );
+}
+
+// ── Info cell (used in the 2-column personal info grid) ───────────────────────
+class _InfoCell extends StatelessWidget {
+  final IconData icon;
+  final String label, value;
+  const _InfoCell({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE8EDF5))),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
+        const SizedBox(height: 5),
+        Text(label, style: GoogleFonts.inter(
+            fontSize: 10, color: const Color(0xFF94A3B8),
+            fontWeight: FontWeight.w500, letterSpacing: 0.2)),
+        const SizedBox(height: 3),
+        Text(value,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF031634))),
+      ],
+    ),
   );
 }
