@@ -245,33 +245,33 @@ class _ChartCardState extends State<_ChartCard>
             children: [
               // ── Header ───────────────────────────────────────────────────
               Padding(
-                padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       Text(widget.title, style: const TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14,
+                        color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12,
                       )),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Text(widget.subtitle, style: TextStyle(
-                        color: Colors.white.withOpacity(0.4), fontSize: 11,
+                        color: Colors.white.withOpacity(0.4), fontSize: 10,
                       )),
                     ]),
                     Row(children: [
                       _Legend(color: widget.accentColor, label: widget.legend1),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       _Legend(color: widget.secondColor, label: widget.legend2),
                     ]),
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
               // ── Chart ────────────────────────────────────────────────────
               SizedBox(
-                height: 160,
+                height: 110,
                 child: Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.only(right: 6),
                   child: LineChart(
                     LineChartData(
                       gridData: FlGridData(
@@ -322,11 +322,11 @@ class _ChartCardState extends State<_ChartCard>
               ),
               // ── Stats ────────────────────────────────────────────────────
               Container(
-                margin: const EdgeInsets.fromLTRB(18, 12, 18, 18),
-                padding: const EdgeInsets.all(14),
+                margin: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.04),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.white.withOpacity(0.06)),
                 ),
                 child: Row(children: [
@@ -335,7 +335,7 @@ class _ChartCardState extends State<_ChartCard>
                     value: widget.stat1Value,
                     color: widget.stat1Color,
                   )),
-                  Container(width: 1, height: 36, color: Colors.white.withOpacity(0.08)),
+                  Container(width: 1, height: 28, color: Colors.white.withOpacity(0.08)),
                   Expanded(child: _Stat(
                     label: widget.stat2Label,
                     value: widget.stat2Value,
@@ -399,19 +399,19 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(children: [
-    Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w700)),
-    const SizedBox(height: 3),
-    Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 10)),
+    Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w700)),
+    const SizedBox(height: 2),
+    Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9)),
   ]);
 }
 
 class _SkeletonCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-    height: 270,
+    height: 190,
     decoration: BoxDecoration(
       color: const Color(0xFF020F25),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       border: Border.all(color: Colors.white.withOpacity(0.06)),
     ),
   );
