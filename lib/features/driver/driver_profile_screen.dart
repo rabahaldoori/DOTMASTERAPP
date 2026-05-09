@@ -306,7 +306,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
         // ── Body ───────────────────────────────────────────────────────────────
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 140),
           sliver: SliverList(delegate: SliverChildListDelegate([
 
             // CDL warning
