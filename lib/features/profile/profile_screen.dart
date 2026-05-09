@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 
 const _navy  = Color(0xFF031634);
@@ -329,6 +330,206 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ]),
           );
         },
+      ),
+    );
+  }
+
+  // ── Help & Support sheet ─────────────────────────────────────────────────────
+  void _showHelpSupport(BuildContext context) {
+    const faqs = [
+      (
+        q: 'How do I add a fuel log?',
+        a: 'Go to the Fuel tab in the bottom navigation bar. Tap the + button to create a new fuel purchase. Fill in the date, gallons, price, jurisdiction, and truck details, then tap Save.'
+      ),
+      (
+        q: 'How do I submit an IFTA report?',
+        a: 'Navigate to Reports → IFTA. Select the quarter and year, then tap Generate Report. Review the totals and tap Submit or Export PDF to download your quarterly IFTA fuel tax report.'
+      ),
+      (
+        q: 'How do I add a new trip?',
+        a: 'Open the Trips tab and tap the + icon. Enter the origin, destination, truck, driver, and start/end odometer readings. The app calculates total miles automatically.'
+      ),
+      (
+        q: 'I forgot my password. How do I reset it?',
+        a: 'On the login screen, tap "Forgot Password?" and enter your registered email address. You will receive a reset link within a few minutes. Check your spam folder if you don\'t see it.'
+      ),
+      (
+        q: 'How do I enable Face ID / biometric login?',
+        a: 'Go to Profile → Security & Privacy and toggle on "Face ID / Biometric Login." You will be prompted to authenticate once to confirm. After that, you can log in using biometrics.'
+      ),
+      (
+        q: 'My company data is not showing. What should I do?',
+        a: 'Ensure you are logged in with the correct account and that your company subscription is active. If your trial has expired, contact your account owner to upgrade. If the issue persists, log out and log back in.'
+      ),
+    ];
+
+    final openIndex = ValueNotifier<int?>( null);
+
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.88,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, scrollCtrl) => ValueListenableBuilder<int?>(
+          valueListenable: openIndex,
+          builder: (ctx, open, _) => Column(children: [
+            // ── Header (sticky) ────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              child: Column(children: [
+                _SheetHandle(),
+                Row(children: [
+                  Container(width: 36, height: 36,
+                    decoration: BoxDecoration(
+                        color: const Color(0xFF64748B).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(10)),
+                    child: const Icon(Icons.help_outline_rounded,
+                        color: Color(0xFF64748B), size: 20)),
+                  const SizedBox(width: 12),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('Help & Support', style: GoogleFonts.inter(
+                        fontSize: 17, fontWeight: FontWeight.w700,
+                        color: _navy)),
+                    Text('We\'re here to help', style: GoogleFonts.inter(
+                        fontSize: 12, color: _grey)),
+                  ]),
+                ]),
+                const SizedBox(height: 16),
+                Container(height: 1, color: const Color(0xFFF1F5F9)),
+              ]),
+            ),
+
+            // ── Scrollable body ─────────────────────────────────────────────
+            Expanded(
+              child: ListView(
+                controller: scrollCtrl,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+                children: [
+                  // Contact tiles
+                  _SupportContactTile(
+                    icon: Icons.email_outlined,
+                    color: _blue,
+                    title: 'Email Support',
+                    subtitle: 'support@dotmaster.app',
+                    onTap: () async {
+                      final uri = Uri(
+                        scheme: 'mailto',
+                        path: 'support@dotmaster.app',
+                        queryParameters: {
+                          'subject': 'DOT Master Support Request',
+                        },
+                      );
+                      if (await canLaunchUrl(uri)) launchUrl(uri);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _SupportContactTile(
+                    icon: Icons.phone_outlined,
+                    color: _green,
+                    title: 'Call Support',
+                    subtitle: '+1 (800) DOT-MASTER',
+                    onTap: () async {
+                      final uri = Uri(scheme: 'tel', path: '+18003681234');
+                      if (await canLaunchUrl(uri)) launchUrl(uri);
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _SupportContactTile(
+                    icon: Icons.chat_bubble_outline_rounded,
+                    color: const Color(0xFF25D366),
+                    title: 'WhatsApp Support',
+                    subtitle: 'Chat with us on WhatsApp',
+                    onTap: () async {
+                      final uri = Uri.parse(
+                          'https://wa.me/18003681234?text=Hello%2C%20I%20need%20help%20with%20DOT%20Master');
+                      if (await canLaunchUrl(uri)) {
+                        launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // FAQ section
+                  Text('Frequently Asked Questions',
+                      style: GoogleFonts.inter(
+                          fontSize: 13, fontWeight: FontWeight.w700,
+                          color: _navy, letterSpacing: 0.3)),
+                  const SizedBox(height: 10),
+
+                  ...List.generate(faqs.length, (i) {
+                    final isOpen = open == i;
+                    return GestureDetector(
+                      onTap: () => openIndex.value = isOpen ? null : i,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: isOpen
+                              ? _blue.withOpacity(0.04)
+                              : Colors.white,
+                          border: Border.all(
+                            color: isOpen
+                                ? _blue.withOpacity(0.25)
+                                : const Color(0xFFE2E8F0),
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(14),
+                              child: Row(children: [
+                                Expanded(child: Text(faqs[i].q,
+                                    style: GoogleFonts.inter(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: isOpen ? _blue : _navy))),
+                                Icon(
+                                  isOpen
+                                      ? Icons.keyboard_arrow_up_rounded
+                                      : Icons.keyboard_arrow_down_rounded,
+                                  color: isOpen ? _blue : _grey,
+                                  size: 20,
+                                ),
+                              ]),
+                            ),
+                            if (isOpen)
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                                child: Text(faqs[i].a,
+                                    style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        color: const Color(0xFF475569),
+                                        height: 1.6)),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 16),
+
+                  // Version info footer
+                  Center(child: Text(
+                    'DOT Master v1.0.0  •  support@dotmaster.app',
+                    style: GoogleFonts.inter(
+                        fontSize: 11, color: const Color(0xFFCBD5E1)),
+                  )),
+                ],
+              ),
+            ),
+          ]),
+        ),
       ),
     );
   }
@@ -941,7 +1142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.help_outline_rounded,
                       iconColor: _grey,
                       label: 'Help & Support',
-                      onTap: () {},
+                      onTap: () => _showHelpSupport(context),
                     ),
                     const _Div(),
                     _MenuItem(
@@ -1250,6 +1451,67 @@ class _PwdField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(
             horizontal: 14, vertical: 14),
       ),
+    ),
+  );
+}
+
+// ── Support Contact Tile ──────────────────────────────────────────────────────
+class _SupportContactTile extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SupportContactTile({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(children: [
+        Container(
+          width: 44, height: 44,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 22),
+        ),
+        const SizedBox(width: 14),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: GoogleFonts.inter(
+                fontSize: 14, fontWeight: FontWeight.w600,
+                color: const Color(0xFF0F172A))),
+            const SizedBox(height: 2),
+            Text(subtitle, style: GoogleFonts.inter(
+                fontSize: 12, color: const Color(0xFF64748B))),
+          ],
+        )),
+        Icon(Icons.arrow_forward_ios_rounded,
+            size: 14, color: const Color(0xFFCBD5E1)),
+      ]),
     ),
   );
 }
