@@ -262,6 +262,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _ComplianceCard(reports: _data?['reports'] ?? []),
                 const SizedBox(height: 16),
 
+                // ── Charts ──────────────────────────────────────────────────
+                const DashboardChartsWidget(),
+                const SizedBox(height: 16),
+
                 // ── Maintenance card ─────────────────────────────────────────
                 _MaintenanceSummaryCard(
                   onTap: () => context.go('/maintenance'),
@@ -281,10 +285,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ]),
                 const SizedBox(height: 8),
                 _ActiveTripCard(trip: _data?['activeTrip']),
-                const SizedBox(height: 24),
-
-                // ── Charts ──────────────────────────────────────────────────
-                const DashboardChartsWidget(),
                 const SizedBox(height: 24),
 
                 // ── Recent fuel logs ────────────────────────────────────────
