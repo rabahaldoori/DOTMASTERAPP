@@ -52,6 +52,221 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // ── Personal Information sheet ──────────────────────────────────────────────
+  void _showPersonalInfo(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) {
+        final name    = _user['name']    ?? '';
+        final email   = _user['email']   ?? '';
+        final phone   = _user['phone']   ?? '';
+        final role    = (_user['role']   ?? '').toString()
+            .replaceAll('_', ' ')
+            .split(' ')
+            .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+            .join(' ');
+        final company = _user['company'] ?? '';
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            _SheetHandle(),
+            Row(children: [
+              Container(width: 36, height: 36,
+                decoration: BoxDecoration(color: _blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.person_outline_rounded,
+                    color: _blue, size: 20)),
+              const SizedBox(width: 12),
+              Text('Personal Information', style: GoogleFonts.inter(
+                  fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+            ]),
+            const SizedBox(height: 20),
+            _SheetInfoRow(icon: Icons.badge_outlined,     label: 'Full Name',  value: name.isEmpty   ? '—' : name),
+            _SheetInfoRow(icon: Icons.email_outlined,     label: 'Email',      value: email.isEmpty  ? '—' : email),
+            _SheetInfoRow(icon: Icons.phone_outlined,     label: 'Phone',      value: phone.isEmpty  ? '—' : phone),
+            _SheetInfoRow(icon: Icons.work_outline,       label: 'Role',       value: role.isEmpty   ? '—' : role),
+            _SheetInfoRow(icon: Icons.business_outlined,  label: 'Company',    value: company.isEmpty? '—' : company,
+                last: true),
+          ]),
+        );
+      },
+    );
+  }
+
+  // ── Security & Privacy sheet ─────────────────────────────────────────────────
+  void _showSecurity(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              _SheetHandle(),
+              Row(children: [
+                Container(width: 36, height: 36,
+                  decoration: BoxDecoration(
+                      color: const Color(0xFF7C3AED).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.lock_outline_rounded,
+                      color: Color(0xFF7C3AED), size: 20)),
+                const SizedBox(width: 12),
+                Text('Security & Privacy', style: GoogleFonts.inter(
+                    fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+              ]),
+              const SizedBox(height: 20),
+
+              // Face ID row
+              _SheetToggleRow(
+                icon: Icons.face_unlock_outlined,
+                iconColor: _blue,
+                label: 'Face ID / Biometric Login',
+                subtitle: 'Sign in without a password',
+                value: true,
+                onChanged: (v) {},
+              ),
+              Container(height: 1, color: const Color(0xFFF1F5F9),
+                  margin: const EdgeInsets.symmetric(vertical: 4)),
+
+              // Change password
+              GestureDetector(
+                onTap: () {},
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(children: [
+                    Container(width: 36, height: 36,
+                      decoration: BoxDecoration(color: _grey.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.key_outlined,
+                          size: 18, color: _grey)),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Change Password', style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.w600,
+                          color: _navy)),
+                      Text('Update your login password',
+                          style: GoogleFonts.inter(
+                              fontSize: 12, color: _grey)),
+                    ])),
+                    const Icon(Icons.chevron_right_rounded,
+                        size: 20, color: Color(0xFFCBD5E1)),
+                  ]),
+                ),
+              ),
+              Container(height: 1, color: const Color(0xFFF1F5F9),
+                  margin: const EdgeInsets.symmetric(vertical: 4)),
+
+              // Privacy policy
+              GestureDetector(
+                onTap: () {},
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  child: Row(children: [
+                    Container(width: 36, height: 36,
+                      decoration: BoxDecoration(
+                          color: _green.withOpacity(0.08),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Icon(Icons.privacy_tip_outlined,
+                          size: 18, color: _green)),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text('Privacy Policy', style: GoogleFonts.inter(
+                          fontSize: 14, fontWeight: FontWeight.w600,
+                          color: _navy)),
+                      Text('How we handle your data',
+                          style: GoogleFonts.inter(
+                              fontSize: 12, color: _grey)),
+                    ])),
+                    const Icon(Icons.chevron_right_rounded,
+                        size: 20, color: Color(0xFFCBD5E1)),
+                  ]),
+                ),
+              ),
+            ]),
+          );
+        },
+      ),
+    );
+  }
+
+  // ── Notification Settings sheet ──────────────────────────────────────────────
+  void _showNotifications(BuildContext context) {
+    bool _push  = true;
+    bool _email = true;
+    bool _sms   = false;
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      useSafeArea: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            _SheetHandle(),
+            Row(children: [
+              Container(width: 36, height: 36,
+                decoration: BoxDecoration(color: _cyan.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10)),
+                child: Icon(Icons.notifications_outlined,
+                    color: _cyan, size: 20)),
+              const SizedBox(width: 12),
+              Text('Notification Settings', style: GoogleFonts.inter(
+                  fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+            ]),
+            const SizedBox(height: 8),
+            Text('Choose which notifications you want to receive.',
+                style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+            const SizedBox(height: 16),
+            _SheetToggleRow(
+              icon: Icons.notifications_active_outlined,
+              iconColor: _cyan,
+              label: 'Push Notifications',
+              subtitle: 'Alerts, reminders & updates',
+              value: _push,
+              onChanged: (v) => setS(() => _push = v),
+            ),
+            Container(height: 1, color: const Color(0xFFF1F5F9),
+                margin: const EdgeInsets.symmetric(vertical: 4)),
+            _SheetToggleRow(
+              icon: Icons.email_outlined,
+              iconColor: _blue,
+              label: 'Email Notifications',
+              subtitle: 'Reports & important alerts',
+              value: _email,
+              onChanged: (v) => setS(() => _email = v),
+            ),
+            Container(height: 1, color: const Color(0xFFF1F5F9),
+                margin: const EdgeInsets.symmetric(vertical: 4)),
+            _SheetToggleRow(
+              icon: Icons.sms_outlined,
+              iconColor: _green,
+              label: 'SMS Notifications',
+              subtitle: 'Text message alerts',
+              value: _sms,
+              onChanged: (v) => setS(() => _sms = v),
+              last: true,
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
+
   Future<void> _logout() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -357,21 +572,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       icon: Icons.person_outline_rounded,
                       iconColor: _blue,
                       label: 'Personal Information',
-                      onTap: () {},
+                      onTap: () => _showPersonalInfo(context),
                     ),
                     const _Div(),
                     _MenuItem(
                       icon: Icons.lock_outline_rounded,
                       iconColor: const Color(0xFF7C3AED),
                       label: 'Security & Privacy',
-                      onTap: () {},
+                      onTap: () => _showSecurity(context),
                     ),
                     const _Div(),
                     _MenuItem(
                       icon: Icons.notifications_outlined,
                       iconColor: _cyan,
                       label: 'Notification Settings',
-                      onTap: () {},
+                      onTap: () => _showNotifications(context),
                     ),
                     const _Div(),
                     _MenuItem(
@@ -522,5 +737,104 @@ class _MenuItem extends StatelessWidget {
         const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFCBD5E1)),
       ]),
     ),
+  );
+}
+
+// ── Sheet helpers ─────────────────────────────────────────────────────────────
+
+class _SheetHandle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    const SizedBox(height: 12),
+    Container(
+      width: 36, height: 4,
+      decoration: BoxDecoration(
+          color: const Color(0xFFCBD5E1),
+          borderRadius: BorderRadius.circular(2)),
+    ),
+    const SizedBox(height: 20),
+  ]);
+}
+
+class _SheetInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label, value;
+  final bool last;
+  const _SheetInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.last = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    Padding(
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      child: Row(children: [
+        Container(
+          width: 34, height: 34,
+          decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(9)),
+          child: Icon(icon, size: 17, color: const Color(0xFF64748B))),
+        const SizedBox(width: 12),
+        Expanded(child: Text(label, style: GoogleFonts.inter(
+            fontSize: 13, color: const Color(0xFF64748B),
+            fontWeight: FontWeight.w500))),
+        Flexible(child: Text(value,
+            textAlign: TextAlign.right,
+            style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF031634)))),
+      ]),
+    ),
+    if (!last)
+      Container(height: 1, color: const Color(0xFFF8FAFC)),
+  ]);
+}
+
+class _SheetToggleRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label, subtitle;
+  final bool value, last;
+  final ValueChanged<bool> onChanged;
+  const _SheetToggleRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+    this.last = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    child: Row(children: [
+      Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.10),
+              borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, size: 18, color: iconColor)),
+      const SizedBox(width: 12),
+      Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: GoogleFonts.inter(
+            fontSize: 14, fontWeight: FontWeight.w600,
+            color: const Color(0xFF031634))),
+        Text(subtitle, style: GoogleFonts.inter(
+            fontSize: 12, color: const Color(0xFF64748B))),
+      ])),
+      Switch.adaptive(
+        value: value,
+        onChanged: onChanged,
+        activeColor: const Color(0xFF0453CD),
+      ),
+    ]),
   );
 }
