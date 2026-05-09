@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -263,10 +264,12 @@ class ApiClient {
   /// Used by biometric login to pass the dedicated biometric_refresh_token.
   static Future<bool> refreshWithToken(String refreshToken) async {
     try {
-      final res = await Dio(BaseOptions(baseUrl: baseUrl)).post(
-        '/api/token/refresh/',
+      debugPrint('🔐 refreshWithToken: posting to ${ApiEndpoints.refreshToken}');
+      final res = await Dio().post(
+        ApiEndpoints.refreshToken,
         data: {'refresh': refreshToken},
       );
+      debugPrint('🔐 refreshWithToken: status=${res.statusCode}');
       if (res.statusCode == 200) {
         final newAccess  = res.data['access']  as String?;
         final newRefresh = res.data['refresh'] as String?;
@@ -280,7 +283,10 @@ class ApiClient {
         return true;
       }
       return false;
-    } catch (_) { return false; }
+    } catch (e) {
+      debugPrint('❌ refreshWithToken failed: $e');
+      return false;
+    }
   }
 
   // ── Face ID preference (SharedPreferences — persists across debug reinstalls) ─
