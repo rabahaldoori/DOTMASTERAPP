@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "on-secondary-fixed": "#001848",
+                  "primary-fixed": "#d8e2ff",
+                  "on-secondary-container": "#fefcff",
+                  "on-background": "#151c27",
+                  "on-error-container": "#93000a",
+                  "primary-container": "#1a2b4a",
+                  "on-tertiary-fixed": "#181c1e",
+                  "primary": "#031634",
+                  "surface-variant": "#dce2f3",
+                  "background": "#f9f9ff",
+                  "secondary-fixed-dim": "#b2c5ff",
+                  "on-surface": "#151c27",
+                  "on-error": "#ffffff",
+                  "surface-container-low": "#f0f3ff",
+                  "surface-bright": "#f9f9ff",
+                  "on-tertiary-fixed-variant": "#43474a",
+                  "on-secondary-fixed-variant": "#0040a2",
+                  "outline-variant": "#c5c6cf",
+                  "on-tertiary-container": "#8f9396",
+                  "inverse-primary": "#b6c6ee",
+                  "error": "#ba1a1a",
+                  "error-container": "#ffdad6",
+                  "surface-container-lowest": "#ffffff",
+                  "secondary-fixed": "#dae2ff",
+                  "on-primary-fixed-variant": "#364767",
+                  "tertiary": "#13181a",
+                  "tertiary-fixed-dim": "#c3c7ca",
+                  "outline": "#75777e",
+                  "primary-fixed-dim": "#b6c6ee",
+                  "on-primary-container": "#8293b7",
+                  "inverse-on-surface": "#ebf1ff",
+                  "secondary-container": "#356ee7",
+                  "inverse-surface": "#2a313d",
+                  "on-secondary": "#ffffff",
+                  "surface-container-highest": "#dce2f3",
+                  "on-tertiary": "#ffffff",
+                  "tertiary-fixed": "#e0e3e6",
+                  "surface-container": "#e7eefe",
+                  "on-primary": "#ffffff",
+                  "tertiary-container": "#282c2e"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "unit-md": "16px",
+                  "touch-target": "48px",
+                  "unit-xs": "4px",
+                  "unit-xl": "32px",
+                  "margin-page": "16px",
+                  "gutter-grid": "12px",
+                  "unit-sm": "8px",
+                  "unit-lg": "24px"
+          },
+          "fontFamily": {
+                  "body-lg": ["Inter"],
+                  "label-sm": ["Inter"],
+                  "label-lg": ["Inter"],
+                  "headline-sm": ["Inter"],
+                  "headline-lg": ["Inter"],
+                  "body-md": ["Inter"],
+                  "label-md": ["Inter"],
+                  "headline-md": ["Inter"]
+          },
+          "fontSize": {
+                  "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                  "label-sm": ["10px", {"lineHeight": "12px", "fontWeight": "700"}],
+                  "label-lg": ["14px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                  "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                  "headline-lg": ["28px", {"lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                  "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                  "headline-md": ["22px", {"lineHeight": "28px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .camera-viewport {
+      height: calc(100vh - 180px);
+      background-size: cover;
+      background-position: center;
+    }
+    .guide-overlay {
+      background: radial-gradient(circle, transparent 60%, rgba(0, 0, 0, 0.4) 100%);
+    }
+    .shutter-btn {
+      width: 72px;
+      height: 72px;
+    }
+    .shutter-inner {
+      width: 58px;
+      height: 58px;
+    }
+  </style>
+</head>
+<body class="bg-primary overflow-hidden font-body-md text-on-primary">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 flex items-center justify-between px-margin-page h-touch-target w-full bg-primary text-on-primary border-b border-outline-variant shadow-sm">
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined cursor-pointer active:scale-95 transition-transform">arrow_back</span>
+<h1 class="font-headline-sm text-headline-sm">Pre-Trip Inspection</h1>
+</div>
+<div class="flex items-center gap-unit-md">
+<span class="material-symbols-outlined cursor-pointer active:scale-95 transition-transform">flash_off</span>
+<span class="material-symbols-outlined cursor-pointer active:scale-95 transition-transform">more_vert</span>
+</div>
+</header>
+<!-- Main Viewfinder Section -->
+<main class="mt-touch-target relative h-screen w-full flex flex-col bg-black">
+<!-- Camera Canvas with Placeholder Background -->
+<div class="camera-viewport relative w-full flex-grow overflow-hidden" style="background-image: url('https://lh3.googleusercontent.com/aida/ADBb0uhoGk0hLMGQHmdxa9ajc-AfZwlvofZ1g7kLUWsMvL2XL3s8agUNcpIM7GQFwnE_f8PLmLwWZkMr8gaOqpaapbLKUlvc6CvNnyoEy6b1Mjfi0vpFoaKEA8kvS9_Kgr9w8SSNAOES8RWAmfiXlqG8PhbafSguJpON4IATDYTiNrJSIqLWdDDdcZ7C3m1hP6hsVrcpfahONQHmTVfi-jfsttLoxRDyZE7A0x-bUT8ABLXloeJzQLLwowUHssk');">
+<!-- Instructional Overlay -->
+<div class="absolute top-unit-lg left-0 w-full flex flex-col items-center gap-unit-sm px-margin-page z-10 pointer-events-none">
+<div class="bg-black/40 backdrop-blur-md rounded-lg px-unit-md py-unit-sm border border-white/20">
+<p class="font-label-lg text-label-lg text-white">Align truck front within the frame</p>
+</div>
+<div class="bg-secondary-container/90 rounded-full px-unit-md py-unit-xs">
+<p class="font-label-sm text-label-sm text-on-secondary-container">Step 1 of 4: Exterior Front</p>
+</div>
+</div>
+<!-- Guide Silhouette -->
+<div class="guide-overlay absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-4/5 h-1/2 border-2 border-dashed border-white/60 rounded-xl relative">
+<!-- Corner Indicators -->
+<div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-secondary-container rounded-tl-lg"></div>
+<div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-secondary-container rounded-tr-lg"></div>
+<div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-secondary-container rounded-bl-lg"></div>
+<div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-secondary-container rounded-br-lg"></div>
+<!-- Center Leveler -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-12 h-[1px] bg-white/40"></div>
+<div class="h-12 w-[1px] bg-white/40"></div>
+</div>
+</div>
+</div>
+<!-- Zoom/Focus Controls -->
+<div class="absolute right-unit-md top-1/2 -translate-y-1/2 flex flex-col gap-unit-md">
+<button class="w-10 h-10 rounded-full bg-black/40 border border-white/20 flex items-center justify-center text-white backdrop-blur-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-sm">add</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center text-primary font-bold text-xs active:scale-90 transition-transform shadow-lg">1x</button>
+<button class="w-10 h-10 rounded-full bg-black/40 border border-white/20 flex items-center justify-center text-white backdrop-blur-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-sm">remove</span>
+</button>
+</div>
+</div>
+<!-- Camera Controls Tray -->
+<div class="h-[140px] bg-primary flex items-center justify-around px-unit-xl pb-6">
+<!-- Gallery Preview -->
+<div class="relative w-12 h-12 rounded-lg border-2 border-white/20 overflow-hidden active:scale-95 transition-transform bg-surface-container">
+<img alt="Last photo preview" class="w-full h-full object-cover grayscale-[0.5]" data-alt="A small square thumbnail image displaying a preview of a heavy-duty commercial truck parked in an industrial loading bay. The image has a slightly muted, professional tone with sharp details on the chrome bumper and headlights. It acts as a gallery shortcut within a clean, technical mobile interface." src="https://lh3.googleusercontent.com/aida/ADBb0uhoGk0hLMGQHmdxa9ajc-AfZwlvofZ1g7kLUWsMvL2XL3s8agUNcpIM7GQFwnE_f8PLmLwWZkMr8gaOqpaapbLKUlvc6CvNnyoEy6b1Mjfi0vpFoaKEA8kvS9_Kgr9w8SSNAOES8RWAmfiXlqG8PhbafSguJpON4IATDYTiNrJSIqLWdDDdcZ7C3m1hP6hsVrcpfahONQHmTVfi-jfsttLoxRDyZE7A0x-bUT8ABLXloeJzQLLwowUHssk"/>
+</div>
+<!-- Shutter Button -->
+<div class="shutter-btn rounded-full border-4 border-white flex items-center justify-center active:scale-90 transition-all duration-200">
+<div class="shutter-inner bg-white rounded-full"></div>
+</div>
+<!-- Retake/Settings -->
+<div class="w-12 h-12 flex items-center justify-center active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-primary text-[32px]">sync</span>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation (Filtered for task focus, but structure defined for context if needed - though suppressed by rule, I will ensure main content is accessible) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-unit-md pb-unit-sm pt-unit-xs bg-surface-container/80 dark:bg-surface-container-high/80 backdrop-blur-md shadow-lg rounded-t-xl md:hidden">
+<div class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">fact_check</span>
+<span class="font-label-sm text-label-sm">Inspections</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-secondary-fixed-dim/20 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-sm text-label-sm">Logs</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-secondary-fixed-dim/20 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">distance</span>
+<span class="font-label-sm text-label-sm">Routes</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-secondary-fixed-dim/20 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-sm text-label-sm">Account</span>
+</div>
+</nav>
+</body></html>
