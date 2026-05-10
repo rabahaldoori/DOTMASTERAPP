@@ -166,7 +166,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
                 const SizedBox(height: 8),
                 Center(
-                  child: Text('Need a custom plan?  info@dotmaster.app',
+                  child: Text('Need a custom plan?  support@dotmaster.app',
                       style: context.af(fontSize: 12,
                           color: const Color(0xFF94A3B8))),
                 ),

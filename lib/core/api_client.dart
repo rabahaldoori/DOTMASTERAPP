@@ -508,5 +508,19 @@ class ApiClient {
       _dio.get('/api/company/invoices/', queryParameters: {
         if (startingAfter != null) 'starting_after': startingAfter,
       });
-}
 
+  /// POST /api/company/invoices/<id>/payment-sheet/
+  /// Returns Stripe payment sheet secrets for paying an open invoice.
+  static Future<Response> getInvoicePaymentSheet(String invoiceId) =>
+      _dio.post('/api/company/invoices/$invoiceId/payment-sheet/');
+
+  /// GET /api/company/invoices/<id>/pdf/
+  /// Downloads the branded invoice as raw PDF bytes (JWT authenticated).
+  static Future<List<int>> getInvoicePdfBytes(String invoiceId) async {
+    final res = await _dio.get<List<int>>(
+      '/api/company/invoices/$invoiceId/pdf/',
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return res.data ?? [];
+  }
+}

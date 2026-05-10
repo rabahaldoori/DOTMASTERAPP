@@ -10,6 +10,7 @@ import '../../core/api_client.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/l10n/language_picker.dart';
 import '../../core/l10n/app_strings.dart';
+import 'invoices_screen.dart';
 
 const _navy  = Color(0xFF031634);
 const _navy2 = Color(0xFF0D2952);
@@ -1155,6 +1156,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       iconColor: const Color(0xFF7C3AED),
                       label: 'Subscription & Plans',
                       onTap: () => context.push('/subscription'),
+                    ),
+                    const _Div(),
+                    _MenuItem(
+                      icon: Icons.receipt_long_rounded,
+                      iconColor: const Color(0xFF0453CD),
+                      label: 'Billing & Invoices',
+                      onTap: () => InvoicesScreen.push(context),
                     ),
                   ]),
                   const SizedBox(height: 16),
