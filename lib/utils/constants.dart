@@ -5,8 +5,7 @@
 const String appName = "IFTATrack";
 const String appVersion = "1.0.0";
 
-// ─── Base URLs ───────────────────────────────────────────────────────────────
-// Change these to your actual server before deploying.
+// ─── Base URLs ───────────────────────────────────────────────────────────────// Change these to your actual server before deploying.
 //
 // For local development on iOS Simulator:     http://localhost
 // For local development on Android Emulator:  http://10.0.2.2

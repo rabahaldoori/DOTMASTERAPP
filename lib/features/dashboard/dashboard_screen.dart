@@ -140,7 +140,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: CustomScrollView(slivers: [
           // ── Pinned header ─────────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 245,
+            expandedHeight: 270,
             pinned: true,
             stretch: true,
             backgroundColor: _navy,
@@ -249,7 +249,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ]),
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 28),
                       ],
                     ),
                   ),
