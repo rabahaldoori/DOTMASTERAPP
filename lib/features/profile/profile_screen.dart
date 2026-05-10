@@ -1146,7 +1146,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ]),
                   const SizedBox(height: 16),
 
-                  // ── Support ────────────────────────────────────────────
+                  // ── Subscription ───────────────────────────────────────────
+                  _Label('SUBSCRIPTION'),
+                  const SizedBox(height: 8),
+                  _Card(children: [
+                    _MenuItem(
+                      icon: Icons.workspace_premium_rounded,
+                      iconColor: const Color(0xFF7C3AED),
+                      label: 'Subscription & Plans',
+                      onTap: () => context.push('/subscription'),
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+
+                  // ── Support ────────────────────────────────────────────────
                   _Label(s.support),
                   const SizedBox(height: 8),
                   _Card(children: [

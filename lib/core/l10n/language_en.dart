@@ -636,4 +636,24 @@ class LanguageEn implements AppStrings {
   @override String get tripDetailHourRest        => '10-hour rest';
   @override String get tripDetailResume          => 'Resume:';
   @override String get tripDetailRemaining       => 'Remaining:';
+  // Company registration screen
+  @override String get dontHaveAccount           => 'Don\'t have an account?';
+  @override String get createAccount              => 'Create Account';
+  @override String get registerYourCompany        => 'Register Your Company';
+  @override String get companyRegistrationSubtitle => 'Start your free trial today — no credit card required';
+  @override String get companyName                => 'Company Name';
+  @override String get phoneNumber                => 'Phone Number';
+  @override String get alreadyHaveAccount         => 'Already have an account?';
+  @override String get signInInstead              => 'Sign In';
+  @override String get registrationFailed         => 'Registration failed. Please try again.';
+  @override String get registrationSuccess        => 'Account created! Welcome aboard 🎉';
+  @override String get startFreeTrial             => 'Start Free Trial';
+  @override String get trialBadge                 => '14-Day Free Trial';
+  @override String get step1PersonalInfo          => 'Personal Info';
+  @override String get step2CompanyInfo           => 'Company Info';
+  @override String get step3Security              => 'Security';
+  @override String get next                       => 'Next';
+  @override String get previous                   => 'Back';
+  @override String get passwordMinLength          => 'Password must be at least 8 characters.';
+  @override String get allFieldsRequired          => 'Please fill in all required fields.';
 }

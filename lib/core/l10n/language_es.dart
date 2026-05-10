@@ -638,4 +638,24 @@ class LanguageEs implements AppStrings {
   @override String get tripDetailHourRest        => 'descanso de 10 horas';
   @override String get tripDetailResume          => 'Reanudar:';
   @override String get tripDetailRemaining       => 'Restante:';
+  // Company registration screen
+  @override String get dontHaveAccount           => '¿No tienes una cuenta?';
+  @override String get createAccount              => 'Crear cuenta';
+  @override String get registerYourCompany        => 'Registra tu empresa';
+  @override String get companyRegistrationSubtitle => 'Comienza tu prueba gratuita hoy — sin tarjeta de crédito';
+  @override String get companyName                => 'Nombre de la empresa';
+  @override String get phoneNumber                => 'Número de teléfono';
+  @override String get alreadyHaveAccount         => '¿Ya tienes una cuenta?';
+  @override String get signInInstead              => 'Iniciar sesión';
+  @override String get registrationFailed         => 'Registro fallido. Por favor, inténtalo de nuevo.';
+  @override String get registrationSuccess        => '¡Cuenta creada! Bienvenido 🎉';
+  @override String get startFreeTrial             => 'Iniciar prueba gratuita';
+  @override String get trialBadge                 => 'Prueba gratuita de 14 días';
+  @override String get step1PersonalInfo          => 'Info personal';
+  @override String get step2CompanyInfo           => 'Info de empresa';
+  @override String get step3Security              => 'Seguridad';
+  @override String get next                       => 'Siguiente';
+  @override String get previous                   => 'Atrás';
+  @override String get passwordMinLength          => 'La contraseña debe tener al menos 8 caracteres.';
+  @override String get allFieldsRequired          => 'Por favor, completa todos los campos requeridos.';
 }

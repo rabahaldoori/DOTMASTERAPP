@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/login_screen.dart';
+import '../features/auth/register_screen.dart';
 import '../features/dashboard/dashboard_screen.dart';
 import '../features/fuel/fuel_logs_screen.dart';
 import '../features/fuel/add_fuel_screen.dart';
@@ -10,6 +11,7 @@ import '../features/trips/trip_detail_screen.dart';
 import '../features/reports/reports_screen.dart';
 import '../features/truck/truck_screen.dart';
 import '../features/profile/profile_screen.dart';
+import '../features/profile/subscription_screen.dart';
 import '../shared/widgets/main_scaffold.dart';
 import '../features/driver/driver_dashboard_screen.dart';
 import '../features/driver/driver_trips_screen.dart';
@@ -36,11 +38,12 @@ final router = GoRouter(
   initialLocation: '/login',
   redirect: (context, state) async {
     final loggedIn = await ApiClient.isLoggedIn;
-    final loggingIn = state.matchedLocation == '/login';
+    final onAuthPage = state.matchedLocation == '/login' ||
+                       state.matchedLocation == '/register';
 
-    if (!loggedIn && !loggingIn) return '/login';
+    if (!loggedIn && !onAuthPage) return '/login';
 
-    if (loggedIn && loggingIn) {
+    if (loggedIn && onAuthPage) {
       // Role-based home redirect
       final role = await ApiClient.getUserRole();
       return role == 'driver' ? '/driver-dashboard' : '/dashboard';
@@ -62,6 +65,10 @@ final router = GoRouter(
     GoRoute(
       path: '/login',
       builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/register',
+      builder: (context, state) => const RegisterScreen(),
     ),
 
     // ── Admin Shell ────────────────────────────────────────────────────────
@@ -94,7 +101,8 @@ final router = GoRouter(
         ),
         GoRoute(path: '/reports',     builder: (_, __) => const ReportsScreen()),
         GoRoute(path: '/truck',       builder: (_, __) => const TruckScreen()),
-        GoRoute(path: '/profile',     builder: (_, __) => const ProfileScreen()),
+        GoRoute(path: '/profile',      builder: (_, __) => const ProfileScreen()),
+        GoRoute(path: '/subscription', builder: (_, __) => const SubscriptionScreen()),
         GoRoute(path: '/about',       builder: (_, __) => const AboutScreen()),
         GoRoute(path: '/maintenance', builder: (_, __) => const AdminMaintenanceScreen()),
         GoRoute(path: '/inspection-template',

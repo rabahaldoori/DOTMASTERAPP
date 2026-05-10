@@ -530,6 +530,26 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ],
 
+                    const SizedBox(height: 28),
+
+                    // ── Register link ────────────────────────────────────
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Builder(builder: (ctx) {
+                        final s = ctx.watch<LocaleProvider>().s;
+                        return Row(children: [
+                          Text(s.dontHaveAccount, style: ctx.af(
+                              fontSize: 13, color: Colors.white38)),
+                          const SizedBox(width: 6),
+                          GestureDetector(
+                            onTap: () => context.go('/register'),
+                            child: Text(s.createAccount, style: ctx.af(
+                                fontSize: 13, color: _cyan,
+                                fontWeight: FontWeight.w700)),
+                          ),
+                        ]);
+                      }),
+                    ]),
+
                     const SizedBox(height: 36),
                   ]),
                 ),

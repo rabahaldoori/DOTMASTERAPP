@@ -74,6 +74,28 @@ class ApiClient {
   static Future<Response> login(String email, String password) =>
       _dio.post(ApiEndpoints.login, data: {'email': email, 'password': password});
 
+  /// Register a new user + company.
+  /// Backend: POST /api/auth/register/
+  /// Fields: email, first_name, last_name, phone, password, password2, company_name
+  static Future<Response> register({
+    required String email,
+    required String firstName,
+    required String lastName,
+    required String phone,
+    required String password,
+    required String password2,
+    required String companyName,
+  }) =>
+      _dio.post(ApiEndpoints.register, data: {
+        'email':        email,
+        'first_name':   firstName,
+        'last_name':    lastName,
+        'phone':        phone,
+        'password':     password,
+        'password2':    password2,
+        'company_name': companyName,
+      });
+
   static Future<Response> getProfile() => _dio.get(ApiEndpoints.me);
 
   static Future<Response> forgotPassword(String email) =>
@@ -446,4 +468,45 @@ class ApiClient {
   /// GET /api/auth/legal/ — returns privacy_policy and terms_of_service
   static Future<Response> getLegalContent() =>
       _dio.get('/api/auth/legal/');
+
+  // ── Subscription / Trial status ──────────────────────────────────────────────
+  /// GET /api/company/subscription/
+  static Future<Response> getSubscription() =>
+      _dio.get('/api/company/subscription/');
+
+  /// GET /api/company/pricing/ — public, returns list of visible plans
+  static Future<Response> getPricing() =>
+      _dio.get('/api/company/pricing/');
+
+  // ── Stripe ──────────────────────────────────────────────────────────────────
+  /// POST /api/company/stripe/checkout/
+  /// Body: { "plan": "starter" | "growth" | "fleet" }
+  /// Returns: { "checkout_url": "https://checkout.stripe.com/pay/cs_..." }
+  static Future<Response> createCheckoutSession(String planSlug) =>
+      _dio.post('/api/company/stripe/checkout/', data: {'plan': planSlug});
+
+  /// POST /api/company/stripe/payment-sheet/
+  /// Returns { customer_id, ephemeral_key_secret, client_secret, publishable_key }
+  static Future<Response> getPaymentSheetData(String planSlug) =>
+      _dio.post('/api/company/stripe/payment-sheet/', data: {'plan': planSlug});
+
+  /// POST /api/company/stripe/confirm-payment/
+  /// Called after Stripe.instance.confirmPayment() succeeds on the client.
+  /// Verifies with Stripe and activates the subscription in our database.
+  static Future<Response> confirmStripePayment({
+    required String paymentIntentId,
+    required String plan,
+  }) =>
+      _dio.post('/api/company/stripe/confirm-payment/', data: {
+        'payment_intent_id': paymentIntentId,
+        'plan': plan,
+      });
+
+  /// GET /api/company/invoices/
+  /// Returns paginated list of Stripe invoices for the authenticated company.
+  static Future<Response> getInvoices({String? startingAfter}) =>
+      _dio.get('/api/company/invoices/', queryParameters: {
+        if (startingAfter != null) 'starting_after': startingAfter,
+      });
 }
+

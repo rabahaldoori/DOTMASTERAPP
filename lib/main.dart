@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:provider/provider.dart';
 import 'core/theme.dart';
@@ -21,6 +22,13 @@ void main() async {
 
   // Initialize API client with JWT interceptor
   ApiClient.init();
+
+  // ── Stripe (publishable key set at runtime from /api/company/stripe/payment-sheet/) ──
+  Stripe.publishableKey = const String.fromEnvironment(
+    'STRIPE_PUBLISHABLE_KEY',
+    defaultValue: 'pk_test_placeholder',   // overridden at checkout time
+  );
+  await Stripe.instance.applySettings();
 
   // ── OneSignal Push Notifications ────────────────────────────────────────
   OneSignal.Debug.setLogLevel(OSLogLevel.none);

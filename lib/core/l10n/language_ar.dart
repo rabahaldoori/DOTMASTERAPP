@@ -638,4 +638,24 @@ class LanguageAr implements AppStrings {
   @override String get tripDetailHourRest        => 'راحة 10 ساعات';
   @override String get tripDetailResume          => 'الاستئناف:';
   @override String get tripDetailRemaining       => 'المتبقي:';
+  // Company registration screen
+  @override String get dontHaveAccount           => 'ليس لديك حساب؟';
+  @override String get createAccount              => 'إنشاء حساب';
+  @override String get registerYourCompany        => 'سجّل شركتك';
+  @override String get companyRegistrationSubtitle => 'ابدأ تجربتك المجانية اليوم — بدون بطاقة ائتمانية';
+  @override String get companyName                => 'اسم الشركة';
+  @override String get phoneNumber                => 'رقم الهاتف';
+  @override String get alreadyHaveAccount         => 'هل لديك حساب بالفعل؟';
+  @override String get signInInstead              => 'تسجيل الدخول';
+  @override String get registrationFailed         => 'فشل التسجيل. يرجى المحاولة مجددًا.';
+  @override String get registrationSuccess        => 'تم إنشاء الحساب! أهلاً بك 🎉';
+  @override String get startFreeTrial             => 'ابدأ التجربة المجانية';
+  @override String get trialBadge                 => 'تجربة مجانية 14 يومًا';
+  @override String get step1PersonalInfo          => 'المعلومات الشخصية';
+  @override String get step2CompanyInfo           => 'معلومات الشركة';
+  @override String get step3Security              => 'الأمان';
+  @override String get next                       => 'التالي';
+  @override String get previous                   => 'رجوع';
+  @override String get passwordMinLength          => 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.';
+  @override String get allFieldsRequired          => 'يرجى ملء جميع الحقول المطلوبة.';
 }

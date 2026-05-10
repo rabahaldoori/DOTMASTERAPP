@@ -650,4 +650,24 @@ abstract class AppStrings {
   String get tripDetailHourRest;
   String get tripDetailResume;
   String get tripDetailRemaining;
+  // Company registration screen
+  String get dontHaveAccount;
+  String get createAccount;
+  String get registerYourCompany;
+  String get companyRegistrationSubtitle;
+  String get companyName;
+  String get phoneNumber;
+  String get alreadyHaveAccount;
+  String get signInInstead;
+  String get registrationFailed;
+  String get registrationSuccess;
+  String get startFreeTrial;
+  String get trialBadge;
+  String get step1PersonalInfo;
+  String get step2CompanyInfo;
+  String get step3Security;
+  String get next;
+  String get previous;
+  String get passwordMinLength;
+  String get allFieldsRequired;
 }

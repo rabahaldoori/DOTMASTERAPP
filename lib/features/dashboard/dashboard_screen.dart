@@ -29,6 +29,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _companyName = 'IFTATrack';
   String _avatarUrl   = '';
 
+  // Trial banner state
+  bool   _isTrialing   = false;
+  int    _daysLeft     = 0;
+  String _trialEndsAt  = '';
+
+
   @override
   void initState() { super.initState(); _load(); }
 
@@ -49,6 +55,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         setState(() => _avatarUrl = url);
       }
     } catch (_) {}
+
+    // Fetch subscription / trial info
+    try {
+      final subRes = await ApiClient.getSubscription();
+      final sub = subRes.data as Map<String, dynamic>;
+      if (mounted && sub['is_trialing'] == true) {
+        setState(() {
+          _isTrialing  = true;
+          _daysLeft    = (sub['days_left'] ?? 0) as int;
+          _trialEndsAt = sub['trial_ends_at']?.toString() ?? '';
+        });
+      }
+    } catch (_) {}
+
     try {
       final results = await Future.wait([
         ApiClient.getTrips(), ApiClient.getFuelLogs(), ApiClient.getIftaReports(),
@@ -133,7 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(children: [
                 Image.asset('assets/images/logo.png', width: 50, height: 50, fit: BoxFit.contain),
                 const SizedBox(width: 8),
-                Text('DOT Master', style: context.af(
+                Text(_companyName.isNotEmpty ? _companyName : 'DOT Master', style: context.af(
                     fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
                 const Spacer(),
                 GestureDetector(
@@ -241,7 +261,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (_loading)
             const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator(color: _blue)))
-          else
+          else ...[
+            // ── Trial banner ──────────────────────────────────────────────
+            if (_isTrialing)
+              SliverToBoxAdapter(
+                child: _TrialBanner(
+                  daysLeft:   _daysLeft,
+                  expiresAt:  _trialEndsAt,
+                ),
+              ),
+
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
               sliver: SliverList(delegate: SliverChildListDelegate([
@@ -336,11 +365,115 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       label: s.noFuelLogsYet),
               ])),
             ),
+          ],
         ]),
       ),
     );
   }
 }
+
+// ── Free-trial banner ──────────────────────────────────────────────────────────
+class _TrialBanner extends StatelessWidget {
+  final int    daysLeft;
+  final String expiresAt;
+  const _TrialBanner({required this.daysLeft, required this.expiresAt});
+
+  String _fmtDate() {
+    if (expiresAt.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(expiresAt).toLocal();
+      const months = ['Jan','Feb','Mar','Apr','May','Jun',
+                      'Jul','Aug','Sep','Oct','Nov','Dec'];
+      return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+    } catch (_) { return ''; }
+  }
+
+  Color get _accentColor {
+    if (daysLeft <= 3) return const Color(0xFFEF4444);
+    if (daysLeft <= 7) return const Color(0xFFF97316);
+    return const Color(0xFF0453CD);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = _accentColor;
+    final expiry = _fmtDate();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // ── Left: clock icon + text ──────────────────────────────────
+          Expanded(
+            child: Row(children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.access_time_rounded, color: accent, size: 14),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Free Trial — $daysLeft ${daysLeft == 1 ? "day" : "days"} remaining',
+                      style: context.af(
+                          fontSize: 12, fontWeight: FontWeight.w700,
+                          color: accent),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (expiry.isNotEmpty)
+                      Text('Expires $expiry', style: context.af(
+                          fontSize: 10, color: const Color(0xFF94A3B8))),
+                  ],
+                ),
+              ),
+            ]),
+          ),
+
+          const SizedBox(width: 10),
+
+          // ── Right: Upgrade button ─────────────────────────────────────
+          GestureDetector(
+            onTap: () => context.push('/subscription'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: accent,
+                borderRadius: BorderRadius.circular(9),
+                boxShadow: [BoxShadow(
+                    color: accent.withValues(alpha: 0.35),
+                    blurRadius: 6, offset: const Offset(0, 3))],
+              ),
+              child: Row(mainAxisSize: MainAxisSize.min, children: [
+                Text('Upgrade Plan', style: context.af(
+                    fontSize: 11, fontWeight: FontWeight.w700,
+                    color: Colors.white)),
+                const SizedBox(width: 4),
+                const Icon(Icons.arrow_forward_rounded,
+                    size: 12, color: Colors.white),
+              ]),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 // ── Hero gradient card ─────────────────────────────────────────────────────────
 class _HeroCard extends StatelessWidget {
