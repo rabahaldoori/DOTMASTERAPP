@@ -140,7 +140,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: CustomScrollView(slivers: [
           // ── Pinned header ─────────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 270,
+            expandedHeight: 320,
             pinned: true,
             stretch: true,
             backgroundColor: _navy,
@@ -201,10 +201,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 4, 20, 0),
+                    padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 12, 20, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
                           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -230,7 +230,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ]),
                         const SizedBox(height: 16),
                         Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                          padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 4),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(16),
