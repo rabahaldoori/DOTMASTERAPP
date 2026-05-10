@@ -393,15 +393,16 @@ class _LoginScreenState extends State<LoginScreen>
                 child: SlideTransition(
                   position: _slide,
                    child: Column(children: [
-                    const SizedBox(height: 0),
-
-                    // ── Logo block ─────────────────────────────────────────
-                    _LogoBlock(),
+                    // ── Logo block (shifted up without changing size) ───────
+                    Transform.translate(
+                      offset: const Offset(0, -28),
+                      child: _LogoBlock(),
+                    ),
                     const SizedBox(height: 12),
 
                     // ── Glass card ─────────────────────────────────────────
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.05),
                         borderRadius: BorderRadius.circular(28),
@@ -447,19 +448,19 @@ class _LoginScreenState extends State<LoginScreen>
                                       fontSize: 12, color: const Color(0xFFFCA5A5)))),
                             ]),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
                         ],
 
                         // Email
                         _FieldLabel(context.watch<LocaleProvider>().s.emailAddress),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         _GlassField(
                           controller: _emailCtrl,
                           hint: 'driver@dotmaster.app',
                           icon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
 
                         // Password
                         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -470,7 +471,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 style: context.af(fontSize: 12, color: _cyan, fontWeight: FontWeight.w600)),
                           ),
                         ]),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         _GlassField(
                           controller: _passCtrl,
                           hint: '••••••••',
@@ -486,7 +487,7 @@ class _LoginScreenState extends State<LoginScreen>
                             onPressed: () => setState(() => _obscure = !_obscure),
                           ),
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 10),
 
                         // Remember me
                         GestureDetector(
@@ -513,7 +514,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 style: context.af(fontSize: 13, color: Colors.white70)),
                           ]),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 10),
 
                         // Sign In Button
                         _SignInButton(loading: _loading, onTap: _login),
@@ -721,22 +722,22 @@ class _GlassField extends StatelessWidget {
     obscureText: obscure,
     keyboardType: keyboardType,
     onSubmitted: onSubmitted,
-    style: context.af(color: _white, fontSize: 14),
+    style: context.af(color: _white, fontSize: 13),
     cursorColor: _cyan,
     decoration: InputDecoration(
       hintText: hint,
-      hintStyle: context.af(color: Colors.white24, fontSize: 14),
-      prefixIcon: Icon(icon, color: Colors.white38, size: 18),
+      hintStyle: context.af(color: Colors.white24, fontSize: 13),
+      prefixIcon: Icon(icon, color: Colors.white38, size: 17),
       suffixIcon: suffix,
       filled: true,
       fillColor: Colors.white.withOpacity(0.06),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.white.withOpacity(0.10)),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _cyan, width: 1.5),
       ),
     ),
