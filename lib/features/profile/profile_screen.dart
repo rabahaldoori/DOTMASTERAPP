@@ -32,8 +32,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic> _user = {};
   bool _loading = true;
 
+  // ── Feature flags (from SiteSettings via legal_content API) ──────────────
+  bool _featureSubscription = true;  // default ON until API responds
+  bool _featureBilling      = true;
+
   @override
-  void initState() { super.initState(); _load(); }
+  void initState() { super.initState(); _load(); _loadFeatureFlags(); }
+
+  /// Loads feature flags from the public legal_content endpoint (no auth needed).
+  Future<void> _loadFeatureFlags() async {
+    try {
+      final res  = await ApiClient.getLegalContent();
+      final data = res.data as Map<String, dynamic>;
+      if (!mounted) return;
+      setState(() {
+        _featureSubscription = data['feature_subscription'] as bool? ?? true;
+        _featureBilling      = data['feature_billing']      as bool? ?? true;
+      });
+    } catch (_) { /* keep defaults */ }
+  }
 
   Future<void> _load() async {
     try {
@@ -1147,25 +1164,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ]),
                   const SizedBox(height: 16),
 
-                  // ── Subscription ───────────────────────────────────────────
-                  _Label('SUBSCRIPTION'),
-                  const SizedBox(height: 8),
-                  _Card(children: [
-                    _MenuItem(
-                      icon: Icons.workspace_premium_rounded,
-                      iconColor: const Color(0xFF7C3AED),
-                      label: 'Subscription & Plans',
-                      onTap: () => context.push('/subscription'),
-                    ),
-                    const _Div(),
-                    _MenuItem(
-                      icon: Icons.receipt_long_rounded,
-                      iconColor: const Color(0xFF0453CD),
-                      label: 'Billing & Invoices',
-                      onTap: () => InvoicesScreen.push(context),
-                    ),
-                  ]),
-                  const SizedBox(height: 16),
+                  // ── Subscription & Billing (controlled by SiteSettings) ───
+                  if (_featureSubscription || _featureBilling) ...[
+                    _Label('SUBSCRIPTION'),
+                    const SizedBox(height: 8),
+                    _Card(children: [
+                      if (_featureSubscription)
+                        _MenuItem(
+                          icon: Icons.workspace_premium_rounded,
+                          iconColor: const Color(0xFF7C3AED),
+                          label: 'Subscription & Plans',
+                          onTap: () => context.push('/subscription'),
+                        ),
+                      if (_featureSubscription && _featureBilling)
+                        const _Div(),
+                      if (_featureBilling)
+                        _MenuItem(
+                          icon: Icons.receipt_long_rounded,
+                          iconColor: const Color(0xFF0453CD),
+                          label: 'Billing & Invoices',
+                          onTap: () => InvoicesScreen.push(context),
+                        ),
+                    ]),
+                    const SizedBox(height: 16),
+                  ],
 
                   // ── Support ────────────────────────────────────────────────
                   _Label(s.support),
