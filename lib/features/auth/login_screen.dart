@@ -34,6 +34,7 @@ class _LoginScreenState extends State<LoginScreen>
   bool _loading    = false;
   bool _bioLoading = false;
   bool _bioVisible = false;          // show button only when canAuthenticate()
+  bool _featureRegistration = true;  // default ON until API responds
   String? _biometricName;            // 'Face ID' | 'Fingerprint' | null
   BiometricType? _biometricType;
   String? _error;
@@ -53,6 +54,18 @@ class _LoginScreenState extends State<LoginScreen>
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic));
     _anim.forward();
     _initBiometric();
+    _loadFeatureFlags();
+  }
+
+  Future<void> _loadFeatureFlags() async {
+    try {
+      final res  = await ApiClient.getLegalContent();
+      final data = res.data as Map<String, dynamic>;
+      if (!mounted) return;
+      setState(() {
+        _featureRegistration = data['feature_registration'] as bool? ?? true;
+      });
+    } catch (_) { /* keep default */ }
   }
 
   Future<void> _initBiometric() async {
@@ -532,7 +545,8 @@ class _LoginScreenState extends State<LoginScreen>
 
                     const SizedBox(height: 28),
 
-                    // ── Register link ────────────────────────────────────
+                    // ── Register link (shown only when registration is enabled) ─
+                    if (_featureRegistration)
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Builder(builder: (ctx) {
                         final s = ctx.watch<LocaleProvider>().s;
