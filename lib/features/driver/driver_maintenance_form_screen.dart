@@ -2,12 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 class DriverMaintenanceFormScreen extends StatefulWidget {
   /// Pass an existing record map to pre-fill (edit mode), or null for new.
@@ -97,6 +99,7 @@ class _DriverMaintenanceFormScreenState
   }
 
   void _showInvoicePicker() {
+    final s = context.read<LocaleProvider>().s;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -112,15 +115,15 @@ class _DriverMaintenanceFormScreenState
                   borderRadius: BorderRadius.circular(2))),
           _InvoiceOption(
               icon: Icons.camera_alt_rounded,
-              label: 'Take a Photo',
+              label: s.takeAPhoto,
               onTap: () { Navigator.pop(context); _pickInvoice('camera'); }),
           _InvoiceOption(
               icon: Icons.photo_library_rounded,
-              label: 'Choose from Gallery',
+              label: s.chooseFromGallery,
               onTap: () { Navigator.pop(context); _pickInvoice('gallery'); }),
           _InvoiceOption(
               icon: Icons.insert_drive_file_rounded,
-              label: 'Browse Files (PDF/Image)',
+              label: s.browseFilesPdfImage,
               onTap: () { Navigator.pop(context); _pickInvoice('file'); }),
           const SizedBox(height: 8),
         ]),
@@ -130,8 +133,9 @@ class _DriverMaintenanceFormScreenState
 
   // ── Save ────────────────────────────────────────────────────────────────────
   Future<void> _save() async {
+    final s = context.read<LocaleProvider>().s;
     if (_titleCtrl.text.trim().isEmpty || _truckId == null) {
-      setState(() => _error = 'Truck and Title are required.');
+      setState(() => _error = s.truckAndTitleRequired);
       return;
     }
     setState(() { _saving = true; _error = null; });
@@ -175,7 +179,7 @@ class _DriverMaintenanceFormScreenState
   // ── Helpers ────────────────────────────────────────────────────────────────
   InputDecoration _dec(String hint) => InputDecoration(
         hintText: hint,
-        hintStyle: GoogleFonts.inter(color: const Color(0xFFCBD5E1), fontSize: 14),
+        hintStyle: context.af(color: const Color(0xFFCBD5E1), fontSize: 14),
         border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
@@ -194,7 +198,7 @@ class _DriverMaintenanceFormScreenState
   Widget _label(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Text(text,
-            style: GoogleFonts.inter(
+            style: context.af(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF64748B),
@@ -208,6 +212,7 @@ class _DriverMaintenanceFormScreenState
 
   @override
   Widget build(BuildContext context) {
+    final s   = context.read<LocaleProvider>().s;
     final top = MediaQuery.of(context).padding.top;
 
     return Scaffold(
@@ -244,8 +249,8 @@ class _DriverMaintenanceFormScreenState
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
                 : Text(
-                    _isEdit ? 'Update Record' : 'Submit Report',
-                    style: GoogleFonts.inter(
+                    _isEdit ? s.updateRecord : s.submitReport,
+                    style: context.af(
                         fontSize: 16, fontWeight: FontWeight.w700)),
           ),
         ),
@@ -276,8 +281,8 @@ class _DriverMaintenanceFormScreenState
                 ),
                 Expanded(
                   child: Text(
-                    _isEdit ? 'Edit Record' : 'Report Maintenance',
-                    style: GoogleFonts.inter(
+                    _isEdit ? s.editRecord : s.reportMaintenance,
+                    style: context.af(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Colors.white),
@@ -309,7 +314,7 @@ class _DriverMaintenanceFormScreenState
                         const SizedBox(width: 8),
                         Expanded(
                             child: Text(_error!,
-                                style: const TextStyle(
+                                style: context.af(
                                     color: Colors.red, fontSize: 13))),
                       ]),
                     ),
@@ -321,10 +326,10 @@ class _DriverMaintenanceFormScreenState
                     children: [
                       Expanded(
                         child: _field(
-                          'TRUCK *',
+                          s.typeTruck,
                           DropdownButtonFormField<String>(
                             value: _truckId,
-                            decoration: _dec('Select truck…'),
+                            decoration: _dec(s.selectTruckHint),
                             isExpanded: true,
                             items: _trucks
                                 .map<DropdownMenuItem<String>>((t) =>
@@ -332,8 +337,7 @@ class _DriverMaintenanceFormScreenState
                                         value: t['id'].toString(),
                                         child: Text(t['label'],
                                             overflow: TextOverflow.ellipsis,
-                                            style: GoogleFonts.inter(
-                                                fontSize: 13))))
+                                            style: context.af(fontSize: 13))))
                                 .toList(),
                             onChanged: (v) =>
                                 setState(() => _truckId = v),
@@ -343,24 +347,24 @@ class _DriverMaintenanceFormScreenState
                       const SizedBox(width: 12),
                       Expanded(
                         child: _field(
-                          'TYPE',
+                          s.typeLabel,
                           DropdownButtonFormField<String>(
                             value: _type,
                             decoration: _dec(''),
                             isExpanded: true,
-                            items: const [
-                              DropdownMenuItem(value: 'oil_change',      child: Text('Oil Change',   style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'tire_rotation',   child: Text('Tires',        style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'brake_service',   child: Text('Brakes',       style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'engine',          child: Text('Engine',       style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'transmission',    child: Text('Transmission', style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'electrical',      child: Text('Electrical',   style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'hvac',            child: Text('HVAC',         style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'suspension',      child: Text('Suspension',   style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'lights',          child: Text('Lights',       style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'windshield',      child: Text('Windshield',   style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'inspection_prep', child: Text('DOT Prep',     style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'other',           child: Text('Other',        style: TextStyle(fontSize: 13))),
+                            items: [
+                              DropdownMenuItem(value: 'oil_change',      child: Text(s.oilChange,          style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'tire_rotation',   child: Text(s.typeTires,          style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'brake_service',   child: Text(s.typeBrakes,         style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'engine',          child: Text(s.typeEngine,         style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'transmission',    child: Text(s.typeTransmission,   style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'electrical',      child: Text(s.typeElectrical,     style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'hvac',            child: Text(s.typeHvac,           style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'suspension',      child: Text(s.typeSuspension,     style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'lights',          child: Text(s.typeLights,         style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'windshield',      child: Text(s.typeWindshield,     style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'inspection_prep', child: Text(s.typeDotPrep,        style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'other',           child: Text(s.typeOther,          style: context.af(fontSize: 13))),
                             ],
                             onChanged: (v) =>
                                 setState(() => _type = v!),
@@ -371,8 +375,8 @@ class _DriverMaintenanceFormScreenState
                   ),
 
                   // Title
-                  _field('TITLE *',
-                      TextField(controller: _titleCtrl, decoration: _dec('e.g. Oil change at 150,000 miles'))),
+                  _field(s.titleRequired,
+                      TextField(controller: _titleCtrl, decoration: _dec(s.titleHint))),
 
                   // Priority + Status
                   Row(
@@ -380,15 +384,15 @@ class _DriverMaintenanceFormScreenState
                     children: [
                       Expanded(
                         child: _field(
-                          'PRIORITY',
+                          s.priority,
                           DropdownButtonFormField<String>(
                             value: _priority,
                             decoration: _dec(''),
-                            items: const [
-                              DropdownMenuItem(value: 'low',      child: Text('Low',      style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'medium',   child: Text('Medium',   style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'high',     child: Text('High',     style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'critical', child: Text('Critical', style: TextStyle(fontSize: 13))),
+                            items: [
+                              DropdownMenuItem(value: 'low',      child: Text(s.priorityLow,    style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'medium',   child: Text(s.priorityMedium, style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'high',     child: Text(s.priorityHigh,   style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'critical', child: Text(s.critical,       style: context.af(fontSize: 13))),
                             ],
                             onChanged: (v) =>
                                 setState(() => _priority = v!),
@@ -398,14 +402,14 @@ class _DriverMaintenanceFormScreenState
                       const SizedBox(width: 12),
                       Expanded(
                         child: _field(
-                          'STATUS',
+                          s.status,
                           DropdownButtonFormField<String>(
                             value: _status,
                             decoration: _dec(''),
-                            items: const [
-                              DropdownMenuItem(value: 'pending',     child: Text('Pending',     style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'in_progress', child: Text('In Progress', style: TextStyle(fontSize: 13))),
-                              DropdownMenuItem(value: 'completed',   child: Text('Completed',   style: TextStyle(fontSize: 13))),
+                            items: [
+                              DropdownMenuItem(value: 'pending',     child: Text(s.pending,         style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'in_progress', child: Text(s.inProgress,      style: context.af(fontSize: 13))),
+                              DropdownMenuItem(value: 'completed',   child: Text(s.statusCompleted, style: context.af(fontSize: 13))),
                             ],
                             onChanged: (v) =>
                                 setState(() => _status = v!),
@@ -417,7 +421,7 @@ class _DriverMaintenanceFormScreenState
 
                   // Date
                   _field(
-                    'DATE PERFORMED',
+                    s.datePerformed,
                     GestureDetector(
                       onTap: () async {
                         HapticFeedback.selectionClick();
@@ -444,8 +448,8 @@ class _DriverMaintenanceFormScreenState
                               size: 16, color: Color(0xFF94A3B8)),
                           const SizedBox(width: 10),
                           Text(
-                            _date ?? 'Select date…',
-                            style: GoogleFonts.inter(
+                            _date ?? s.selectDateHint,
+                            style: context.af(
                               fontSize: 14,
                               color: _date != null
                                   ? const Color(0xFF1E293B)
@@ -462,34 +466,34 @@ class _DriverMaintenanceFormScreenState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                          child: _field('COST (\$)',
+                          child: _field(s.costDollar,
                               TextField(
                                   controller: _costCtrl,
                                   keyboardType: TextInputType.number,
                                   decoration: _dec('0.00')))),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: _field('ODOMETER (MI)',
+                          child: _field(s.odometerMi,
                               TextField(
                                   controller: _mileCtrl,
                                   keyboardType: TextInputType.number,
-                                  decoration: _dec('miles')))),
+                                  decoration: _dec(s.miles)))),
                     ],
                   ),
 
                   // Vendor
-                  _field('VENDOR / SHOP',
-                      TextField(controller: _vendorCtrl, decoration: _dec("Joe's Auto Shop"))),
+                  _field(s.vendorShop,
+                      TextField(controller: _vendorCtrl, decoration: _dec(s.vendorShopHint))),
 
                   // Description
-                  _field('DESCRIPTION',
+                  _field(s.description,
                       TextField(
                           controller: _descCtrl,
                           maxLines: 4,
-                          decoration: _dec('Details about the maintenance issue…'))),
+                          decoration: _dec(s.descriptionHint))),
 
                   // Invoice Upload
-                  _label('INVOICE / RECEIPT'),
+                  _label(s.invoiceReceipt),
                   const SizedBox(height: 6),
                   GestureDetector(
                     onTap: _showInvoicePicker,
@@ -525,12 +529,12 @@ class _DriverMaintenanceFormScreenState
                                     children: [
                                       Text(p.basename(_invoiceFile!.path),
                                           overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.inter(
+                                          style: context.af(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
                                               color: const Color(0xFF1E293B))),
-                                      Text('Tap to change',
-                                          style: GoogleFonts.inter(
+                                      Text(s.tapToChange,
+                                          style: context.af(
                                               fontSize: 11,
                                               color: const Color(0xFF94A3B8))),
                                     ]),
@@ -547,14 +551,14 @@ class _DriverMaintenanceFormScreenState
                               const Icon(Icons.upload_file_rounded,
                                   size: 32, color: Color(0xFFCBD5E1)),
                               const SizedBox(height: 8),
-                              Text('Tap to attach invoice',
-                                  style: GoogleFonts.inter(
+                              Text(s.tapAttachInvoice,
+                                  style: context.af(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: const Color(0xFF94A3B8))),
                               const SizedBox(height: 4),
-                              Text('PDF, JPG or PNG',
-                                  style: GoogleFonts.inter(
+                              Text(s.pdfJpgPng,
+                                  style: context.af(
                                       fontSize: 11,
                                       color: const Color(0xFFCBD5E1))),
                             ]),
@@ -566,8 +570,8 @@ class _DriverMaintenanceFormScreenState
                       const Icon(Icons.check_circle_outline_rounded,
                           size: 14, color: Color(0xFF22C55E)),
                       const SizedBox(width: 6),
-                      Text('Existing invoice on file',
-                          style: GoogleFonts.inter(
+                      Text(s.existingInvoiceOnFile,
+                          style: context.af(
                               fontSize: 12, color: const Color(0xFF22C55E))),
                     ]),
                   ],
@@ -599,7 +603,7 @@ class _InvoiceOption extends StatelessWidget {
           child: Icon(icon, color: const Color(0xFF031634), size: 22),
         ),
         title: Text(label,
-            style: GoogleFonts.inter(
+            style: context.af(
                 fontWeight: FontWeight.w600, fontSize: 14,
                 color: const Color(0xFF1E293B))),
         trailing: const Icon(Icons.chevron_right_rounded,
@@ -608,34 +612,5 @@ class _InvoiceOption extends StatelessWidget {
           HapticFeedback.selectionClick();
           onTap();
         },
-      );
-}
-
-class _SourceChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _SourceChip({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        child: Column(children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, size: 22, color: const Color(0xFF475569)),
-          ),
-          const SizedBox(height: 4),
-          Text(label,
-              style: GoogleFonts.inter(
-                  fontSize: 11, color: const Color(0xFF64748B),
-                  fontWeight: FontWeight.w600)),
-        ]),
       );
 }

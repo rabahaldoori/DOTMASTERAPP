@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../core/api_client.dart';
-import '../../core/theme.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 const _navy = Color(0xFF031634);
 const _blue = Color(0xFF3B82F6);
@@ -20,6 +21,7 @@ class _TripsScreenState extends State<TripsScreen> {
   List _trips = [];
   List _filtered = [];
   bool _loading = true;
+  // Internal filter key — always compare against these constants, not translated labels
   String _filter = 'All';
   String _search = '';
   double _totalMiles = 0;
@@ -84,7 +86,16 @@ class _TripsScreenState extends State<TripsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
     final bottom = MediaQuery.of(context).padding.bottom;
+
+    // Filter tabs: keys are fixed English strings, labels are localized
+    final filters = [
+      ('All',       s.filterAll),
+      ('Active',    s.active),
+      ('Completed', s.completed),
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
       body: RefreshIndicator(
@@ -98,13 +109,13 @@ class _TripsScreenState extends State<TripsScreen> {
               pinned: true,
               backgroundColor: _navy,
               foregroundColor: Colors.white,
-              title: Text('Trips', style: GoogleFonts.inter(
+              title: Text(s.navTrips, style: context.af(
                   fontWeight: FontWeight.w800, color: Colors.white, fontSize: 17)),
               actions: [
                 IconButton(
                   icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
                   onPressed: () {},
-                  tooltip: 'New Trip',
+                  tooltip: s.newTrip,
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(
@@ -124,7 +135,7 @@ class _TripsScreenState extends State<TripsScreen> {
                           : Row(children: [
                               _HeaderStat(
                                 value: '${_trips.length}',
-                                label: 'Total Trips',
+                                label: s.totalTrips,
                                 icon: Icons.route_rounded,
                               ),
                               _headerDiv(),
@@ -132,22 +143,22 @@ class _TripsScreenState extends State<TripsScreen> {
                                 value: _totalMiles > 0
                                     ? '${(_totalMiles / 1000).toStringAsFixed(1)}K'
                                     : '0',
-                                label: 'Total Miles',
+                                label: s.totalMiles,
                                 icon: Icons.speed_rounded,
                               ),
                               _headerDiv(),
                               _HeaderStat(
                                 value: '$_stateCount',
-                                label: 'States',
+                                label: s.states,
                                 icon: Icons.map_outlined,
                               ),
                               _headerDiv(),
                               _HeaderStat(
                                 value: '${_trips.where((t) {
-                                  final s = (t['status'] ?? '').toString().toLowerCase();
-                                  return s == 'active' || s == 'in_progress';
+                                  final st = (t['status'] ?? '').toString().toLowerCase();
+                                  return st == 'active' || st == 'in_progress';
                                 }).length}',
-                                label: 'Active',
+                                label: s.active,
                                 icon: Icons.local_shipping_rounded,
                                 color: const Color(0xFF22C55E),
                               ),
@@ -175,11 +186,12 @@ class _TripsScreenState extends State<TripsScreen> {
                     ),
                     child: TextField(
                       onChanged: (v) { _search = v; _applyFilter(); },
-                      style: GoogleFonts.inter(fontSize: 13, color: _navy),
+                      style: context.af(fontSize: 13, color: _navy),
                       decoration: InputDecoration(
-                        hintText: 'Search by truck, driver, state…',
-                        hintStyle: GoogleFonts.inter(fontSize: 13, color: _grey),
-                        prefixIcon: const Icon(Icons.search_rounded, size: 18, color: Color(0xFF94A3B8)),
+                        hintText: s.searchByTruckDriverState,
+                        hintStyle: context.af(fontSize: 13, color: _grey),
+                        prefixIcon: const Icon(Icons.search_rounded, size: 18,
+                            color: Color(0xFF94A3B8)),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(vertical: 11),
                       ),
@@ -190,27 +202,27 @@ class _TripsScreenState extends State<TripsScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: ['All', 'Active', 'Completed'].map((f) =>
+                      children: filters.map((f) =>
                         GestureDetector(
-                          onTap: () { setState(() => _filter = f); _applyFilter(); },
+                          onTap: () { setState(() => _filter = f.$1); _applyFilter(); },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 160),
                             margin: const EdgeInsets.only(right: 8),
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 7),
                             decoration: BoxDecoration(
-                              color: _filter == f ? _navy : Colors.white,
+                              color: _filter == f.$1 ? _navy : Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                  color: _filter == f
+                                  color: _filter == f.$1
                                       ? _navy : const Color(0xFFE2E8F0)),
-                              boxShadow: _filter == f ? [BoxShadow(
+                              boxShadow: _filter == f.$1 ? [BoxShadow(
                                   color: _navy.withOpacity(0.18),
                                   blurRadius: 8, offset: const Offset(0, 3))] : [],
                             ),
-                            child: Text(f, style: GoogleFonts.inter(
+                            child: Text(f.$2, style: context.af(
                                 fontSize: 13, fontWeight: FontWeight.w600,
-                                color: _filter == f ? Colors.white : _grey)),
+                                color: _filter == f.$1 ? Colors.white : _grey)),
                           ),
                         )
                       ).toList(),
@@ -232,11 +244,11 @@ class _TripsScreenState extends State<TripsScreen> {
                     Icon(Icons.route_outlined, size: 52,
                         color: _grey.withOpacity(0.4)),
                     const SizedBox(height: 12),
-                    Text('No trips found', style: GoogleFonts.inter(
+                    Text(s.noTripsFound, style: context.af(
                         color: _grey, fontSize: 15, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 4),
-                    Text('Try adjusting your filter or search',
-                        style: GoogleFonts.inter(color: _grey, fontSize: 13)),
+                    Text(s.adjustFilterSearch,
+                        style: context.af(color: _grey, fontSize: 13)),
                   ]),
                 ),
               )
@@ -274,16 +286,15 @@ class _HeaderStat extends StatelessWidget {
     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Icon(icon, size: 14, color: color.withOpacity(0.7)),
       const SizedBox(height: 3),
-      // FittedBox auto-shrinks the value if the column is too narrow
       FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text(value, style: GoogleFonts.inter(fontSize: 15,
+        child: Text(value, style: context.af(fontSize: 15,
             fontWeight: FontWeight.w800, color: color)),
       ),
       const SizedBox(height: 1),
       FittedBox(
         fit: BoxFit.scaleDown,
-        child: Text(label, style: GoogleFonts.inter(fontSize: 9,
+        child: Text(label, style: context.af(fontSize: 9,
             color: Colors.white38, letterSpacing: 0.3)),
       ),
     ]),
@@ -297,15 +308,18 @@ class _TripCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status    = (trip['status'] ?? '').toString().toLowerCase();
-    final isActive  = status == 'active' || status == 'in_progress';
-    final isDone    = status == 'completed' || status == 'complete';
+    final s      = context.watch<LocaleProvider>().s;
+    final status = (trip['status'] ?? '').toString().toLowerCase();
+    final isActive = status == 'active' || status == 'in_progress';
+    final isDone   = status == 'completed' || status == 'complete';
 
     final Color statusColor = isActive
         ? const Color(0xFF0891B2)
         : isDone ? const Color(0xFF059669) : _grey;
-    final String statusLabel = isActive ? 'ACTIVE'
-        : isDone ? 'COMPLETE' : status.toUpperCase().replaceAll('_', ' ');
+    final String statusLabel = isActive
+        ? s.statusActive
+        : isDone ? s.statusComplete
+        : status.toUpperCase().replaceAll('_', ' ');
 
     final truckId  = trip['truck_unit'] ?? trip['truck'] ?? '—';
     final tripNum  = trip['trip_number']?.toString() ?? '';
@@ -316,14 +330,11 @@ class _TripCard extends StatelessWidget {
         (trip['total_miles'] ?? trip['miles_driven'] ?? 0).toString()) ?? 0;
     final states   = trip['states_traveled']?.toString() ?? '';
     final startDate = _fmt(trip['start_date']);
-
     final id = int.tryParse(trip['id']?.toString() ?? '') ?? 0;
 
     return GestureDetector(
       onTap: () {
-        if (id > 0) {
-          context.push('/trips/$id', extra: trip);
-        }
+        if (id > 0) context.push('/trips/$id', extra: trip);
       },
       child: Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -352,11 +363,11 @@ class _TripCard extends StatelessWidget {
             Expanded(child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('TRUCK-${truckId.toString().toUpperCase()}',
-                  style: GoogleFonts.inter(fontSize: 13,
+                  style: context.af(fontSize: 13,
                       fontWeight: FontWeight.w800, color: _navy)),
               Row(children: [
                 if (tripNum.isNotEmpty) ...[
-                  Text('Trip #$tripNum', style: GoogleFonts.inter(
+                  Text('Trip #$tripNum', style: context.af(
                       fontSize: 11, color: _grey)),
                   const SizedBox(width: 6),
                   Container(width: 3, height: 3,
@@ -365,7 +376,7 @@ class _TripCard extends StatelessWidget {
                           shape: BoxShape.circle)),
                   const SizedBox(width: 6),
                 ],
-                Text(startDate, style: GoogleFonts.inter(
+                Text(startDate, style: context.af(
                     fontSize: 11, color: _grey)),
               ]),
             ])),
@@ -378,13 +389,13 @@ class _TripCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: statusColor.withOpacity(0.3)),
                 ),
-                child: Text(statusLabel, style: GoogleFonts.inter(
+                child: Text(statusLabel, style: context.af(
                     fontSize: 9, fontWeight: FontWeight.w700,
                     color: statusColor, letterSpacing: 0.4)),
               ),
               const SizedBox(height: 4),
-              Text(miles > 0 ? '${miles.toStringAsFixed(0)} mi' : '—',
-                  style: GoogleFonts.inter(fontSize: 13,
+              Text(miles > 0 ? '${miles.toStringAsFixed(0)} ${s.miles}' : '—',
+                  style: context.af(fontSize: 13,
                       fontWeight: FontWeight.w800, color: _navy)),
             ]),
           ]),
@@ -403,7 +414,7 @@ class _TripCard extends StatelessWidget {
                 _LocDot(isStart: true),
                 const SizedBox(width: 8),
                 Text(origin.isNotEmpty ? origin.toUpperCase() : '—',
-                    style: GoogleFonts.inter(fontSize: 12,
+                    style: context.af(fontSize: 12,
                         fontWeight: FontWeight.w700, color: _navy)),
                 Expanded(child: Row(children: [
                   Expanded(child: Container(height: 1,
@@ -415,7 +426,7 @@ class _TripCard extends StatelessWidget {
                       margin: const EdgeInsets.symmetric(horizontal: 8))),
                 ])),
                 Text(dest.isNotEmpty ? dest.toUpperCase() : '—',
-                    style: GoogleFonts.inter(fontSize: 12,
+                    style: context.af(fontSize: 12,
                         fontWeight: FontWeight.w700, color: _navy)),
                 const SizedBox(width: 8),
                 _LocDot(isStart: false),
@@ -431,7 +442,7 @@ class _TripCard extends StatelessWidget {
                 const Icon(Icons.person_outline_rounded, size: 13,
                     color: Color(0xFF94A3B8)),
                 const SizedBox(width: 4),
-                Text(driver, style: GoogleFonts.inter(fontSize: 11, color: _grey)),
+                Text(driver, style: context.af(fontSize: 11, color: _grey)),
                 if (states.isNotEmpty) const SizedBox(width: 10),
               ],
               if (states.isNotEmpty) ...[
@@ -439,15 +450,15 @@ class _TripCard extends StatelessWidget {
                     color: Color(0xFF94A3B8)),
                 const SizedBox(width: 4),
                 Expanded(child: Text(states,
-                    style: GoogleFonts.inter(fontSize: 11, color: _grey),
+                    style: context.af(fontSize: 11, color: _grey),
                     maxLines: 1, overflow: TextOverflow.ellipsis)),
               ],
             ]),
           ],
         ]),
-      ),    // closes Container's child: Padding
-    ),      // closes Container
-    );      // closes GestureDetector
+      ),
+      ),
+    );
   }
 
   String _fmt(dynamic d) {

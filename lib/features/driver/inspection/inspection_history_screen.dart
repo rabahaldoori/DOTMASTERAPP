@@ -1,10 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../core/api_client.dart';
-
+import '../../../core/l10n/locale_provider.dart';
+import '../../../core/font_ext.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const _navy   = Color(0xFF031634);
@@ -57,29 +58,33 @@ class _State extends State<InspectionHistoryScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = 'Failed to load. Tap to retry.'; _loading = false; });
+      if (mounted) {
+        final s = context.read<LocaleProvider>().s;
+        setState(() { _error = s.failedToLoadTapRetry; _loading = false; });
+      }
     }
   }
 
   // Group inspections by date string
   Map<String, List<Map<String, dynamic>>> get _grouped {
+    final s = context.read<LocaleProvider>().s;
     final map = <String, List<Map<String, dynamic>>>{};
     for (final insp in _inspections) {
       final raw = insp['submitted_at']?.toString() ?? '';
       final dt = DateTime.tryParse(raw)?.toLocal();
       final key = dt != null
-          ? _formatDateKey(dt)
+          ? _formatDateKey(dt, s)
           : 'Unknown Date';
       map.putIfAbsent(key, () => []).add(insp);
     }
     return map;
   }
 
-  String _formatDateKey(DateTime dt) {
+  String _formatDateKey(DateTime dt, dynamic s) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final d     = DateTime(dt.year, dt.month, dt.day);
-    if (d == today)                           return 'Today';
+    if (d == today)                           return s.today;
     if (d == today.subtract(const Duration(days: 1))) return 'Yesterday';
     return '${_month(dt.month)} ${dt.day}, ${dt.year}';
   }
@@ -130,7 +135,7 @@ class _State extends State<InspectionHistoryScreen> {
       widgets.add(Padding(
         padding: const EdgeInsets.only(top: 4, bottom: 10),
         child: Row(children: [
-          Text(entry.key, style: GoogleFonts.inter(
+          Text(entry.key, style: context.af(
               fontSize: 12, fontWeight: FontWeight.w700,
               color: _grey, letterSpacing: 0.5)),
           const SizedBox(width: 8),
@@ -139,11 +144,11 @@ class _State extends State<InspectionHistoryScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: _blue.withOpacity(0.08),
+              color: _blue.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text('${entry.value.length}',
-                style: GoogleFonts.inter(fontSize: 11,
+                style: context.af(fontSize: 11,
                     fontWeight: FontWeight.w700, color: _blue)),
           ),
         ]),
@@ -174,140 +179,149 @@ class _State extends State<InspectionHistoryScreen> {
     }).length;
   }
 
-  Widget _buildAppBar() => SliverAppBar(
-    pinned: true,
-    expandedHeight: 230,
-    backgroundColor: _navy,
-    systemOverlayStyle: SystemUiOverlayStyle.light,
-    surfaceTintColor: Colors.transparent,
-    elevation: 0,
-    leading: IconButton(
-      icon: Container(
-        width: 34, height: 34,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(9)),
-        child: const Icon(Icons.arrow_back_ios_new_rounded, color: _white, size: 16),
-      ),
-      onPressed: () => context.pop(),
-    ),
-    actions: [
-      IconButton(
+  Widget _buildAppBar() {
+    final s = context.read<LocaleProvider>().s;
+    return SliverAppBar(
+      pinned: true,
+      expandedHeight: 230,
+      backgroundColor: _navy,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
         icon: Container(
           width: 34, height: 34,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.12),
+            color: Colors.white.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(9)),
-          child: const Icon(Icons.refresh_rounded, color: _white, size: 18),
+          child: const Icon(Icons.arrow_back_ios_new_rounded, color: _white, size: 16),
         ),
-        onPressed: _load,
-        tooltip: 'Refresh',
+        onPressed: () => context.pop(),
       ),
-      const SizedBox(width: 8),
-    ],
-    flexibleSpace: FlexibleSpaceBar(
-      collapseMode: CollapseMode.parallax,
-      background: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF020D1F), Color(0xFF0A2550), Color(0xFF0453CD)],
-            begin: Alignment.topLeft, end: Alignment.bottomRight,
+      actions: [
+        IconButton(
+          icon: Container(
+            width: 34, height: 34,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(9)),
+            child: const Icon(Icons.refresh_rounded, color: _white, size: 18),
           ),
+          onPressed: _load,
+          tooltip: s.retry,
         ),
-        child: Stack(children: [
-          // Decorative orbs
-          Positioned(right: -30, top: -30,
-            child: Container(width: 150, height: 150,
-              decoration: BoxDecoration(shape: BoxShape.circle,
-                color: _cyan.withOpacity(0.08)))),
-          Positioned(left: -20, bottom: 30,
-            child: Container(width: 90, height: 90,
-              decoration: BoxDecoration(shape: BoxShape.circle,
-                color: _blue.withOpacity(0.10)))),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Badge + title
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _cyan.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _cyan.withOpacity(0.35))),
-                      child: Text(widget.isAdmin ? 'ADMIN' : 'DRIVER',
-                          style: GoogleFonts.inter(
-                              fontSize: 10, fontWeight: FontWeight.w700,
-                              color: _cyan, letterSpacing: 0.8)),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 36, height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.10),
-                        borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.fact_check_rounded,
-                          color: _white, size: 18)),
-                  ]),
-                  const SizedBox(height: 6),
-                  Text(widget.isAdmin ? 'All Inspections' : 'Inspection History',
-                      style: GoogleFonts.inter(
-                          fontSize: 22, fontWeight: FontWeight.w900,
-                          color: _white, letterSpacing: -0.3)),
-                  const SizedBox(height: 16),
-                  // ── Stats row ─────────────────────────────────────────
-                  if (!_loading) Row(children: [
-                    _HeaderStat(label: 'Total',  value: '$_totalCount',  color: _white),
-                    const SizedBox(width: 8),
-                    _HeaderStat(label: 'Passed', value: '$_passedCount', color: const Color(0xFF4ADE80)),
-                    const SizedBox(width: 8),
-                    _HeaderStat(label: 'Failed', value: '$_failedCount', color: const Color(0xFFF87171)),
-                    const SizedBox(width: 8),
-                    _HeaderStat(label: 'Today',  value: '$_todayCount',  color: const Color(0xFFFBBF24)),
-                  ]),
-                ],
-              ),
+        const SizedBox(width: 8),
+      ],
+      flexibleSpace: FlexibleSpaceBar(
+        collapseMode: CollapseMode.parallax,
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF020D1F), Color(0xFF0A2550), Color(0xFF0453CD)],
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
             ),
           ),
-        ]),
+          child: Stack(children: [
+            // Decorative orbs
+            Positioned(right: -30, top: -30,
+              child: Container(width: 150, height: 150,
+                decoration: BoxDecoration(shape: BoxShape.circle,
+                  color: _cyan.withValues(alpha: 0.08)))),
+            Positioned(left: -20, bottom: 30,
+              child: Container(width: 90, height: 90,
+                decoration: BoxDecoration(shape: BoxShape.circle,
+                  color: _blue.withValues(alpha: 0.10)))),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Badge + title
+                    Row(children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _cyan.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: _cyan.withValues(alpha: 0.35))),
+                        child: Text(widget.isAdmin ? 'ADMIN' : 'DRIVER',
+                            style: context.af(
+                                fontSize: 10, fontWeight: FontWeight.w700,
+                                color: _cyan, letterSpacing: 0.8)),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(10)),
+                        child: const Icon(Icons.fact_check_rounded,
+                            color: _white, size: 18)),
+                    ]),
+                    const SizedBox(height: 6),
+                    Text(widget.isAdmin ? s.allInspections : s.inspectionHistory,
+                        style: context.af(
+                            fontSize: 22, fontWeight: FontWeight.w900,
+                            color: _white, letterSpacing: -0.3)),
+                    const SizedBox(height: 16),
+                    // ── Stats row ─────────────────────────────────────────
+                    if (!_loading) Row(children: [
+                      _HeaderStat(label: s.totalInspections,  value: '$_totalCount',  color: _white),
+                      const SizedBox(width: 8),
+                      _HeaderStat(label: s.passed, value: '$_passedCount', color: const Color(0xFF4ADE80)),
+                      const SizedBox(width: 8),
+                      _HeaderStat(label: s.failed, value: '$_failedCount', color: const Color(0xFFF87171)),
+                      const SizedBox(width: 8),
+                      _HeaderStat(label: s.today,  value: '$_todayCount',  color: const Color(0xFFFBBF24)),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+          ]),
+        ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _buildError() => Center(
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      const Icon(Icons.error_outline, size: 48, color: Colors.red),
-      const SizedBox(height: 12),
-      Text(_error!, style: GoogleFonts.inter(color: _grey)),
-      const SizedBox(height: 16),
-      ElevatedButton(
-        onPressed: _load,
-        style: ElevatedButton.styleFrom(backgroundColor: _blue,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-        child: Text('Retry', style: GoogleFonts.inter(color: _white))),
-    ]),
-  );
+  Widget _buildError() {
+    final s = context.read<LocaleProvider>().s;
+    return Center(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+        const SizedBox(height: 12),
+        Text(_error!, style: context.af(color: _grey)),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _load,
+          style: ElevatedButton.styleFrom(backgroundColor: _blue,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+          child: Text(s.retry, style: context.af(color: _white))),
+      ]),
+    );
+  }
 
-  Widget _buildEmpty() => Center(
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(width: 80, height: 80,
-        decoration: BoxDecoration(
-          color: _blue.withOpacity(0.07),
-          borderRadius: BorderRadius.circular(24)),
-        child: const Icon(Icons.fact_check_outlined, size: 40, color: _blue)),
-      const SizedBox(height: 18),
-      Text('No inspections yet', style: GoogleFonts.inter(
-          fontSize: 18, fontWeight: FontWeight.w700, color: _navy)),
-      const SizedBox(height: 6),
-      Text('Complete your first pre-trip inspection\nto see history here.',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.inter(fontSize: 13, color: _grey, height: 1.5)),
-    ]),
-  );
+  Widget _buildEmpty() {
+    final s = context.read<LocaleProvider>().s;
+    return Center(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 80, height: 80,
+          decoration: BoxDecoration(
+            color: _blue.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(24)),
+          child: const Icon(Icons.fact_check_outlined, size: 40, color: _blue)),
+        const SizedBox(height: 18),
+        Text(s.noInspectionsYet, style: context.af(
+            fontSize: 18, fontWeight: FontWeight.w700, color: _navy)),
+        const SizedBox(height: 6),
+        Text(s.completeFirstInspection,
+            textAlign: TextAlign.center,
+            style: context.af(fontSize: 13, color: _grey, height: 1.5)),
+      ]),
+    );
+  }
 }
 
 // ── Single inspection card ─────────────────────────────────────────────────────
@@ -319,6 +333,7 @@ class _InspectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s        = context.read<LocaleProvider>().s;
     final passed   = (insp['passed_items'] ?? 0) as int;
     final failed   = (insp['failed_items'] ?? 0) as int;
     final total    = (insp['total_items'] ?? passed + failed) as int;
@@ -339,10 +354,10 @@ class _InspectionCard extends StatelessWidget {
           color: _white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(color: allPassed
-              ? const Color(0xFF86EFAC).withOpacity(0.6)
-              : const Color(0xFFFCA5A5).withOpacity(0.6)),
+              ? const Color(0xFF86EFAC).withValues(alpha: 0.6)
+              : const Color(0xFFFCA5A5).withValues(alpha: 0.6)),
           boxShadow: [BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10, offset: const Offset(0, 3))],
         ),
         child: Padding(
@@ -353,9 +368,9 @@ class _InspectionCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: _blue.withOpacity(0.08),
+                  color: _blue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20)),
-                child: Text(typeLabel, style: GoogleFonts.inter(
+                child: Text(typeLabel, style: context.af(
                     fontSize: 10, fontWeight: FontWeight.w800,
                     color: _blue, letterSpacing: 0.6)),
               ),
@@ -363,7 +378,7 @@ class _InspectionCard extends StatelessWidget {
               if (timeStr.isNotEmpty) ...[
                 const Icon(Icons.schedule_rounded, size: 13, color: _grey),
                 const SizedBox(width: 4),
-                Text(timeStr, style: GoogleFonts.inter(
+                Text(timeStr, style: context.af(
                     fontSize: 12, color: _grey, fontWeight: FontWeight.w500)),
                 const SizedBox(width: 10),
               ],
@@ -391,16 +406,16 @@ class _InspectionCard extends StatelessWidget {
                   color: _white, size: 22)),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('$inspNum', style: GoogleFonts.inter(
+                Text('$inspNum', style: context.af(
                     fontSize: 16, fontWeight: FontWeight.w800, color: _navy)),
                 if (showDriver && insp['driver_name'] != null)
-                  Text(insp['driver_name'].toString(), style: GoogleFonts.inter(
+                  Text(insp['driver_name'].toString(), style: context.af(
                       fontSize: 12, color: _blue, fontWeight: FontWeight.w600))
                 else if (insp['truck'] != null)
-                  Text('Truck #${insp['truck']}', style: GoogleFonts.inter(
+                  Text('${s.truck} #${insp['truck']}', style: context.af(
                       fontSize: 12, color: _grey, fontWeight: FontWeight.w500)),
                 if (showDriver && insp['truck'] != null)
-                  Text('Truck #${insp['truck']}', style: GoogleFonts.inter(
+                  Text('${s.truck} #${insp['truck']}', style: context.af(
                       fontSize: 11, color: _grey, fontWeight: FontWeight.w400)),
               ])),
               // Score badge
@@ -408,10 +423,10 @@ class _InspectionCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: allPassed
-                      ? _green.withOpacity(0.10)
-                      : _red.withOpacity(0.10),
+                      ? _green.withValues(alpha: 0.10)
+                      : _red.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12)),
-                child: Text('$score%', style: GoogleFonts.inter(
+                child: Text('$score%', style: context.af(
                     fontSize: 18, fontWeight: FontWeight.w900,
                     color: allPassed ? _green : _red)),
               ),
@@ -431,11 +446,11 @@ class _InspectionCard extends StatelessWidget {
             const SizedBox(height: 10),
             // Stats row
             Row(children: [
-              _Stat(Icons.check_circle_rounded, '$passed Passed', _green),
+              _Stat(Icons.check_circle_rounded, '$passed ${s.passed}', _green),
               const SizedBox(width: 16),
-              _Stat(Icons.cancel_rounded, '$failed Failed', _red),
+              _Stat(Icons.cancel_rounded, '$failed ${s.failed}', _red),
               const SizedBox(width: 16),
-              _Stat(Icons.checklist_rounded, '$total Total', _grey),
+              _Stat(Icons.checklist_rounded, '$total ${s.totalInspections}', _grey),
             ]),
           ]),
         ),
@@ -457,7 +472,7 @@ class _Stat extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
     Icon(icon, size: 13, color: color),
     const SizedBox(width: 4),
-    Text(label, style: GoogleFonts.inter(
+    Text(label, style: context.af(
         fontSize: 11, color: color, fontWeight: FontWeight.w600)),
   ]);
 }
@@ -473,17 +488,17 @@ class _HeaderStat extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.09),
+        color: Colors.white.withValues(alpha: 0.09),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.10)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
       ),
       child: Column(children: [
-        Text(value, style: GoogleFonts.inter(
+        Text(value, style: context.af(
             fontSize: 20, fontWeight: FontWeight.w900, color: color)),
         const SizedBox(height: 2),
-        Text(label, style: GoogleFonts.inter(
+        Text(label, style: context.af(
             fontSize: 10, fontWeight: FontWeight.w500,
-            color: Colors.white.withOpacity(0.60))),
+            color: Colors.white.withValues(alpha: 0.60))),
       ]),
     ),
   );

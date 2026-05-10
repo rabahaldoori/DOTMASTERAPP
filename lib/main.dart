@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:provider/provider.dart';
 import 'core/theme.dart';
 import 'core/router.dart';
 import 'core/api_client.dart';
+import 'core/l10n/locale_provider.dart';
 
 const _kOneSignalAppId = 'eecc27a7-0556-4f6f-a17c-73a6a34c467e';
 
@@ -20,19 +23,20 @@ void main() async {
   ApiClient.init();
 
   // ── OneSignal Push Notifications ────────────────────────────────────────
-  OneSignal.Debug.setLogLevel(OSLogLevel.none);      // disable verbose logs in prod
+  OneSignal.Debug.setLogLevel(OSLogLevel.none);
   OneSignal.initialize(_kOneSignalAppId);
-
-  // Request permission (iOS will show native prompt; Android 13+ too)
   OneSignal.Notifications.requestPermission(true);
 
-  // When user logs in, tag them with their role & company for targeted pushes
   OneSignal.Notifications.addClickListener((event) {
-    // Additional click handling can go here
     debugPrint('🔔 OneSignal notification clicked: ${event.notification.title}');
   });
 
-  runApp(const IFTATrackApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => LocaleProvider(),
+      child: const IFTATrackApp(),
+    ),
+  );
 }
 
 class IFTATrackApp extends StatelessWidget {
@@ -40,11 +44,28 @@ class IFTATrackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = context.watch<LocaleProvider>();
+
     return MaterialApp.router(
-      title: 'IFTATrack',
+      title: 'DOT Master',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: localeProvider.locale.languageCode == 'ar'
+          ? AppTheme.arabic
+          : AppTheme.light,
       routerConfig: router,
+
+      // ── Localization ──────────────────────────────────────────────────────
+      locale: localeProvider.locale,
+      supportedLocales: const [
+        Locale('en', 'US'),
+        Locale('ar', 'SA'),
+        Locale('es', 'ES'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }

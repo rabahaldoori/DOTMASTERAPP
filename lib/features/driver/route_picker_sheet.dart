@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/font_ext.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/locale_provider.dart';
 
 // ─── Data model ───────────────────────────────────────────────────────────────
 class RouteOption {
-  final String label;        // "Fastest", "Avoid Tolls", "Avoid Highways"
-  final String viaSummary;   // highway name from Google
+  final String label;        // internal key: "Fastest", "Avoid Tolls", "Avoid Highways"
+  final String viaSummary;
   final double totalMiles;
   final String durationText;
   final int durationSeconds;
@@ -31,8 +34,6 @@ class RouteOption {
 }
 
 // ─── Public entry point ───────────────────────────────────────────────────────
-/// Shows the route picker bottom sheet.
-/// Returns the chosen [RouteOption] or null if dismissed.
 Future<RouteOption?> showRoutePicker(
   BuildContext context, {
   required String origin,
@@ -72,25 +73,20 @@ class _RoutePickerSheetState extends State<_RoutePickerSheet> {
     _fetchRoutes();
   }
 
-  // ── Fetch 3 route variants in parallel ─────────────────────────────────────
   Future<void> _fetchRoutes() async {
     setState(() { _loading = true; _error = null; });
-
     try {
       final results = await Future.wait([
         _calcRoute('Fastest',        avoidTolls: false, avoidHighways: false),
         _calcRoute('Avoid Tolls',    avoidTolls: true,  avoidHighways: false),
         _calcRoute('Avoid Highways', avoidTolls: false, avoidHighways: true),
       ]);
-
-      // Remove nulls and deduplicate by duration bucket (5-min windows)
       final seen = <int>{};
       final unique = results.whereType<RouteOption>().where((r) {
         final key = (r.durationSeconds / 300).round();
         return seen.add(key);
       }).toList()
         ..sort((a, b) => a.durationSeconds.compareTo(b.durationSeconds));
-
       setState(() { _routes = unique; _loading = false; });
     } catch (e) {
       setState(() { _error = e.toString(); _loading = false; });
@@ -104,167 +100,166 @@ class _RoutePickerSheetState extends State<_RoutePickerSheet> {
   }) async {
     try {
       final res = await ApiClient.calculateRoute(
-        origin:         widget.origin,
-        destination:    widget.destination,
-        avoidTolls:     avoidTolls,
-        avoidHighways:  avoidHighways,
+        origin:        widget.origin,
+        destination:   widget.destination,
+        avoidTolls:    avoidTolls,
+        avoidHighways: avoidHighways,
       );
       final d = res.data as Map<String, dynamic>;
-
-      // Parse miles_by_state — comes as {"TX": "641.75", "NM": "164.19", ...}
       final rawState = d['miles_by_state'] as Map<String, dynamic>? ?? {};
       final stateMap = rawState.map((k, v) => MapEntry(k, v));
-
       final seconds = (d['duration_seconds'] as num?)?.toInt() ?? 0;
       final h = seconds ~/ 3600;
       final m = (seconds % 3600) ~/ 60;
       final durText = d['duration_text'] as String? ??
           (h > 0 ? '${h}h ${m}m' : '${m}m');
-
       return RouteOption(
-        label:               label,
-        viaSummary:          d['via_summary'] as String? ?? label,
-        totalMiles:          (d['total_miles'] as num?)?.toDouble() ?? 0,
-        durationText:        durText,
-        durationSeconds:     seconds,
-        originAddress:       d['origin_address'] as String? ?? widget.origin,
-        destinationAddress:  d['destination_address'] as String? ?? widget.destination,
-        milesPerState:       stateMap,
-        statesTraveled:      d['states_traveled'] as String? ?? '',
-        routePolyline:       d['route_polyline'] as String? ?? '',
+        label:              label,
+        viaSummary:         d['via_summary'] as String? ?? label,
+        totalMiles:         (d['total_miles'] as num?)?.toDouble() ?? 0,
+        durationText:       durText,
+        durationSeconds:    seconds,
+        originAddress:      d['origin_address'] as String? ?? widget.origin,
+        destinationAddress: d['destination_address'] as String? ?? widget.destination,
+        milesPerState:      stateMap,
+        statesTraveled:     d['states_traveled'] as String? ?? '',
+        routePolyline:      d['route_polyline'] as String? ?? '',
       );
     } catch (_) {
-      return null; // this variant failed — skip it
+      return null;
     }
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.72,
-      minChildSize:     0.4,
-      maxChildSize:     0.92,
-      builder: (_, ctrl) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(children: [
-          // Handle bar
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 4),
-            width: 40, height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
+    return Consumer<LocaleProvider>(builder: (_, lp, __) {
+      final s = lp.strings;
+      return DraggableScrollableSheet(
+        initialChildSize: 0.72,
+        minChildSize:     0.4,
+        maxChildSize:     0.92,
+        builder: (_, ctrl) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-
-          // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-            child: Row(children: [
-              const Icon(Icons.alt_route_rounded, color: _blue, size: 22),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Choose Your Route',
-                    style: GoogleFonts.inter(fontSize: 16,
-                        fontWeight: FontWeight.w800, color: _navy)),
-                  Text('Select the route you want to take',
-                    style: GoogleFonts.inter(fontSize: 11, color: Colors.grey[600])),
-                ]),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, color: Colors.grey),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ]),
-          ),
-
-          // Route — From / To summary
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Column(children: [
+            // Handle bar
+            Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 4),
+              width: 40, height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFF),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
               ),
+            ),
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Row(children: [
-                Column(children: [
-                  const Icon(Icons.circle, color: Color(0xFF22C55E), size: 8),
-                  Container(width: 1, height: 18, color: Colors.grey[300]),
-                  const Icon(Icons.location_on_rounded, color: Colors.redAccent, size: 12),
-                ]),
+                const Icon(Icons.alt_route_rounded, color: _blue, size: 22),
                 const SizedBox(width: 10),
-                Expanded(child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(widget.origin,
-                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600,
-                        color: _navy), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
-                  Text(widget.destination,
-                    style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600,
-                        color: _navy), maxLines: 1, overflow: TextOverflow.ellipsis),
-                ])),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(s.chooseYourRoute,
+                      style: context.af(fontSize: 16,
+                          fontWeight: FontWeight.w800, color: _navy)),
+                    Text(s.selectRouteSubtitle,
+                      style: context.af(fontSize: 11, color: Colors.grey[600])),
+                  ]),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ]),
             ),
-          ),
 
-          const SizedBox(height: 12),
-          const Divider(height: 1),
-
-          // Body
-          Expanded(child: _loading
-            ? const Center(child: _LoadingRoutesWidget())
-            : _error != null
-              ? _ErrorWidget(error: _error!, onRetry: _fetchRoutes)
-              : ListView(
-                  controller: ctrl,
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                  children: [
-                    ..._routes.asMap().entries.map((e) =>
-                      _RouteCard(
-                        option:     e.value,
-                        isSelected: e.key == _selectedIdx,
-                        onTap:      () => setState(() => _selectedIdx = e.key),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
+            // Route — From / To summary
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-          ),
+                child: Row(children: [
+                  Column(children: [
+                    const Icon(Icons.circle, color: Color(0xFF22C55E), size: 8),
+                    Container(width: 1, height: 18, color: Colors.grey[300]),
+                    const Icon(Icons.location_on_rounded, color: Colors.redAccent, size: 12),
+                  ]),
+                  const SizedBox(width: 10),
+                  Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(widget.origin,
+                      style: context.af(fontSize: 11, fontWeight: FontWeight.w600,
+                          color: _navy), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 6),
+                    Text(widget.destination,
+                      style: context.af(fontSize: 11, fontWeight: FontWeight.w600,
+                          color: _navy), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  ])),
+                ]),
+              ),
+            ),
 
-          // Confirm button
-          if (!_loading && _error == null && _routes.isNotEmpty)
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.play_arrow_rounded, size: 20),
-                    label: Text('Start Trip with this Route',
-                      style: GoogleFonts.inter(fontSize: 14,
-                          fontWeight: FontWeight.w700)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _blue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+
+            // Body
+            Expanded(child: _loading
+              ? Center(child: _LoadingRoutesWidget(strings: s))
+              : _error != null
+                ? _ErrorWidget(error: _error!, onRetry: _fetchRoutes, strings: s)
+                : ListView(
+                    controller: ctrl,
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                    children: [
+                      ..._routes.asMap().entries.map((e) =>
+                        _RouteCard(
+                          option:     e.value,
+                          isSelected: e.key == _selectedIdx,
+                          onTap:      () => setState(() => _selectedIdx = e.key),
+                          strings:    s,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+            ),
+
+            // Confirm button
+            if (!_loading && _error == null && _routes.isNotEmpty)
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                      label: Text(s.startTripWithRoute,
+                        style: context.af(fontSize: 14,
+                            fontWeight: FontWeight.w700)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _blue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: () => Navigator.pop(context, _routes[_selectedIdx]),
                     ),
-                    onPressed: () => Navigator.pop(context, _routes[_selectedIdx]),
                   ),
                 ),
               ),
-            ),
-        ]),
-      ),
-    );
+          ]),
+        ),
+      );
+    });
   }
 }
 
@@ -273,15 +268,17 @@ class _RouteCard extends StatelessWidget {
   final RouteOption option;
   final bool isSelected;
   final VoidCallback onTap;
+  final AppStrings strings;
 
-  static const _navy  = Color(0xFF0A1628);
-  static const _blue  = Color(0xFF1E3A8A);
+  static const _navy   = Color(0xFF0A1628);
+  static const _blue   = Color(0xFF1E3A8A);
   static const _accent = Color(0xFF3B82F6);
 
   const _RouteCard({
     required this.option,
     required this.isSelected,
     required this.onTap,
+    required this.strings,
   });
 
   @override
@@ -300,10 +297,10 @@ class _RouteCard extends StatelessWidget {
             width: isSelected ? 2 : 1,
           ),
           boxShadow: isSelected ? [
-            BoxShadow(color: _accent.withOpacity(0.15),
+            BoxShadow(color: _accent.withValues(alpha: 0.15),
                 blurRadius: 12, offset: const Offset(0, 4)),
           ] : [
-            BoxShadow(color: Colors.black.withOpacity(0.04),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 6, offset: const Offset(0, 2)),
           ],
         ),
@@ -327,18 +324,18 @@ class _RouteCard extends StatelessWidget {
           const SizedBox(width: 12),
 
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Label + duration
+            // Label badge + duration
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              _tag(option.label),
+              _tag(context, option.label),
               Text(option.durationText,
-                style: GoogleFonts.inter(fontSize: 13,
+                style: context.af(fontSize: 13,
                     fontWeight: FontWeight.w800, color: _navy)),
             ]),
             const SizedBox(height: 4),
 
             // Via summary
-            Text('via ${option.viaSummary}',
-              style: GoogleFonts.inter(fontSize: 11,
+            Text('${strings.via} ${option.viaSummary}',
+              style: context.af(fontSize: 11,
                   color: Colors.grey[600], fontWeight: FontWeight.w500)),
             const SizedBox(height: 8),
 
@@ -346,8 +343,8 @@ class _RouteCard extends StatelessWidget {
             Row(children: [
               const Icon(Icons.straighten_rounded, size: 13, color: Colors.grey),
               const SizedBox(width: 4),
-              Text('${option.totalMiles.toStringAsFixed(1)} mi total',
-                style: GoogleFonts.inter(fontSize: 12,
+              Text('${option.totalMiles.toStringAsFixed(1)} ${strings.miTotal}',
+                style: context.af(fontSize: 12,
                     fontWeight: FontWeight.w700, color: _blue)),
             ]),
 
@@ -365,7 +362,7 @@ class _RouteCard extends StatelessWidget {
                       border: Border.all(color: const Color(0xFFD0D9F5)),
                     ),
                     child: Text('${e.key}  ${mi.toStringAsFixed(1)} mi',
-                      style: GoogleFonts.inter(fontSize: 9,
+                      style: context.af(fontSize: 9,
                           fontWeight: FontWeight.w700, color: _blue)),
                   );
                 }).toList(),
@@ -377,22 +374,25 @@ class _RouteCard extends StatelessWidget {
     );
   }
 
-  Widget _tag(String label) {
-    final Map<String, Color> colors = {
-      'Fastest':        const Color(0xFF22C55E),
-      'Avoid Tolls':    const Color(0xFFF59E0B),
-      'Avoid Highways': const Color(0xFF8B5CF6),
+  Widget _tag(BuildContext context, String label) {
+    // Map internal label → localized display name + color
+    final Map<String, (String, Color)> cfg = {
+      'Fastest':        (strings.routeLabelFastest,       const Color(0xFF22C55E)),
+      'Avoid Tolls':    (strings.routeLabelAvoidTolls,    const Color(0xFFF59E0B)),
+      'Avoid Highways': (strings.routeLabelAvoidHighways, const Color(0xFF8B5CF6)),
     };
-    final color = colors[label] ?? Colors.grey;
+    final entry = cfg[label];
+    final displayName = entry?.$1 ?? label;
+    final color       = entry?.$2 ?? Colors.grey;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Text(label,
-        style: GoogleFonts.inter(fontSize: 10,
+      child: Text(displayName,
+        style: context.af(fontSize: 10,
             fontWeight: FontWeight.w800, color: color)),
     );
   }
@@ -400,7 +400,8 @@ class _RouteCard extends StatelessWidget {
 
 // ─── Loading widget ───────────────────────────────────────────────────────────
 class _LoadingRoutesWidget extends StatelessWidget {
-  const _LoadingRoutesWidget();
+  final AppStrings strings;
+  const _LoadingRoutesWidget({required this.strings});
 
   @override
   Widget build(BuildContext context) => Column(
@@ -408,12 +409,13 @@ class _LoadingRoutesWidget extends StatelessWidget {
     children: [
       const CircularProgressIndicator(color: Color(0xFF1E3A8A)),
       const SizedBox(height: 16),
-      Text('Finding best routes…',
-        style: GoogleFonts.inter(fontSize: 13,
+      Text(strings.findingBestRoutes,
+        style: context.af(fontSize: 13,
             fontWeight: FontWeight.w600, color: Colors.grey[600])),
       const SizedBox(height: 4),
-      Text('Fastest · Avoid Tolls · Avoid Highways',
-        style: GoogleFonts.inter(fontSize: 10, color: Colors.grey[400])),
+      Text(
+        '${strings.routeLabelFastest} · ${strings.routeLabelAvoidTolls} · ${strings.routeLabelAvoidHighways}',
+        style: context.af(fontSize: 10, color: Colors.grey[400])),
     ],
   );
 }
@@ -422,7 +424,8 @@ class _LoadingRoutesWidget extends StatelessWidget {
 class _ErrorWidget extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
-  const _ErrorWidget({required this.error, required this.onRetry});
+  final AppStrings strings;
+  const _ErrorWidget({required this.error, required this.onRetry, required this.strings});
 
   @override
   Widget build(BuildContext context) => Center(
@@ -431,15 +434,15 @@ class _ErrorWidget extends StatelessWidget {
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 40),
         const SizedBox(height: 12),
-        Text('Could not load routes', style: GoogleFonts.inter(
+        Text(strings.couldNotLoadRoutes, style: context.af(
             fontWeight: FontWeight.w700, color: const Color(0xFF0A1628))),
         const SizedBox(height: 6),
         Text(error, textAlign: TextAlign.center,
-          style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
+          style: context.af(fontSize: 11, color: Colors.grey)),
         const SizedBox(height: 16),
         TextButton.icon(
           icon: const Icon(Icons.refresh_rounded),
-          label: const Text('Try Again'),
+          label: Text(strings.tryAgain),
           onPressed: onRetry,
         ),
       ]),

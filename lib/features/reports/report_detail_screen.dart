@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 const _navy    = Color(0xFF031634);
 const _navy2   = Color(0xFF0D2952);
@@ -24,7 +26,7 @@ double _n(dynamic v) {
 
 class ReportDetailScreen extends StatefulWidget {
   final int reportId;
-  final Map reportSummary; // passed from list to pre-fill while loading
+  final Map reportSummary;
   const ReportDetailScreen({super.key, required this.reportId, required this.reportSummary});
   @override
   State<ReportDetailScreen> createState() => _ReportDetailScreenState();
@@ -47,7 +49,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       final res = await ApiClient.getIftaReportDetail(widget.reportId);
       setState(() => _detail = res.data as Map);
     } catch (e) {
-      setState(() => _error = 'Could not load report details.');
+      final s = context.read<LocaleProvider>().s;
+      setState(() => _error = s.couldNotLoadReportDetails);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -67,7 +70,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
         builder: (_) => _PdfViewerScreen(filePath: file.path, title: 'IFTA Q$q $y'),
       ));
     } catch (e) {
-      if (mounted) _showError('Failed to download PDF. Please try again.');
+      if (mounted) _showError(context.read<LocaleProvider>().s.failedDownloadPdf);
     } finally {
       if (mounted) setState(() => _downloading = false);
     }
@@ -89,7 +92,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
         text: 'IFTA Q$q $y jurisdiction breakdown CSV',
       );
     } catch (e) {
-      if (mounted) _showError('Failed to download CSV. Please try again.');
+      if (mounted) _showError(context.read<LocaleProvider>().s.failedDownloadCsv);
     } finally {
       if (mounted) setState(() => _downloadingCsv = false);
     }
@@ -97,25 +100,26 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
   void _showError(String msg) {
     if (!mounted) return;
+    final s = context.read<LocaleProvider>().s;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Error', style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
-        content: Text(msg, style: GoogleFonts.inter()),
+        title: Text(s.error, style: context.af(fontWeight: FontWeight.w800)),
+        content: Text(msg, style: context.af()),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('OK', style: GoogleFonts.inter(color: _blue, fontWeight: FontWeight.w700)),
+            child: Text(s.ok, style: context.af(color: _blue, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final s       = context.watch<LocaleProvider>().s;
     final data    = _detail ?? widget.reportSummary;
     final quarter = data['quarter'] as int? ?? 1;
     final year    = data['year']    as int? ?? DateTime.now().year;
@@ -123,9 +127,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     final isFiled = status == 'filed';
     final isReady = status.contains('ready') || status == 'validation_complete';
     final statusColor = isFiled ? _green : isReady ? _blue : _amber;
-    final statusLabel = isFiled ? 'FILED' : isReady ? 'READY TO FILE' : 'DRAFT';
+    final statusLabel = isFiled ? s.filedLabel : isReady ? s.readyToFileLabel : s.draftLabel;
 
-    final qNames = {1:'Q1 · Jan–Mar', 2:'Q2 · Apr–Jun', 3:'Q3 · Jul–Sep', 4:'Q4 · Oct–Dec'};
+    final qNames = {
+      1: 'Q1 · ${s.q1Months}',
+      2: 'Q2 · ${s.q2Months}',
+      3: 'Q3 · ${s.q3Months}',
+      4: 'Q4 · ${s.q4Months}',
+    };
     final jurisdictions = (data['lines'] as List?) ?? [];
     final taxDue  = _n(data['net_tax_due']);
     final miles   = _n(data['total_miles']);
@@ -142,8 +151,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
           pinned: true,
           backgroundColor: _navy,
           systemOverlayStyle: SystemUiOverlayStyle.light,
-          leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
-          title: Text('Report Details', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(s.reportDetails, style: context.af(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
           actions: [
             // CSV button
             GestureDetector(
@@ -151,13 +163,17 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
               child: Container(
                 margin: const EdgeInsets.only(right: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withOpacity(0.20))),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white.withOpacity(0.20)),
+                ),
                 child: _downloadingCsv
                     ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : Row(mainAxisSize: MainAxisSize.min, children: [
                         const Icon(Icons.table_chart_outlined, color: Colors.white, size: 14),
                         const SizedBox(width: 5),
-                        Text('CSV', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('CSV', style: context.af(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
                       ]),
               ),
             ),
@@ -167,13 +183,17 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
               child: Container(
                 margin: const EdgeInsets.only(right: 14),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(color: Colors.white.withOpacity(0.12), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withOpacity(0.20))),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white.withOpacity(0.20)),
+                ),
                 child: _downloading
                     ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : Row(mainAxisSize: MainAxisSize.min, children: [
                         const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 14),
                         const SizedBox(width: 5),
-                        Text('PDF', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                        Text('PDF', style: context.af(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
                       ]),
               ),
             ),
@@ -181,18 +201,35 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
           flexibleSpace: FlexibleSpaceBar(
             collapseMode: CollapseMode.parallax,
             background: Container(
-              decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [_navy, _navy2])),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [_navy, _navy2],
+                ),
+              ),
               child: Stack(children: [
-                Positioned(right: -30, top: -30, child: Container(width: 150, height: 150, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.04)))),
+                Positioned(right: -30, top: -30, child: Container(
+                  width: 150, height: 150,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.04)),
+                )),
                 SafeArea(child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                   child: Column(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(qNames[quarter] ?? 'Q$quarter', style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
-                        Text('$year Quarterly Report', style: GoogleFonts.inter(fontSize: 12, color: Colors.white54)),
+                        Text(qNames[quarter] ?? 'Q$quarter', style: context.af(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+                        Text('$year ${s.quarterlyReport}', style: context.af(fontSize: 12, color: Colors.white54)),
                       ])),
-                      Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: statusColor.withOpacity(0.20), borderRadius: BorderRadius.circular(10), border: Border.all(color: statusColor.withOpacity(0.5))), child: Text(statusLabel, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor, letterSpacing: 0.3))),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.20),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: statusColor.withOpacity(0.5)),
+                        ),
+                        child: Text(statusLabel, style: context.af(fontSize: 11, fontWeight: FontWeight.w700, color: statusColor, letterSpacing: 0.3)),
+                      ),
                     ]),
                   ]),
                 )),
@@ -207,9 +244,13 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
           SliverFillRemaining(child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
             const SizedBox(height: 12),
-            Text(_error!, style: GoogleFonts.inter(color: _grey)),
+            Text(_error!, style: context.af(color: _grey)),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: _load, style: ElevatedButton.styleFrom(backgroundColor: _navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text('Retry', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700))),
+            ElevatedButton(
+              onPressed: _load,
+              style: ElevatedButton.styleFrom(backgroundColor: _navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+              child: Text(s.retry, style: context.af(color: Colors.white, fontWeight: FontWeight.w700)),
+            ),
           ])))
         else ...[
           SliverToBoxAdapter(child: Padding(
@@ -218,15 +259,15 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
               // ── Key Metrics ─────────────────────────────────────────
               Row(children: [
-                Expanded(child: _MetricCard(icon: Icons.route_outlined, color: _blue, label: 'Total Miles', value: '${miles.toStringAsFixed(1)} mi')),
+                Expanded(child: _MetricCard(icon: Icons.route_outlined, color: _blue, label: s.totalMiles, value: '${miles.toStringAsFixed(1)} mi')),
                 const SizedBox(width: 10),
-                Expanded(child: _MetricCard(icon: Icons.water_drop_outlined, color: const Color(0xFF06B6D4), label: 'Gallons', value: gallons.toStringAsFixed(1))),
+                Expanded(child: _MetricCard(icon: Icons.water_drop_outlined, color: const Color(0xFF06B6D4), label: s.gallons, value: gallons.toStringAsFixed(1))),
               ]),
               const SizedBox(height: 10),
               Row(children: [
-                Expanded(child: _MetricCard(icon: Icons.speed_rounded, color: const Color(0xFF7C3AED), label: 'Avg MPG', value: mpg.toStringAsFixed(2), warn: mpg > 0 && mpg < 5)),
+                Expanded(child: _MetricCard(icon: Icons.speed_rounded, color: const Color(0xFF7C3AED), label: s.avgMpgLabel, value: mpg.toStringAsFixed(2), warn: mpg > 0 && mpg < 5)),
                 const SizedBox(width: 10),
-                Expanded(child: _MetricCard(icon: Icons.account_balance_outlined, color: _green, label: 'Tax Due', value: '\$${taxDue.toStringAsFixed(2)}')),
+                Expanded(child: _MetricCard(icon: Icons.account_balance_outlined, color: _green, label: s.taxDue, value: '\$${taxDue.toStringAsFixed(2)}')),
               ]),
 
               const SizedBox(height: 20),
@@ -236,8 +277,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('MILES BY JURISDICTION', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.8)),
-                    Text('${jurisdictions.length} states', style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+                    Text(s.milesByJurisdictionTitle, style: context.af(fontSize: 11, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.8)),
+                    Text('${jurisdictions.length} ${s.states}', style: context.af(fontSize: 10, color: _grey)),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -249,13 +290,13 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: const BoxDecoration(color: Color(0xFFF8FAFF), borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
                       child: Row(children: [
-                        Expanded(flex: 2, child: Text('STATE', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
-                        Expanded(child: Text('MILES', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
-                        Expanded(child: Text('GALLONS', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
-                        Expanded(child: Text('TAX', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
+                        Expanded(flex: 2, child: Text(s.stateCol, style: context.af(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
+                        Expanded(child: Text(s.milesCol, textAlign: TextAlign.right, style: context.af(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
+                        Expanded(child: Text(s.gallonsCol, textAlign: TextAlign.right, style: context.af(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
+                        Expanded(child: Text(s.taxCol, textAlign: TextAlign.right, style: context.af(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.6))),
                       ]),
                     ),
-                    // ── Animated collapsible rows ────────────────────
+                    // ── Animated collapsible rows ─────────────────────
                     AnimatedSize(
                       duration: const Duration(milliseconds: 280),
                       curve: Curves.easeInOut,
@@ -275,13 +316,13 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                                 Row(children: [
-                                  Expanded(flex: 2, child: Text(stateName, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: _navy))),
-                                  Expanded(child: Text('${jMiles.toStringAsFixed(0)} mi', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, color: _navy))),
-                                  Expanded(child: Text(jGal > 0 ? jGal.toStringAsFixed(1) : '—', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, color: _grey))),
-                                  Expanded(child: Text('\$${jTax.toStringAsFixed(2)}', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: jTax > 0 ? _blue : _grey))),
+                                  Expanded(flex: 2, child: Text(stateName, style: context.af(fontSize: 13, fontWeight: FontWeight.w700, color: _navy))),
+                                  Expanded(child: Text('${jMiles.toStringAsFixed(0)} mi', textAlign: TextAlign.right, style: context.af(fontSize: 12, color: _navy))),
+                                  Expanded(child: Text(jGal > 0 ? jGal.toStringAsFixed(1) : '—', textAlign: TextAlign.right, style: context.af(fontSize: 12, color: _grey))),
+                                  Expanded(child: Text('\$${jTax.toStringAsFixed(2)}', textAlign: TextAlign.right, style: context.af(fontSize: 12, fontWeight: FontWeight.w600, color: jTax > 0 ? _blue : _grey))),
                                 ]),
                                 const SizedBox(height: 5),
-                                ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct, minHeight: 4, backgroundColor: _border, valueColor: AlwaysStoppedAnimation(_navy))),
+                                ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct, minHeight: 4, backgroundColor: _border, valueColor: const AlwaysStoppedAnimation(_navy))),
                               ]),
                             );
                           }).toList(),
@@ -306,8 +347,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                             ),
                             const SizedBox(width: 5),
                             Text(
-                              _showAllJuris ? 'Hide' : 'Show All ${jurisdictions.length} States',
-                              style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: _blue),
+                              _showAllJuris ? s.hide : '${s.showAllStates} ${jurisdictions.length} ${s.states}',
+                              style: context.af(fontSize: 12, fontWeight: FontWeight.w700, color: _blue),
                             ),
                           ]),
                         ),
@@ -317,17 +358,16 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                 const SizedBox(height: 20),
               ],
 
-
               // ── Summary row ─────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border)),
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                  _SumItem(label: 'Jurisdictions', value: '${jurisdictions.length}'),
+                  _SumItem(label: s.jurisdictions, value: '${jurisdictions.length}'),
                   Container(width: 1, height: 32, color: _border),
-                  _SumItem(label: 'Net Tax', value: '\$${netTax.toStringAsFixed(2)}', highlight: netTax > 0),
+                  _SumItem(label: s.netTax, value: '\$${netTax.toStringAsFixed(2)}', highlight: netTax > 0),
                   Container(width: 1, height: 32, color: _border),
-                  _SumItem(label: 'Ref #', value: 'IFT-${data['id'] ?? '—'}'),
+                  _SumItem(label: s.refNum, value: 'IFT-${data['id'] ?? '—'}'),
                 ]),
               ),
 
@@ -336,11 +376,20 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
               // ── Download buttons ────────────────────────────────────
               SizedBox(width: double.infinity, child: ElevatedButton.icon(
                 onPressed: _downloading ? null : _downloadPdf,
-                style: ElevatedButton.styleFrom(backgroundColor: _navy, disabledBackgroundColor: _navy.withOpacity(0.5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), padding: const EdgeInsets.symmetric(vertical: 15), elevation: 0),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _navy,
+                  disabledBackgroundColor: _navy.withOpacity(0.5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  elevation: 0,
+                ),
                 icon: _downloading
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                     : const Icon(Icons.picture_as_pdf_rounded, color: Colors.white, size: 20),
-                label: Text(_downloading ? 'Downloading…' : 'View & Download PDF', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                label: Text(
+                  _downloading ? s.downloading : s.viewDownloadPdf,
+                  style: context.af(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                ),
               )),
 
               const SizedBox(height: 10),
@@ -355,10 +404,12 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                 icon: _downloadingCsv
                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: _navy, strokeWidth: 2))
                     : const Icon(Icons.table_chart_outlined, color: _navy, size: 20),
-                label: Text(_downloadingCsv ? 'Downloading…' : 'Download & Share CSV', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: _navy)),
+                label: Text(
+                  _downloadingCsv ? s.downloading : s.downloadShareCsv,
+                  style: context.af(fontSize: 15, fontWeight: FontWeight.w700, color: _navy),
+                ),
               )),
 
-              // Bottom spacer — clears the bottom nav bar + device home indicator
               SizedBox(height: 80 + MediaQuery.of(context).padding.bottom),
             ]),
           )),
@@ -382,8 +433,8 @@ class _MetricCard extends StatelessWidget {
         if (warn) ...[const Spacer(), const Icon(Icons.warning_amber_rounded, size: 16, color: _amber)],
       ]),
       const SizedBox(height: 8),
-      Text(value, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: warn ? _amber : _navy)),
-      Text(label, style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+      Text(value, style: context.af(fontSize: 16, fontWeight: FontWeight.w800, color: warn ? _amber : _navy)),
+      Text(label, style: context.af(fontSize: 10, color: _grey)),
     ]),
   );
 }
@@ -393,9 +444,9 @@ class _SumItem extends StatelessWidget {
   const _SumItem({required this.label, required this.value, this.highlight = false});
   @override
   Widget build(BuildContext context) => Column(children: [
-    Text(value, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: highlight ? _blue : _navy)),
+    Text(value, style: context.af(fontSize: 14, fontWeight: FontWeight.w700, color: highlight ? _blue : _navy)),
     const SizedBox(height: 2),
-    Text(label, style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+    Text(label, style: context.af(fontSize: 10, color: _grey)),
   ]);
 }
 
@@ -428,49 +479,53 @@ class _PdfViewerState extends State<_PdfViewerScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: Colors.black87,
-    appBar: AppBar(
-      backgroundColor: _navy,
-      systemOverlayStyle: SystemUiOverlayStyle.light,
-      leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20), onPressed: () => Navigator.pop(context)),
-      title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(widget.title, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
-        if (_ready && _pages > 0)
-          Text('Page ${_current + 1} of $_pages', style: GoogleFonts.inter(fontSize: 11, color: Colors.white54)),
-      ]),
-      actions: [
-        // Share button
-        IconButton(
-          tooltip: 'Share PDF',
-          onPressed: _sharing ? null : _share,
-          icon: _sharing
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Icon(Icons.ios_share_rounded, color: Colors.white, size: 22),
+  Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
+    return Scaffold(
+      backgroundColor: Colors.black87,
+      appBar: AppBar(
+        backgroundColor: _navy,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          onPressed: () => Navigator.pop(context),
         ),
-        // Page navigation
-        if (_pages > 1) ...[
-          IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: _current > 0 ? () { _ctrl?.setPage(_current - 1); } : null),
-          IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: _current < _pages - 1 ? () { _ctrl?.setPage(_current + 1); } : null),
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(widget.title, style: context.af(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+          if (_ready && _pages > 0)
+            Text('${s.page} ${_current + 1} ${s.pageOf} $_pages', style: context.af(fontSize: 11, color: Colors.white54)),
+        ]),
+        actions: [
+          IconButton(
+            tooltip: s.sharePdf,
+            onPressed: _sharing ? null : _share,
+            icon: _sharing
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Icon(Icons.ios_share_rounded, color: Colors.white, size: 22),
+          ),
+          if (_pages > 1) ...[
+            IconButton(icon: const Icon(Icons.chevron_left, color: Colors.white), onPressed: _current > 0 ? () { _ctrl?.setPage(_current - 1); } : null),
+            IconButton(icon: const Icon(Icons.chevron_right, color: Colors.white), onPressed: _current < _pages - 1 ? () { _ctrl?.setPage(_current + 1); } : null),
+          ],
         ],
-      ],
-    ),
-    body: Stack(children: [
-      PDFView(
-        filePath: widget.filePath,
-        enableSwipe: true,
-        swipeHorizontal: false,
-        autoSpacing: true,
-        pageFling: true,
-        pageSnap: true,
-        fitPolicy: FitPolicy.BOTH,
-        onRender: (pages) => setState(() { _pages = pages ?? 0; _ready = true; }),
-        onViewCreated: (ctrl) => _ctrl = ctrl,
-        onPageChanged: (page, _) => setState(() => _current = page ?? 0),
-        onError: (e) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('PDF error: $e'))),
       ),
-      if (!_ready)
-        Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator(color: Colors.white))),
-    ]),
-  );
+      body: Stack(children: [
+        PDFView(
+          filePath: widget.filePath,
+          enableSwipe: true,
+          swipeHorizontal: false,
+          autoSpacing: true,
+          pageFling: true,
+          pageSnap: true,
+          fitPolicy: FitPolicy.BOTH,
+          onRender: (pages) => setState(() { _pages = pages ?? 0; _ready = true; }),
+          onViewCreated: (ctrl) => _ctrl = ctrl,
+          onPageChanged: (page, _) => setState(() => _current = page ?? 0),
+          onError: (e) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('PDF error: $e'))),
+        ),
+        if (!_ready)
+          Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator(color: Colors.white))),
+      ]),
+    );
+  }
 }

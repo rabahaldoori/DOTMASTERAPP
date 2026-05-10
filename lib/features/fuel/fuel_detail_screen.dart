@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 const _navy  = Color(0xFF031634);
 const _navy2 = Color(0xFF0D2952);
@@ -34,6 +36,7 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
 
   // ── Receipt upload ───────────────────────────────────────────────────────────
   Future<void> _uploadReceipt() async {
+    final s = context.read<LocaleProvider>().s;
     final src = await showModalBottomSheet<ImageSource>(
       context: context,
       useRootNavigator: true,
@@ -54,8 +57,8 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
               decoration: BoxDecoration(color: _blue.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.camera_alt_outlined, color: _blue, size: 18)),
-            title: Text('Take Photo',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+            title: Text(s.takePhoto,
+                style: ctx.af(fontWeight: FontWeight.w600)),
             onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.camera)),
           ListTile(
             leading: Container(width: 36, height: 36,
@@ -63,8 +66,8 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                   borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.photo_library_outlined,
                   color: _green, size: 18)),
-            title: Text('Choose from Gallery',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w600)),
+            title: Text(s.chooseFromGallery,
+                style: ctx.af(fontWeight: FontWeight.w600)),
             onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.gallery)),
         ]),
       ),
@@ -83,8 +86,8 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
         HapticFeedback.lightImpact();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Receipt uploaded!',
-                style: GoogleFonts.inter(color: Colors.white)),
+            content: Text(s.receiptUploaded,
+                style: context.af(color: Colors.white)),
             backgroundColor: _green,
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10)),
@@ -98,8 +101,8 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Upload failed. Please try again.',
-                style: GoogleFonts.inter(color: Colors.white)),
+            content: Text(s.uploadFailed,
+                style: context.af(color: Colors.white)),
             backgroundColor: Colors.red.shade600,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
@@ -113,13 +116,14 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final fuel = widget.fuel;
+    final s          = context.watch<LocaleProvider>().s;
+    final fuel       = widget.fuel;
     final cost       = _n(fuel['total_cost']);
     final gallons    = _n(fuel['gallons']);
     final ppg        = _n(fuel['price_per_gallon']);
     final truckId    = fuel['truck']?.toString().toUpperCase() ?? '—';
     final station    = (fuel['vendor_name'] as String? ??
-                        fuel['station_name'] as String? ?? 'Fuel Stop');
+                        fuel['station_name'] as String? ?? s.fuelStop);
     final address    = fuel['vendor_address'] as String? ?? '';
     final jur        = fuel['state'] as String? ??
                        fuel['jurisdiction'] as String? ?? '—';
@@ -153,7 +157,7 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                   color: Colors.white, size: 20),
               onPressed: () => context.pop(),
             ),
-            title: Text('Fuel Log Detail', style: GoogleFonts.inter(
+            title: Text(s.fuelLogDetail, style: context.af(
                 fontSize: 17, fontWeight: FontWeight.w700,
                 color: Colors.white)),
             flexibleSpace: FlexibleSpaceBar(
@@ -176,8 +180,7 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                           decoration: BoxDecoration(
                             color: _green.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                                color: _green.withOpacity(0.3)),
+                            border: Border.all(color: _green.withOpacity(0.3)),
                           ),
                           child: const Icon(Icons.local_gas_station_rounded,
                               color: _green, size: 26),
@@ -187,11 +190,11 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text('Truck #$truckId', style: GoogleFonts.inter(
+                            Text('Truck #$truckId', style: context.af(
                                 fontSize: 18, fontWeight: FontWeight.w800,
                                 color: Colors.white)),
                             const SizedBox(height: 2),
-                            Text(station, style: GoogleFonts.inter(
+                            Text(station, style: context.af(
                                 fontSize: 12, color: Colors.white54)),
                           ],
                         )),
@@ -199,10 +202,10 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                           Text('\$${cost.toStringAsFixed(2)}',
-                              style: GoogleFonts.inter(
+                              style: context.af(
                                   fontSize: 22, fontWeight: FontWeight.w900,
                                   color: _green)),
-                          Text(date, style: GoogleFonts.inter(
+                          Text(date, style: context.af(
                               fontSize: 10, color: Colors.white38)),
                         ]),
                       ],
@@ -224,21 +227,21 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                   // ── Fuel Details card ────────────────────────────────────────
                   _Section(
                     icon: Icons.water_drop_rounded,
-                    title: 'Fuel Details',
+                    title: s.fuelDetails,
                     iconColor: _blue,
                     rows: [
-                      _DetailRow('Gallons', '${gallons.toStringAsFixed(2)} gal',
+                      _DetailRow(s.gallons, '${gallons.toStringAsFixed(2)} gal',
                           icon: Icons.water_drop_outlined),
-                      _DetailRow('Price / Gallon',
+                      _DetailRow(s.pricePerGallon,
                           '\$${ppg.toStringAsFixed(3)}',
                           icon: Icons.attach_money_rounded),
-                      _DetailRow('Total Cost',
+                      _DetailRow(s.totalCost,
                           '\$${cost.toStringAsFixed(2)}',
                           icon: Icons.payments_outlined,
                           valueColor: _green,
                           bold: true),
                       if (fuelType.isNotEmpty)
-                        _DetailRow('Fuel Type', fuelType,
+                        _DetailRow(s.fuelType, fuelType,
                             icon: Icons.local_gas_station_outlined),
                     ],
                   ),
@@ -248,15 +251,15 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                   // ── Location card ────────────────────────────────────────────
                   _Section(
                     icon: Icons.location_on_rounded,
-                    title: 'Location',
+                    title: s.location,
                     iconColor: const Color(0xFFE07B39),
                     rows: [
-                      _DetailRow('Station', station,
+                      _DetailRow(s.station, station,
                           icon: Icons.storefront_rounded),
                       if (address.isNotEmpty)
-                        _DetailRow('Address', address,
+                        _DetailRow(s.address, address,
                             icon: Icons.map_outlined),
-                      _DetailRow('Jurisdiction', jur,
+                      _DetailRow(s.jurisdiction, jur,
                           icon: Icons.flag_outlined),
                     ],
                   ),
@@ -266,17 +269,17 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                   // ── Payment card ─────────────────────────────────────────────
                   _Section(
                     icon: Icons.credit_card_rounded,
-                    title: 'Payment',
+                    title: s.payment,
                     iconColor: const Color(0xFF7C3AED),
                     rows: [
                       if (payment.isNotEmpty)
-                        _DetailRow('Method', payment,
+                        _DetailRow(s.method, payment,
                             icon: Icons.credit_card_outlined),
                       if (receiptNo.isNotEmpty)
-                        _DetailRow('Receipt #', receiptNo,
+                        _DetailRow(s.receiptNumber, receiptNo,
                             icon: Icons.receipt_outlined),
                       if (odometer.isNotEmpty)
-                        _DetailRow('Odometer', '$odometer mi',
+                        _DetailRow(s.odometer, '$odometer mi',
                             icon: Icons.speed_rounded),
                     ],
                   ),
@@ -286,7 +289,7 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                   // ── Receipt card ─────────────────────────────────────────────
                   _SectionHeader(
                       icon: Icons.photo_camera_rounded,
-                      title: 'Receipt',
+                      title: s.receiptSection,
                       iconColor: hasReceipt ? _green : _grey),
                   const SizedBox(height: 10),
                   Container(
@@ -324,8 +327,8 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                               const Icon(Icons.check_circle_rounded,
                                   color: _green, size: 16),
                               const SizedBox(width: 6),
-                              Text('Receipt attached',
-                                  style: GoogleFonts.inter(
+                              Text(s.receiptAttached,
+                                  style: context.af(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                       color: _green)),
@@ -342,14 +345,14 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                                     size: 26,
                                     color: Colors.red)),
                               const SizedBox(height: 10),
-                              Text('No receipt attached',
-                                  style: GoogleFonts.inter(
+                              Text(s.noReceiptAttached,
+                                  style: context.af(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                       color: _grey)),
                               const SizedBox(height: 4),
-                              Text('Tap below to upload a receipt',
-                                  style: GoogleFonts.inter(
+                              Text(s.tapToUploadReceipt,
+                                  style: context.af(
                                       fontSize: 12,
                                       color: Colors.grey.shade400)),
                             ],
@@ -386,8 +389,8 @@ class _FuelDetailScreenState extends State<FuelDetailScreen> {
                         : const Icon(Icons.upload_rounded,
                             color: Colors.white, size: 20),
                     label: Text(
-                        _uploading ? 'Uploading…' : 'Upload Receipt',
-                        style: GoogleFonts.inter(
+                        _uploading ? s.uploading : s.uploadReceipt,
+                        style: context.af(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: Colors.white)),
@@ -459,7 +462,7 @@ class _SectionHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(8)),
         child: Icon(icon, size: 15, color: iconColor)),
     const SizedBox(width: 8),
-    Text(title, style: GoogleFonts.inter(
+    Text(title, style: context.af(
         fontSize: 13, fontWeight: FontWeight.w700,
         color: const Color(0xFF64748B), letterSpacing: 0.4)),
   ]);
@@ -487,11 +490,11 @@ class _DetailRow extends StatelessWidget {
           child: Icon(icon, size: 15, color: _grey)),
         const SizedBox(width: 12),
       ],
-      Expanded(child: Text(label, style: GoogleFonts.inter(
+      Expanded(child: Text(label, style: context.af(
           fontSize: 13, color: _grey, fontWeight: FontWeight.w500))),
       Flexible(child: Text(value,
         textAlign: TextAlign.right,
-        style: GoogleFonts.inter(
+        style: context.af(
             fontSize: 13,
             fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
             color: valueColor ?? _navy))),

@@ -1,11 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../core/font_ext.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/l10n/language_picker.dart';
+import '../../core/l10n/app_strings.dart';
 
 const _navy  = Color(0xFF031634);
 const _navy2 = Color(0xFF0D2952);
@@ -55,6 +59,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Personal Information sheet ──────────────────────────────────────────────
   void _showPersonalInfo(BuildContext context) {
+    final s = context.read<LocaleProvider>().s;
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -83,11 +88,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: const Icon(Icons.person_outline_rounded,
                     color: _blue, size: 20)),
               const SizedBox(width: 12),
-              Text('Personal Information', style: GoogleFonts.inter(
+              Text(s.personalInformation, style: context.af(
                   fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
             ]),
             const SizedBox(height: 20),
-            // 2-column grid of info fields
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -96,11 +100,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               children: [
-                _InfoCell(icon: Icons.badge_outlined,    label: 'Full Name',  value: name.isEmpty    ? '—' : name),
-                _InfoCell(icon: Icons.email_outlined,    label: 'Email',      value: email.isEmpty   ? '—' : email),
-                _InfoCell(icon: Icons.phone_outlined,    label: 'Phone',      value: phone.isEmpty   ? '—' : phone),
-                _InfoCell(icon: Icons.work_outline,      label: 'Role',       value: role.isEmpty    ? '—' : role),
-                _InfoCell(icon: Icons.business_outlined, label: 'Company',    value: company.isEmpty ? '—' : company),
+                _InfoCell(icon: Icons.badge_outlined,    label: s.fullName,  value: name.isEmpty    ? '—' : name),
+                _InfoCell(icon: Icons.email_outlined,    label: s.email,     value: email.isEmpty   ? '—' : email),
+                _InfoCell(icon: Icons.phone_outlined,    label: s.phone,     value: phone.isEmpty   ? '—' : phone),
+                _InfoCell(icon: Icons.work_outline,      label: s.role,      value: role.isEmpty    ? '—' : role),
+                _InfoCell(icon: Icons.business_outlined, label: s.company,   value: company.isEmpty ? '—' : company),
               ],
             ),
           ]),
@@ -111,6 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Security & Privacy sheet ─────────────────────────────────────────────────
   void _showSecurity(BuildContext context) {
+    final s = context.read<LocaleProvider>().s;
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -132,24 +137,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Icon(Icons.lock_outline_rounded,
                       color: Color(0xFF7C3AED), size: 20)),
                 const SizedBox(width: 12),
-                Text('Security & Privacy', style: GoogleFonts.inter(
+                Text(s.securityPrivacy, style: context.af(
                     fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
               ]),
               const SizedBox(height: 20),
-
-              // Face ID row
               _SheetToggleRow(
                 icon: Icons.face_unlock_outlined,
                 iconColor: _blue,
-                label: 'Face ID / Biometric Login',
-                subtitle: 'Sign in without a password',
+                label: s.faceIdBiometric,
+                subtitle: s.signInWithoutPassword,
                 value: true,
                 onChanged: (v) {},
               ),
               Container(height: 1, color: const Color(0xFFF1F5F9),
                   margin: const EdgeInsets.symmetric(vertical: 4)),
-
-              // Change password
               GestureDetector(
                 onTap: () {
                   Navigator.of(context, rootNavigator: true).pop();
@@ -161,27 +162,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Container(width: 36, height: 36,
                       decoration: BoxDecoration(color: _grey.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(10)),
-                      child: const Icon(Icons.key_outlined,
-                          size: 18, color: _grey)),
+                      child: const Icon(Icons.key_outlined, size: 18, color: _grey)),
                     const SizedBox(width: 12),
                     Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Change Password', style: GoogleFonts.inter(
-                          fontSize: 14, fontWeight: FontWeight.w600,
-                          color: _navy)),
-                      Text('Update your login password',
-                          style: GoogleFonts.inter(
-                              fontSize: 12, color: _grey)),
+                      Text(s.changePassword, style: context.af(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: _navy)),
+                      Text(s.updateLoginPassword, style: context.af(fontSize: 12, color: _grey)),
                     ])),
-                    const Icon(Icons.chevron_right_rounded,
-                        size: 20, color: Color(0xFFCBD5E1)),
+                    const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFCBD5E1)),
                   ]),
                 ),
               ),
               Container(height: 1, color: const Color(0xFFF1F5F9),
                   margin: const EdgeInsets.symmetric(vertical: 4)),
-
-              // Privacy policy
               GestureDetector(
                 onTap: () => _showPrivacyPolicy(context),
                 child: Padding(
@@ -191,20 +185,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: BoxDecoration(
                           color: _green.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(10)),
-                      child: Icon(Icons.privacy_tip_outlined,
-                          size: 18, color: _green)),
+                      child: Icon(Icons.privacy_tip_outlined, size: 18, color: _green)),
                     const SizedBox(width: 12),
                     Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Privacy Policy', style: GoogleFonts.inter(
-                          fontSize: 14, fontWeight: FontWeight.w600,
-                          color: _navy)),
-                      Text('How we handle your data',
-                          style: GoogleFonts.inter(
-                              fontSize: 12, color: _grey)),
+                      Text(s.privacyPolicy, style: context.af(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: _navy)),
+                      Text(s.howWeHandleData, style: context.af(fontSize: 12, color: _grey)),
                     ])),
-                    const Icon(Icons.chevron_right_rounded,
-                        size: 20, color: Color(0xFFCBD5E1)),
+                    const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFCBD5E1)),
                   ]),
                 ),
               ),
@@ -215,8 +204,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ── Notification Settings sheet ──────────────────────────────────────────────
   void _showNotifications(BuildContext context) {
+    final s = context.read<LocaleProvider>().s;
     // Mutable state — starts as defaults; will be overwritten once API loads
     bool push  = true;
     bool email = true;
@@ -283,12 +272,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Icon(Icons.notifications_outlined,
                       color: _cyan, size: 20)),
                 const SizedBox(width: 12),
-                Text('Notification Settings', style: GoogleFonts.inter(
+                Text(s.notificationSettings, style: context.af(
                     fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
               ]),
               const SizedBox(height: 8),
-              Text('Choose which notifications you want to receive.',
-                  style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+              Text(s.chooseNotifications,
+                  style: context.af(fontSize: 13, color: _grey)),
               const SizedBox(height: 16),
               if (loading)
                 const Padding(
@@ -300,8 +289,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SheetToggleRow(
                   icon: Icons.notifications_active_outlined,
                   iconColor: _cyan,
-                  label: 'Push Notifications',
-                  subtitle: 'Alerts, reminders & updates',
+                  label: s.pushNotifications,
+                  subtitle: s.pushNotifSubtitle,
                   value: push,
                   onChanged: (v) => toggle(newPush: v),
                 ),
@@ -310,8 +299,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SheetToggleRow(
                   icon: Icons.email_outlined,
                   iconColor: _blue,
-                  label: 'Email Notifications',
-                  subtitle: 'Reports & important alerts',
+                  label: s.emailNotifications,
+                  subtitle: s.emailNotifSubtitle,
                   value: email,
                   onChanged: (v) => toggle(newEmail: v),
                 ),
@@ -320,8 +309,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _SheetToggleRow(
                   icon: Icons.sms_outlined,
                   iconColor: _green,
-                  label: 'SMS Notifications',
-                  subtitle: 'Text message alerts',
+                  label: s.smsNotifications,
+                  subtitle: s.smsNotifSubtitle,
                   value: sms,
                   onChanged: (v) => toggle(newSms: v),
                   last: true,
@@ -336,6 +325,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Help & Support sheet ─────────────────────────────────────────────────────
   void _showHelpSupport(BuildContext context) {
+    final s = context.read<LocaleProvider>().s;
     const faqs = [
       (
         q: 'How do I add a fuel log?',
@@ -427,10 +417,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: Color(0xFF64748B), size: 20)),
                   const SizedBox(width: 12),
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Help & Support', style: GoogleFonts.inter(
+                    Text(s.helpSupport, style: context.af(
                         fontSize: 17, fontWeight: FontWeight.w700,
                         color: _navy)),
-                    Text('We\'re here to help', style: GoogleFonts.inter(
+                    Text(s.weAreHereToHelp, style: context.af(
                         fontSize: 12, color: _grey)),
                   ]),
                 ]),
@@ -449,7 +439,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _SupportContactTile(
                     icon: Icons.email_outlined,
                     color: _blue,
-                    title: 'Email Support',
+                    title: s.emailSupport,
                     subtitle: supportEmail,
                     onTap: () async {
                       final uri = Uri(
@@ -466,7 +456,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _SupportContactTile(
                     icon: Icons.phone_outlined,
                     color: _green,
-                    title: 'Call Support',
+                    title: s.callSupport,
                     subtitle: supportPhone,
                     onTap: () async {
                       final uri = Uri(scheme: 'tel', path: supportDialable);
@@ -477,7 +467,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _SupportContactTile(
                     icon: Icons.chat_bubble_outline_rounded,
                     color: const Color(0xFF25D366),
-                    title: 'WhatsApp Support',
+                    title: s.whatsappSupport,
                     subtitle: waLabel,
                     onTap: () async {
                       final waNum = supportDialable.replaceAll('+', '');
@@ -492,8 +482,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 24),
 
                   // FAQ section
-                  Text('Frequently Asked Questions',
-                      style: GoogleFonts.inter(
+                  Text(s.frequentlyAsked,
+                      style: context.af(
                           fontSize: 13, fontWeight: FontWeight.w700,
                           color: _navy, letterSpacing: 0.3)),
                   const SizedBox(height: 10),
@@ -523,7 +513,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               padding: const EdgeInsets.all(14),
                               child: Row(children: [
                                 Expanded(child: Text(faqs[i].q,
-                                    style: GoogleFonts.inter(
+                                    style: context.af(
                                         fontSize: 13.5,
                                         fontWeight: FontWeight.w600,
                                         color: isOpen ? _blue : _navy))),
@@ -540,7 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Padding(
                                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
                                 child: Text(faqs[i].a,
-                                    style: GoogleFonts.inter(
+                                    style: context.af(
                                         fontSize: 13,
                                         color: const Color(0xFF475569),
                                         height: 1.6)),
@@ -556,7 +546,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Version info footer
                   Center(child: Text(
                     'DOT Master v1.0.0  •  $supportEmail',
-                    style: GoogleFonts.inter(
+                    style: context.af(
                         fontSize: 11, color: const Color(0xFFCBD5E1)),
                   )),
                 ],
@@ -572,6 +562,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Privacy Policy sheet ─────────────────────────────────────────────────────
   void _showPrivacyPolicy(BuildContext context) {
+    final s = context.read<LocaleProvider>().s;
     String content = '';
     bool loading = true;
     String? error;
@@ -618,7 +609,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Icon(Icons.privacy_tip_outlined,
                           color: _green, size: 20)),
                     const SizedBox(width: 12),
-                    Text('Privacy Policy', style: GoogleFonts.inter(
+                    Text(s.privacyPolicy, style: context.af(
                         fontSize: 17, fontWeight: FontWeight.w700,
                         color: _navy)),
                   ]),
@@ -636,7 +627,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             padding: const EdgeInsets.all(24),
                             child: Text(error!,
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
+                                style: context.af(
                                     fontSize: 13, color: _grey)),
                           ))
                         : content.isEmpty
@@ -646,14 +637,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   Icon(Icons.article_outlined,
                                       size: 48, color: const Color(0xFFCBD5E1)),
                                   const SizedBox(height: 12),
-                                  Text('Privacy Policy not set yet.',
-                                      style: GoogleFonts.inter(
+                                  Text(s.privacyPolicyNotSet,
+                                      style: context.af(
                                           fontSize: 14, color: _grey)),
-                                  const SizedBox(height: 6),
-                                  Text('Ask your administrator to add it\nin Platform Settings.',
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.inter(
-                                          fontSize: 12, color: const Color(0xFFCBD5E1))),
                                 ],
                               ))
                             : ListView(
@@ -662,7 +648,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 children: [
                                   SelectableText(
                                     content,
-                                    style: GoogleFonts.inter(
+                                    style: context.af(
                                         fontSize: 13.5,
                                         color: const Color(0xFF334155),
                                         height: 1.75),
@@ -679,6 +665,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // ── Change Password sheet ────────────────────────────────────────────────────
   void _showChangePassword(BuildContext context) {
+    final s = context.read<LocaleProvider>().s;
     final oldCtrl  = TextEditingController();
     final newCtrl  = TextEditingController();
     final confCtrl = TextEditingController();
@@ -698,19 +685,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) {
           Future<void> submit() async {
+            final s2   = ctx.read<LocaleProvider>().s;
             final old  = oldCtrl.text.trim();
             final nw   = newCtrl.text.trim();
             final conf = confCtrl.text.trim();
             if (old.isEmpty || nw.isEmpty || conf.isEmpty) {
-              setS(() => errorMsg = 'Please fill in all fields.');
+              setS(() => errorMsg = s2.fillAllFields);
               return;
             }
             if (nw.length < 8) {
-              setS(() => errorMsg = 'New password must be at least 8 characters.');
+              setS(() => errorMsg = s2.passwordMin8);
               return;
             }
             if (nw != conf) {
-              setS(() => errorMsg = 'Passwords do not match.');
+              setS(() => errorMsg = s2.passwordsNoMatch);
               return;
             }
             setS(() { loading = true; errorMsg = null; });
@@ -720,8 +708,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Navigator.of(ctx, rootNavigator: true).pop();
                 HapticFeedback.lightImpact();
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text('Password changed successfully!',
-                      style: GoogleFonts.inter(color: Colors.white)),
+                  content: Text(s2.passwordChanged,
+                      style: context.af(color: Colors.white)),
                   backgroundColor: _green,
                   behavior: SnackBarBehavior.floating,
                   margin: const EdgeInsets.all(16),
@@ -730,12 +718,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ));
               }
             } catch (e) {
-              String msg = 'Failed to change password. Please try again.';
+              String msg = s2.failedChangePassword;
               if (e.toString().contains('400') ||
                   e.toString().toLowerCase().contains('incorrect') ||
                   e.toString().toLowerCase().contains('invalid') ||
                   e.toString().toLowerCase().contains('wrong')) {
-                msg = 'Current password is incorrect.';
+                msg = s2.currentPasswordIncorrect;
               }
               setS(() { loading = false; errorMsg = msg; });
             }
@@ -755,7 +743,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: const Icon(Icons.lock_outline_rounded,
                       color: Color(0xFF7C3AED), size: 20)),
                 const SizedBox(width: 12),
-                Text('Change Password', style: GoogleFonts.inter(
+                Text(s.changePassword, style: context.af(
                     fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
               ]),
               const SizedBox(height: 20),
@@ -774,7 +762,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Icon(Icons.error_outline_rounded,
                         color: _red, size: 16),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(errorMsg!, style: GoogleFonts.inter(
+                    Expanded(child: Text(errorMsg!, style: context.af(
                         fontSize: 13, color: _red,
                         fontWeight: FontWeight.w500))),
                   ]),
@@ -782,31 +770,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 14),
               ],
 
-              // Current password
-              _PwdField(
-                controller: oldCtrl,
-                label: 'Current Password',
-                obscure: oldObscure,
-                onToggle: () => setS(() => oldObscure = !oldObscure),
-              ),
+              _PwdField(controller: oldCtrl, label: s.currentPassword,
+                  obscure: oldObscure, onToggle: () => setS(() => oldObscure = !oldObscure)),
               const SizedBox(height: 12),
-
-              // New password
-              _PwdField(
-                controller: newCtrl,
-                label: 'New Password',
-                obscure: newObscure,
-                onToggle: () => setS(() => newObscure = !newObscure),
-              ),
+              _PwdField(controller: newCtrl, label: s.newPassword,
+                  obscure: newObscure, onToggle: () => setS(() => newObscure = !newObscure)),
               const SizedBox(height: 12),
-
-              // Confirm password
-              _PwdField(
-                controller: confCtrl,
-                label: 'Confirm New Password',
-                obscure: confObscure,
-                onToggle: () => setS(() => confObscure = !confObscure),
-              ),
+              _PwdField(controller: confCtrl, label: s.confirmNewPassword,
+                  obscure: confObscure, onToggle: () => setS(() => confObscure = !confObscure)),
               const SizedBox(height: 20),
 
               // Submit button
@@ -826,7 +797,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ? const SizedBox(width: 20, height: 20,
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2))
-                      : Text('Update Password', style: GoogleFonts.inter(
+                      : Text(s.updatePassword, style: context.af(
                           fontSize: 15, fontWeight: FontWeight.w800,
                           color: Colors.white)),
                 ),
@@ -839,6 +810,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _logout() async {
+    final s = context.read<LocaleProvider>().s;
     final confirmed = await showDialog<bool>(
       context: context,
       barrierColor: Colors.black54,
@@ -867,14 +839,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             // Title
-            Text('Sign Out',
-                style: GoogleFonts.inter(
+            Text(s.signOut,
+                style: context.af(
                     fontSize: 18, fontWeight: FontWeight.w800, color: _navy)),
             const SizedBox(height: 8),
-            // Body
-            Text('Are you sure you want to sign out?',
+            Text(s.areYouSureSignOut,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 14, color: _grey)),
+                style: context.af(fontSize: 14, color: _grey)),
             const SizedBox(height: 24),
             // Buttons
             Row(children: [
@@ -888,8 +859,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: Text('Cancel',
-                          style: GoogleFonts.inter(
+                      child: Text(s.cancel,
+                          style: context.af(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: _grey)),
@@ -912,8 +883,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                     child: Center(
-                      child: Text('Sign Out',
-                          style: GoogleFonts.inter(
+                      child: Text(s.signOut,
+                          style: context.af(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: Colors.white)),
@@ -957,23 +928,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final s2 = context.read<LocaleProvider>().s;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not upload photo. Try again.')));
+          SnackBar(content: Text(s2.couldNotUploadPhoto)));
       }
     }
   }
 
-  String get _roleLabel {
+  String _roleLabel(AppStrings s) {
     switch ((_user['role'] ?? '').toString().toLowerCase()) {
-      case 'admin':      return 'Fleet Administrator';
-      case 'manager':    return 'Fleet Manager';
-      case 'dispatcher': return 'Dispatcher';
-      default:           return 'Fleet Member';
+      case 'admin':      return s.fleetAdministrator;
+      case 'manager':    return s.fleetManager;
+      case 'dispatcher': return s.dispatcher;
+      default:           return s.fleetMember;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final s       = context.watch<LocaleProvider>().s;
     final name    = (_user['name']    ?? 'User').toString();
     final email   = (_user['email']   ?? '').toString();
     final company = (_user['company'] ?? '').toString();
@@ -991,7 +964,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 backgroundColor: _navy,
                 systemOverlayStyle: SystemUiOverlayStyle.light,
                 automaticallyImplyLeading: false,
-                title: Text('My Profile', style: GoogleFonts.inter(
+                title: Text(s.myProfile, style: context.af(
                     fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
                 flexibleSpace: FlexibleSpaceBar(
                   collapseMode: CollapseMode.parallax,
@@ -1048,7 +1021,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               fit: BoxFit.cover,
                                               errorBuilder: (_, __, ___) => Center(
                                                 child: Text(_initials,
-                                                    style: GoogleFonts.inter(
+                                                    style: context.af(
                                                         fontSize: 34,
                                                         fontWeight: FontWeight.w900,
                                                         color: Colors.white))),
@@ -1060,7 +1033,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                             color: Colors.white, strokeWidth: 2)),
                                             )
                                           : Center(child: Text(_initials,
-                                              style: GoogleFonts.inter(fontSize: 34,
+                                              style: context.af(fontSize: 34,
                                                   fontWeight: FontWeight.w900, color: Colors.white))),
                                     ),
                                   ),
@@ -1084,11 +1057,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(name, textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
+                              style: context.af(
                                   fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
                           const SizedBox(height: 2),
-                          Text(_roleLabel, textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(fontSize: 13, color: Colors.white60)),
+                          Text(_roleLabel(s), textAlign: TextAlign.center,
+                              style: context.af(fontSize: 13, color: Colors.white60)),
                           if (company.isNotEmpty) ...[
                             const SizedBox(height: 6),
                             Container(
@@ -1099,7 +1072,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 border: Border.all(color: Colors.white.withOpacity(0.15)),
                               ),
                               child: Text(company, textAlign: TextAlign.center,
-                                  style: GoogleFonts.inter(
+                                  style: context.af(
                                       fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white70)),
                             ),
                           ],
@@ -1118,73 +1091,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // ── Contact info card ──────────────────────────────────
                   _Card(children: [
                     if (email.isNotEmpty)
-                      _InfoRow(icon: Icons.email_outlined, label: 'Email', value: email),
+                      _InfoRow(icon: Icons.email_outlined, label: s.email, value: email),
                     if (phone.isNotEmpty) ...[
                       const _Div(),
-                      _InfoRow(icon: Icons.phone_outlined, label: 'Phone', value: phone),
+                      _InfoRow(icon: Icons.phone_outlined, label: s.phone, value: phone),
                     ],
                     if (company.isNotEmpty) ...[
                       const _Div(),
-                      _InfoRow(icon: Icons.business_outlined, label: 'Company', value: company),
+                      _InfoRow(icon: Icons.business_outlined, label: s.company, value: company),
                     ],
                     if (email.isEmpty && phone.isEmpty && company.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text('No contact info', style: GoogleFonts.inter(color: _grey)),
+                        child: Text(s.noContactInfo, style: context.af(color: _grey)),
                       ),
                   ]),
                   const SizedBox(height: 24),
 
                   // ── Settings ───────────────────────────────────────────
-                  _Label('SETTINGS'),
+                  _Label(s.settings),
                   const SizedBox(height: 8),
                   _Card(children: [
                     _MenuItem(
                       icon: Icons.person_outline_rounded,
                       iconColor: _blue,
-                      label: 'Personal Information',
+                      label: s.personalInformation,
                       onTap: () => _showPersonalInfo(context),
                     ),
                     const _Div(),
                     _MenuItem(
                       icon: Icons.lock_outline_rounded,
                       iconColor: const Color(0xFF7C3AED),
-                      label: 'Security & Privacy',
+                      label: s.securityPrivacy,
                       onTap: () => _showSecurity(context),
                     ),
                     const _Div(),
                     _MenuItem(
                       icon: Icons.notifications_outlined,
                       iconColor: _cyan,
-                      label: 'Notification Settings',
+                      label: s.notificationSettings,
                       onTap: () => _showNotifications(context),
                     ),
                     const _Div(),
-                    _MenuItem(
-                      icon: Icons.language_rounded,
-                      iconColor: const Color(0xFF059669),
-                      label: 'App Language',
-                      trailing: 'English',
-                      onTap: () {},
-                    ),
+                    Builder(builder: (ctx) {
+                      final lp = ctx.watch<LocaleProvider>();
+                      return _MenuItem(
+                        icon: Icons.language_rounded,
+                        iconColor: const Color(0xFF059669),
+                        label: s.appLanguage,
+                        trailing: lp.language.code.toUpperCase(),
+                        onTap: () => LanguagePicker.show(ctx),
+                      );
+                    }),
                   ]),
                   const SizedBox(height: 16),
 
                   // ── Support ────────────────────────────────────────────
-                  _Label('SUPPORT'),
+                  _Label(s.support),
                   const SizedBox(height: 8),
                   _Card(children: [
                     _MenuItem(
                       icon: Icons.help_outline_rounded,
                       iconColor: _grey,
-                      label: 'Help & Support',
+                      label: s.helpSupport,
                       onTap: () => _showHelpSupport(context),
                     ),
                     const _Div(),
                     _MenuItem(
                       icon: Icons.info_outline_rounded,
                       iconColor: _grey,
-                      label: 'About DOT Comply',
+                      label: s.aboutDotComply,
                       trailing: 'v1.0.0',
                       onTap: () => context.push('/about'),
                     ),
@@ -1204,7 +1180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         const Icon(Icons.logout_rounded, color: _red, size: 20),
                         const SizedBox(width: 10),
-                        Text('Sign Out', style: GoogleFonts.inter(
+                        Text(s.signOut, style: context.af(
                             fontSize: 15, fontWeight: FontWeight.w700, color: _red)),
                       ]),
                     ),
@@ -1222,7 +1198,7 @@ class _Label extends StatelessWidget {
   const _Label(this.text);
   @override
   Widget build(BuildContext context) => Text(text,
-      style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700,
+      style: context.af(fontSize: 10, fontWeight: FontWeight.w700,
           color: _grey, letterSpacing: 0.8));
 }
 
@@ -1266,10 +1242,11 @@ class _InfoRow extends StatelessWidget {
       ),
       const SizedBox(width: 12),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w600,
+        Text(label, style: context.af(
+            fontSize: 10, fontWeight: FontWeight.w600,
             color: _grey, letterSpacing: 0.3)),
         const SizedBox(height: 2),
-        Text(value, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700,
+        Text(value, style: context.af(fontSize: 13, fontWeight: FontWeight.w700,
             color: _navy), maxLines: 1, overflow: TextOverflow.ellipsis),
       ])),
     ]),
@@ -1300,10 +1277,10 @@ class _MenuItem extends StatelessWidget {
           child: Icon(icon, size: 18, color: iconColor),
         ),
         const SizedBox(width: 12),
-        Expanded(child: Text(label, style: GoogleFonts.inter(
+        Expanded(child: Text(label, style: context.af(
             fontSize: 14, fontWeight: FontWeight.w600, color: _navy))),
         if (trailing != null)
-          Text(trailing!, style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+          Text(trailing!, style: context.af(fontSize: 13, color: _grey)),
         const SizedBox(width: 4),
         const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFCBD5E1)),
       ]),
@@ -1350,13 +1327,13 @@ class _SheetInfoRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(10)),
           child: Icon(icon, size: 18, color: const Color(0xFF64748B))),
         const SizedBox(height: 8),
-        Text(label, style: GoogleFonts.inter(
+        Text(label, style: context.af(
             fontSize: 11, color: const Color(0xFF94A3B8),
             fontWeight: FontWeight.w500, letterSpacing: 0.3)),
         const SizedBox(height: 4),
         Text(value,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: context.af(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF031634))),
@@ -1396,10 +1373,10 @@ class _SheetToggleRow extends StatelessWidget {
       const SizedBox(width: 12),
       Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.inter(
+        Text(label, style: context.af(
             fontSize: 14, fontWeight: FontWeight.w600,
             color: const Color(0xFF031634))),
-        Text(subtitle, style: GoogleFonts.inter(
+        Text(subtitle, style: context.af(
             fontSize: 12, color: const Color(0xFF64748B))),
       ])),
       Switch.adaptive(
@@ -1430,7 +1407,7 @@ class _InfoCell extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
         const SizedBox(height: 5),
-        Text(label, style: GoogleFonts.inter(
+        Text(label, style: context.af(
             fontSize: 10, color: const Color(0xFF94A3B8),
             fontWeight: FontWeight.w500, letterSpacing: 0.2)),
         const SizedBox(height: 3),
@@ -1438,7 +1415,7 @@ class _InfoCell extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.inter(
+            style: context.af(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF031634))),
@@ -1470,10 +1447,10 @@ class _PwdField extends StatelessWidget {
     child: TextField(
       controller: controller,
       obscureText: obscure,
-      style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF031634)),
+      style: context.af(fontSize: 14, color: const Color(0xFF031634)),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.inter(
+        labelStyle: context.af(
             fontSize: 13, color: const Color(0xFF94A3B8)),
         prefixIcon: const Icon(Icons.lock_outline_rounded,
             size: 18, color: Color(0xFF94A3B8)),
@@ -1537,11 +1514,11 @@ class _SupportContactTile extends StatelessWidget {
         Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: GoogleFonts.inter(
+            Text(title, style: context.af(
                 fontSize: 14, fontWeight: FontWeight.w600,
                 color: const Color(0xFF0F172A))),
             const SizedBox(height: 2),
-            Text(subtitle, style: GoogleFonts.inter(
+            Text(subtitle, style: context.af(
                 fontSize: 12, color: const Color(0xFF64748B))),
           ],
         )),

@@ -1,12 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
+import 'package:provider/provider.dart';
 
 const _navy  = Color(0xFF031634);
 const _blue  = Color(0xFF0453CD);
@@ -114,8 +116,8 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
         padding: EdgeInsets.only(top: 8, bottom: MediaQuery.of(ctx).padding.bottom + 8),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(margin: const EdgeInsets.only(bottom: 8), width: 36, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-          ListTile(leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.camera_alt_outlined, color: _blue, size: 18)), title: Text('Take Photo', style: GoogleFonts.inter(fontWeight: FontWeight.w600)), onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.camera)),
-          ListTile(leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _sky.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.photo_library_outlined, color: _sky, size: 18)), title: Text('Choose from Gallery', style: GoogleFonts.inter(fontWeight: FontWeight.w600)), onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.gallery)),
+          ListTile(leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.camera_alt_outlined, color: _blue, size: 18)), title: Text(context.read<LocaleProvider>().s.takePhoto, style: context.af(fontWeight: FontWeight.w600)), onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.camera)),
+          ListTile(leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _sky.withOpacity(0.1), borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.photo_library_outlined, color: _sky, size: 18)), title: Text(context.read<LocaleProvider>().s.chooseFromGallery, style: context.af(fontWeight: FontWeight.w600)), onTap: () => Navigator.of(ctx, rootNavigator: true).pop(ImageSource.gallery)),
         ]),
       ),
     );
@@ -132,7 +134,7 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    if (_truckId == null) { _err('No truck found. Please add a trip first.'); return; }
+    if (_truckId == null) { _err(context.read<LocaleProvider>().s.noTruckAssigned); return; }
     setState(() => _saving = true);
     try {
       final res = await ApiClient.logFuelFromDevice({
@@ -158,7 +160,7 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
         context.go('/fuel');
       }
     } catch (_) {
-      _err('Failed to save. Please try again.');
+      _err(context.read<LocaleProvider>().s.failedSave);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -168,9 +170,10 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
     if (!mounted) return;
     showDialog(context: context, builder: (_) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text('Oops!', style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
-      content: Text(msg, style: GoogleFonts.inter()),
-      actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text('OK', style: GoogleFonts.inter(color: _blue, fontWeight: FontWeight.w700)))],
+      title: Text('Oops!', style: context.af(fontWeight: FontWeight.w800)),
+      content: Text(msg, style: context.af()),
+      actions: [TextButton(onPressed: () => Navigator.pop(context),
+        child: Text('OK', style: context.af(color: _blue, fontWeight: FontWeight.w700)))],
     ));
   }
 
@@ -189,7 +192,9 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
               : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   const Icon(Icons.save_rounded, color: Colors.white, size: 20),
                   const SizedBox(width: 10),
-                  Text('Save Fuel Log', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.3)),
+                  Text(context.read<LocaleProvider>().s.saveFuelLog,
+                      style: context.af(fontSize: 16, fontWeight: FontWeight.w800,
+                          color: Colors.white, letterSpacing: 0.3)),
                 ]),
         )),
       )),
@@ -197,7 +202,8 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
         backgroundColor: _navy, elevation: 0,
         systemOverlayStyle: SystemUiOverlayStyle.light,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20), onPressed: () => context.go('/fuel')),
-        title: Text('Log Fuel Stop', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+        title: Text(context.read<LocaleProvider>().s.logFuelStop,
+            style: context.af(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
         actions: [
           GestureDetector(
             onTap: _gpsLoading ? null : _getGPS,
@@ -214,7 +220,7 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
                   : Row(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.gps_fixed_rounded, size: 12, color: _lat != null ? _green : Colors.orange),
                       const SizedBox(width: 4),
-                      Text(_lat != null ? 'GPS ✓' : 'No GPS', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _lat != null ? _green : Colors.orange)),
+                      Text(_lat != null ? 'GPS ✓' : 'No GPS', style: context.af(fontSize: 11, fontWeight: FontWeight.w700, color: _lat != null ? _green : Colors.orange)),
                     ]),
             ),
           ),
@@ -240,10 +246,14 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
               Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white.withOpacity(0.15), borderRadius: BorderRadius.circular(14)), child: const Icon(Icons.local_gas_station_rounded, color: Colors.white, size: 26)),
               const SizedBox(width: 14),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Total Amount', style: GoogleFonts.inter(fontSize: 12, color: Colors.white60, fontWeight: FontWeight.w500)),
+                Text(context.read<LocaleProvider>().s.totalAmount,
+                    style: context.af(fontSize: 12, color: Colors.white60, fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
-                Text(hasTotal ? '\$${_total.toStringAsFixed(2)}' : '\$ Auto-calculated', style: GoogleFonts.inter(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
-                if (hasTotal) Text('${_gallons.text} gal × \$${_ppg.text}', style: GoogleFonts.inter(fontSize: 11, color: Colors.white60)),
+                Text(hasTotal ? '\$${_total.toStringAsFixed(2)}'
+                    : '\$ ${context.read<LocaleProvider>().s.autoCalculated}',
+                    style: context.af(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white)),
+                if (hasTotal) Text('${_gallons.text} gal × \$${_ppg.text}',
+                    style: context.af(fontSize: 11, color: Colors.white60)),
               ])),
             ]),
           ),
@@ -251,35 +261,58 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
           const SizedBox(height: 24),
 
           // ── Trip Info ─────────────────────────────────────────────────
-          _SectionHeader(icon: Icons.calendar_today_rounded, label: 'Trip Info'),
+          _SectionHeader(icon: Icons.calendar_today_rounded,
+              label: context.read<LocaleProvider>().s.tripInfo),
           const SizedBox(height: 10),
           _Card(children: [
-            _CardRow(icon: Icons.event_rounded, iconColor: _blue, label: 'Purchase Date',
-              trailing: Text('${_date.month}/${_date.day}/${_date.year}', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)),
+            _CardRow(icon: Icons.event_rounded, iconColor: _blue,
+              label: context.read<LocaleProvider>().s.purchaseDate,
+              trailing: Text('${_date.month}/${_date.day}/${_date.year}',
+                  style: context.af(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)),
               onTap: () async {
                 final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(2020), lastDate: DateTime.now());
                 if (d != null) setState(() => _date = d);
               }),
             const _CDivider(),
             _CardRow(
-              icon: Icons.local_shipping_rounded, iconColor: _blue, label: 'Truck',
+              icon: Icons.local_shipping_rounded, iconColor: _blue,
+              label: context.read<LocaleProvider>().s.truck,
               trailing: _trucks.isEmpty
-                  ? Text('Loading…', style: GoogleFonts.inter(fontSize: 14, color: Colors.grey))
+                  ? Text(context.read<LocaleProvider>().s.locating,
+                      style: context.af(fontSize: 14, color: Colors.grey))
                   : DropdownButtonHideUnderline(child: DropdownButton<int>(
                       value: _truckId,
                       isDense: true,
                       icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey.shade400, size: 18),
-                      items: _trucks.map((t) => DropdownMenuItem<int>(value: t['id'] is int ? t['id'] : int.tryParse(t['id'].toString()), child: Text(t['unit_number']?.toString() ?? 'Truck', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)))).toList(),
+                      items: _trucks.map((t) => DropdownMenuItem<int>(
+                          value: t['id'] is int ? t['id'] : int.tryParse(t['id'].toString()),
+                          child: Text(t['unit_number']?.toString() ??
+                              context.read<LocaleProvider>().s.truck,
+                              style: context.af(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)))).toList(),
                       onChanged: (v) => setState(() => _truckId = v),
                     )),
               onTap: null,
             ),
             const _CDivider(),
             _CardRow(
-              icon: Icons.location_on_rounded, iconColor: _lat != null ? _green : Colors.orange, label: 'Location',
+              icon: Icons.location_on_rounded,
+              iconColor: _lat != null ? _green : Colors.orange,
+              label: context.read<LocaleProvider>().s.location,
               trailing: _gpsLoading
-                  ? Row(mainAxisSize: MainAxisSize.min, children: [const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: _blue)), const SizedBox(width: 6), Text('Locating…', style: GoogleFonts.inter(fontSize: 12, color: Colors.grey))])
-                  : Flexible(child: Text(_address ?? (_lat != null ? '${_lat!.toStringAsFixed(4)}, ${_lng!.toStringAsFixed(4)}' : 'Tap to get location'), textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: _lat != null ? _green : Colors.orange))),
+                  ? Row(mainAxisSize: MainAxisSize.min, children: [
+                      const SizedBox(width: 14, height: 14,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: _blue)),
+                      const SizedBox(width: 6),
+                      Text(context.read<LocaleProvider>().s.locating,
+                          style: context.af(fontSize: 12, color: Colors.grey))])
+                  : Flexible(child: Text(
+                      _address ?? (_lat != null
+                          ? '${_lat!.toStringAsFixed(4)}, ${_lng!.toStringAsFixed(4)}'
+                          : context.read<LocaleProvider>().s.tapToGetLocation),
+                      textAlign: TextAlign.right, maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: context.af(fontSize: 12, fontWeight: FontWeight.w600,
+                          color: _lat != null ? _green : Colors.orange))),
               onTap: _gpsLoading ? null : _getGPS,
             ),
           ]),
@@ -287,39 +320,63 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
           const SizedBox(height: 20),
 
           // ── Fuel Details ──────────────────────────────────────────────
-          _SectionHeader(icon: Icons.water_drop_rounded, label: 'Fuel Details'),
+          _SectionHeader(icon: Icons.water_drop_rounded,
+              label: context.read<LocaleProvider>().s.fuelDetails),
           const SizedBox(height: 10),
           _Card(children: [
-            _InlineField(icon: Icons.storefront_rounded, iconColor: _blue, label: 'Vendor / Station', ctrl: _vendor, hint: 'e.g. Pilot #402', validator: (v) => v!.trim().isEmpty ? 'Required' : null),
+            _InlineField(icon: Icons.storefront_rounded, iconColor: _blue,
+                label: context.read<LocaleProvider>().s.vendorStation,
+                ctrl: _vendor, hint: 'e.g. Pilot #402',
+                validator: (v) => v!.trim().isEmpty ? 'Required' : null),
             const _CDivider(),
             Row(children: [
-              Expanded(child: _InlineField(icon: Icons.water_drop_outlined, iconColor: _sky, label: 'Gallons', ctrl: _gallons, hint: '120.5', type: TextInputType.number, compact: true, validator: (v) => double.tryParse(v ?? '') == null ? '!' : null, onChanged: (_) => setState(() {}))),
+              Expanded(child: _InlineField(icon: Icons.water_drop_outlined, iconColor: _sky,
+                  label: context.read<LocaleProvider>().s.gallons,
+                  ctrl: _gallons, hint: '120.5', type: TextInputType.number, compact: true,
+                  validator: (v) => double.tryParse(v ?? '') == null ? '!' : null,
+                  onChanged: (_) => setState(() {}))),
               Container(width: 1, height: 56, color: const Color(0xFFEEF0F5)),
-              Expanded(child: _InlineField(icon: Icons.attach_money_rounded, iconColor: _sky, label: 'Price / Gal', ctrl: _ppg, hint: '3.859', type: TextInputType.number, compact: true, validator: (v) => double.tryParse(v ?? '') == null ? '!' : null, onChanged: (_) => setState(() {}))),
+              Expanded(child: _InlineField(icon: Icons.attach_money_rounded, iconColor: _sky,
+                  label: context.read<LocaleProvider>().s.pricePerGal,
+                  ctrl: _ppg, hint: '3.859', type: TextInputType.number, compact: true,
+                  validator: (v) => double.tryParse(v ?? '') == null ? '!' : null,
+                  onChanged: (_) => setState(() {}))),
             ]),
             const _CDivider(),
-            _DropRow<String>(icon: Icons.local_gas_station_outlined, iconColor: _blue, label: 'Fuel Type', value: _fuelType, items: const {'diesel': 'Diesel', 'gasoline': 'Gasoline', 'lng': 'LNG', 'cng': 'CNG', 'reefer': 'Reefer Diesel'}, onChanged: (v) => setState(() => _fuelType = v!)),
+            _DropRow<String>(icon: Icons.local_gas_station_outlined, iconColor: _blue,
+                label: context.read<LocaleProvider>().s.fuelType,
+                value: _fuelType, items: const {'diesel': 'Diesel', 'gasoline': 'Gasoline', 'lng': 'LNG', 'cng': 'CNG', 'reefer': 'Reefer Diesel'},
+                onChanged: (v) => setState(() => _fuelType = v!)),
           ]),
 
           const SizedBox(height: 20),
 
           // ── Payment ───────────────────────────────────────────────────
-          _SectionHeader(icon: Icons.credit_card_rounded, label: 'Payment'),
+          _SectionHeader(icon: Icons.credit_card_rounded,
+              label: context.read<LocaleProvider>().s.payment),
           const SizedBox(height: 10),
           _Card(children: [
-            _DropRow<String>(icon: Icons.credit_card_outlined, iconColor: _blue, label: 'Payment Method', value: _payment, items: const {'fleet_card': 'Fleet Card', 'cash': 'Cash', 'card': 'Credit/Debit', 'check': 'Check', 'other': 'Other'}, onChanged: (v) => setState(() => _payment = v!)),
+            _DropRow<String>(icon: Icons.credit_card_outlined, iconColor: _blue,
+                label: context.read<LocaleProvider>().s.paymentMethod,
+                value: _payment, items: const {'fleet_card': 'Fleet Card', 'cash': 'Cash', 'card': 'Credit/Debit', 'check': 'Check', 'other': 'Other'},
+                onChanged: (v) => setState(() => _payment = v!)),
             const _CDivider(),
             Row(children: [
-              Expanded(child: _InlineField(icon: Icons.speed_rounded, iconColor: _sky, label: 'Odometer', ctrl: _odo, hint: '145200', type: TextInputType.number, compact: true)),
+              Expanded(child: _InlineField(icon: Icons.speed_rounded, iconColor: _sky,
+                  label: context.read<LocaleProvider>().s.odometer,
+                  ctrl: _odo, hint: '145200', type: TextInputType.number, compact: true)),
               Container(width: 1, height: 56, color: const Color(0xFFEEF0F5)),
-              Expanded(child: _InlineField(icon: Icons.receipt_long_rounded, iconColor: _sky, label: 'Receipt #', ctrl: _rcptNo, hint: 'TXN-001', compact: true)),
+              Expanded(child: _InlineField(icon: Icons.receipt_long_rounded, iconColor: _sky,
+                  label: context.read<LocaleProvider>().s.receiptNumber,
+                  ctrl: _rcptNo, hint: 'TXN-001', compact: true)),
             ]),
           ]),
 
           const SizedBox(height: 20),
 
           // ── Receipt photo ─────────────────────────────────────────────
-          _SectionHeader(icon: Icons.photo_camera_rounded, label: 'Receipt'),
+          _SectionHeader(icon: Icons.photo_camera_rounded,
+              label: context.read<LocaleProvider>().s.receiptSection),
           const SizedBox(height: 10),
           GestureDetector(
             onTap: _pickReceipt,
@@ -336,15 +393,18 @@ class _AddFuelScreenState extends State<AddFuelScreen> {
                       ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.file(_receipt!, width: 64, height: 64, fit: BoxFit.cover)),
                       const SizedBox(width: 14),
                       Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Receipt attached', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: _green)),
+                        Text(context.read<LocaleProvider>().s.receiptAttached,
+                            style: context.af(fontSize: 13, fontWeight: FontWeight.w700, color: _green)),
                         const SizedBox(height: 2),
-                        Text('Tap to change', style: GoogleFonts.inter(fontSize: 11, color: Colors.grey)),
+                        Text(context.read<LocaleProvider>().s.receiptTapToChange,
+                            style: context.af(fontSize: 11, color: Colors.grey)),
                       ]),
                     ])
                   : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Icon(Icons.cloud_upload_outlined, size: 28, color: Colors.grey.shade400),
                       const SizedBox(height: 6),
-                      Text('Tap to upload receipt (JPG, PNG, PDF)', style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade500)),
+                      Text(context.read<LocaleProvider>().s.tapToUploadReceiptFmt,
+                          style: context.af(fontSize: 12, color: Colors.grey.shade500)),
                     ]),
             ),
           ),
@@ -363,7 +423,7 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) => Row(children: [
     Container(width: 28, height: 28, decoration: BoxDecoration(color: _blue.withOpacity(0.10), borderRadius: BorderRadius.circular(8)), child: Icon(icon, size: 15, color: _blue)),
     const SizedBox(width: 8),
-    Text(label, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF64748B), letterSpacing: 0.4)),
+    Text(label, style: context.af(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF64748B), letterSpacing: 0.4)),
   ]);
 }
 
@@ -387,7 +447,7 @@ class _CardRow extends StatelessWidget {
     child: Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Row(children: [
       Container(width: 32, height: 32, decoration: BoxDecoration(color: iconColor.withOpacity(0.10), borderRadius: BorderRadius.circular(9)), child: Icon(icon, size: 16, color: iconColor)),
       const SizedBox(width: 12),
-      Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF64748B)))),
+      Expanded(child: Text(label, style: context.af(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF64748B)))),
       trailing,
       if (onTap != null) ...[const SizedBox(width: 6), Icon(Icons.chevron_right_rounded, size: 18, color: Colors.grey.shade400)],
     ])),
@@ -408,8 +468,8 @@ class _InlineField extends StatelessWidget {
       Container(width: 30, height: 30, decoration: BoxDecoration(color: iconColor.withOpacity(0.10), borderRadius: BorderRadius.circular(8)), child: Icon(icon, size: 15, color: iconColor)),
       const SizedBox(width: 10),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8))),
-        TextFormField(controller: ctrl, keyboardType: type, validator: validator, onChanged: onChanged, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _navy), decoration: InputDecoration(hintText: hint, isDense: true, contentPadding: const EdgeInsets.only(top: 4), hintStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFFCBD5E1)), border: InputBorder.none, focusedBorder: InputBorder.none, enabledBorder: InputBorder.none, errorBorder: InputBorder.none, focusedErrorBorder: InputBorder.none, errorStyle: const TextStyle(height: 0, fontSize: 0))),
+        Text(label, style: context.af(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8))),
+        TextFormField(controller: ctrl, keyboardType: type, validator: validator, onChanged: onChanged, style: context.af(fontSize: 14, fontWeight: FontWeight.w600, color: _navy), decoration: InputDecoration(hintText: hint, isDense: true, contentPadding: const EdgeInsets.only(top: 4), hintStyle: context.af(fontSize: 13, color: const Color(0xFFCBD5E1)), border: InputBorder.none, focusedBorder: InputBorder.none, enabledBorder: InputBorder.none, errorBorder: InputBorder.none, focusedErrorBorder: InputBorder.none, errorStyle: const TextStyle(height: 0, fontSize: 0))),
       ])),
     ]),
   );
@@ -426,7 +486,7 @@ class _DropRow<T> extends StatelessWidget {
     child: Row(children: [
       Container(width: 32, height: 32, decoration: BoxDecoration(color: iconColor.withOpacity(0.10), borderRadius: BorderRadius.circular(9)), child: Icon(icon, size: 16, color: iconColor)),
       const SizedBox(width: 12),
-      Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<T>(value: value, isExpanded: true, icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey.shade400), items: items.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)))).toList(), onChanged: onChanged))),
+      Expanded(child: DropdownButtonHideUnderline(child: DropdownButton<T>(value: value, isExpanded: true, icon: Icon(Icons.keyboard_arrow_down_rounded, color: Colors.grey.shade400), items: items.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, style: context.af(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)))).toList(), onChanged: onChanged))),
     ]),
   );
 }

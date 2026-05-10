@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../core/font_ext.dart';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const _navy    = Color(0xFF031634);
@@ -25,11 +28,11 @@ Color _stsColor(String? s) => switch (s) {
       _             => const Color(0xFF94A3B8),
     };
 
-String _stsLabel(String? s) => switch (s) {
-      'pending'     => 'Pending',
-      'in_progress' => 'In Progress',
-      'completed'   => 'Completed',
-      'cancelled'   => 'Cancelled',
+String _stsLabel(String? s, AppStrings l) => switch (s) {
+      'pending'     => l.pending,
+      'in_progress' => l.inProgress,
+      'completed'   => l.statusCompleted,
+      'cancelled'   => l.statusCancelled,
       _             => s ?? '—',
     };
 
@@ -72,6 +75,7 @@ class _DriverMaintenanceScreenState extends State<DriverMaintenanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.read<LocaleProvider>().s;
     return Scaffold(
       backgroundColor: _surface,
       body: RefreshIndicator(
@@ -89,15 +93,15 @@ class _DriverMaintenanceScreenState extends State<DriverMaintenanceScreen> {
             title: Row(children: [
               const Icon(Icons.build_rounded, color: _cyan, size: 18),
               const SizedBox(width: 8),
-              Text('Maintenance',
-                  style: GoogleFonts.inter(
+              Text(s.maintenance,
+                  style: context.af(
                       fontSize: 17,
                       fontWeight: FontWeight.w800,
                       color: Colors.white)),
               const Spacer(),
               _HeaderBtn(
                 icon: Icons.add_rounded,
-                label: 'Add',
+                label: s.add,
                 onTap: () async {
                   await context.push('/driver-maintenance/add');
                   _load();
@@ -129,17 +133,20 @@ class _DriverMaintenanceScreenState extends State<DriverMaintenanceScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Row(children: [
-                  _StatChip(label: 'Total',     value: '${_records.length}', color: _cyan),
-                  const SizedBox(width: 8),
-                  _StatChip(label: 'Pending',   value: '$_pending',   color: const Color(0xFFF59E0B)),
-                  const SizedBox(width: 8),
-                  _StatChip(label: 'Done',      value: '$_completed', color: const Color(0xFF22C55E)),
-                  if (_critical > 0) ...[
+                child: Builder(builder: (ctx) {
+                  final sl = ctx.read<LocaleProvider>().s;
+                  return Row(children: [
+                    _StatChip(label: sl.totalStat,    value: '${_records.length}', color: _cyan),
                     const SizedBox(width: 8),
-                    _StatChip(label: 'Critical', value: '$_critical', color: const Color(0xFFEF4444)),
-                  ],
-                ]),
+                    _StatChip(label: sl.pending,      value: '$_pending',   color: const Color(0xFFF59E0B)),
+                    const SizedBox(width: 8),
+                    _StatChip(label: sl.doneStat,     value: '$_completed', color: const Color(0xFF22C55E)),
+                    if (_critical > 0) ...[
+                      const SizedBox(width: 8),
+                      _StatChip(label: sl.criticalStat, value: '$_critical', color: const Color(0xFFEF4444)),
+                    ],
+                  ]);
+                }),
               ),
             ),
 
@@ -150,15 +157,15 @@ class _DriverMaintenanceScreenState extends State<DriverMaintenanceScreen> {
                   child: CircularProgressIndicator(color: _cyan)),
             )
           else if (_error != null)
-            SliverFillRemaining(child: _buildError())
+            SliverFillRemaining(child: Builder(builder: (ctx) => _buildError(ctx)))
           else if (_records.isEmpty)
-            SliverFillRemaining(child: _buildEmpty())
+            SliverFillRemaining(child: Builder(builder: (ctx) => _buildEmpty(ctx)))
           else
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (_, i) => _RecordCard(
+                  (ctx, i) => _RecordCard(
                     record: _records[i],
                     onEdit: () async {
                       await context.push(
@@ -176,61 +183,67 @@ class _DriverMaintenanceScreenState extends State<DriverMaintenanceScreen> {
     );
   }
 
-  Widget _buildError() => Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          const Icon(Icons.error_outline, size: 48, color: Colors.red),
-          const SizedBox(height: 12),
-          Text('Failed to load',
-              style: GoogleFonts.inter(fontSize: 16, color: Colors.black87)),
-          const SizedBox(height: 8),
-          FilledButton(
-              onPressed: _load,
-              style: FilledButton.styleFrom(backgroundColor: _navy),
-              child: const Text('Retry')),
-        ]),
-      );
+  Widget _buildError(BuildContext ctx) {
+    final s = ctx.read<LocaleProvider>().s;
+    return Center(
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+        const SizedBox(height: 12),
+        Text(s.failedToLoad,
+            style: ctx.af(fontSize: 16, color: Colors.black87)),
+        const SizedBox(height: 8),
+        FilledButton(
+            onPressed: _load,
+            style: FilledButton.styleFrom(backgroundColor: _navy),
+            child: Text(s.retry)),
+      ]),
+    );
+  }
 
-  Widget _buildEmpty() => Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                      color: _navy.withValues(alpha: 0.08),
-                      blurRadius: 20)
-                ]),
-            child: const Icon(Icons.build_outlined,
-                size: 48, color: Color(0xFFCBD5E1)),
-          ),
-          const SizedBox(height: 20),
-          Text('No maintenance records yet',
-              style: GoogleFonts.inter(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF94A3B8))),
-          const SizedBox(height: 8),
-          Text('Tap "Add" to report an issue',
-              style: GoogleFonts.inter(
-                  fontSize: 13, color: const Color(0xFFCBD5E1))),
-          const SizedBox(height: 24),
-          FilledButton.icon(
-            onPressed: () async {
-              await context.push('/driver-maintenance/add');
-              _load();
-            },
-            style: FilledButton.styleFrom(
-                backgroundColor: _navy,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 14)),
-            icon: const Icon(Icons.add, size: 18),
-            label: Text('Report Maintenance',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-          ),
-        ]),
-      );
+  Widget _buildEmpty(BuildContext ctx) {
+    final s = ctx.read<LocaleProvider>().s;
+    return Center(
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                    color: _navy.withValues(alpha: 0.08),
+                    blurRadius: 20)
+              ]),
+          child: const Icon(Icons.build_outlined,
+              size: 48, color: Color(0xFFCBD5E1)),
+        ),
+        const SizedBox(height: 20),
+        Text(s.noMaintenanceYet,
+            style: ctx.af(
+                fontSize: 17,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF94A3B8))),
+        const SizedBox(height: 8),
+        Text(s.tapAddToReportIssue,
+            style: ctx.af(
+                fontSize: 13, color: const Color(0xFFCBD5E1))),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: () async {
+            await ctx.push('/driver-maintenance/add');
+            _load();
+          },
+          style: FilledButton.styleFrom(
+              backgroundColor: _navy,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 24, vertical: 14)),
+          icon: const Icon(Icons.add, size: 18),
+          label: Text(s.reportMaintenance,
+              style: ctx.af(fontWeight: FontWeight.w700)),
+        ),
+      ]),
+    );
+  }
 }
 
 // ── Header add button ─────────────────────────────────────────────────────────
@@ -254,7 +267,7 @@ class _HeaderBtn extends StatelessWidget {
             Icon(icon, size: 15, color: _cyan),
             const SizedBox(width: 4),
             Text(label,
-                style: GoogleFonts.inter(
+                style: context.af(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: _cyan)),
@@ -285,13 +298,13 @@ class _StatChip extends StatelessWidget {
               ]),
           child: Column(children: [
             Text(value,
-                style: GoogleFonts.inter(
+                style: context.af(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                     color: color)),
             const SizedBox(height: 2),
             Text(label,
-                style: GoogleFonts.inter(
+                style: context.af(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF94A3B8))),
@@ -308,6 +321,7 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s   = context.read<LocaleProvider>().s;
     final pri = _priColor(record['priority']);
     final sts = _stsColor(record['status']);
 
@@ -345,7 +359,7 @@ class _RecordCard extends StatelessWidget {
                   Row(children: [
                     Expanded(
                       child: Text(record['title'] ?? '—',
-                          style: GoogleFonts.inter(
+                          style: context.af(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF1E293B))),
@@ -357,8 +371,8 @@ class _RecordCard extends StatelessWidget {
                       decoration: BoxDecoration(
                           color: sts.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20)),
-                      child: Text(_stsLabel(record['status']),
-                          style: GoogleFonts.inter(
+                      child: Text(_stsLabel(record['status'], s),
+                          style: context.af(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: sts)),
@@ -373,7 +387,7 @@ class _RecordCard extends StatelessWidget {
                         size: 12, color: Color(0xFF94A3B8)),
                     const SizedBox(width: 4),
                     Text(record['truck_unit'] ?? '—',
-                        style: GoogleFonts.inter(
+                        style: context.af(
                             fontSize: 11,
                             color: const Color(0xFF94A3B8))),
                     const SizedBox(width: 10),
@@ -384,14 +398,14 @@ class _RecordCard extends StatelessWidget {
                       child: Text(
                           record['maintenance_type_display'] ?? '—',
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
+                          style: context.af(
                               fontSize: 11,
                               color: const Color(0xFF94A3B8))),
                     ),
                     if (record['cost'] != null)
                       Text(
                           '\$${double.tryParse(record['cost'].toString())?.toStringAsFixed(2) ?? record['cost']}',
-                          style: GoogleFonts.inter(
+                          style: context.af(
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                               color: _navy)),
@@ -403,7 +417,7 @@ class _RecordCard extends StatelessWidget {
                           size: 11, color: Color(0xFFCBD5E1)),
                       const SizedBox(width: 4),
                       Text(record['date_performed'],
-                          style: GoogleFonts.inter(
+                          style: context.af(
                               fontSize: 11,
                               color: const Color(0xFFCBD5E1))),
                     ]),

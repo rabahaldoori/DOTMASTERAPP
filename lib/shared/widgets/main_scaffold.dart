@@ -2,7 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 class MainScaffold extends StatelessWidget {
   final Widget child;
@@ -40,6 +42,7 @@ class _GlassTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s          = context.watch<LocaleProvider>().s;
     final safeBottom = MediaQuery.of(context).padding.bottom;
 
     return Padding(
@@ -118,22 +121,22 @@ class _GlassTabBar extends StatelessWidget {
               // ── Tab items ──────────────────────────────────────────────
               Row(children: [
                 _TabItem(icon: Icons.grid_view_rounded,
-                    label: 'Dashboard', active: isDash,
+                    label: s.navDashboard, active: isDash,
                     onTap: () => context.go('/dashboard')),
                 _TabItem(icon: Icons.local_gas_station_rounded,
-                    label: 'Fuel', active: isFuel,
+                    label: s.navFuel, active: isFuel,
                     onTap: () => context.go('/fuel')),
                 _TabItem(icon: Icons.route_rounded,
-                    label: 'Trips', active: isTrips,
+                    label: s.navTrips, active: isTrips,
                     onTap: () => context.go('/trips')),
                 _TabItem(icon: Icons.bar_chart_rounded,
-                    label: 'Reports', active: isReports,
+                    label: s.navReports, active: isReports,
                     onTap: () => context.go('/reports')),
                 _TabItem(icon: Icons.local_shipping_outlined,
-                    label: 'Truck', active: isTruck,
+                    label: s.navTruck, active: isTruck,
                     onTap: () => context.go('/truck')),
                 _TabItem(icon: Icons.person_rounded,
-                    label: 'Profile', active: isProfile,
+                    label: s.navProfile, active: isProfile,
                     onTap: () => context.go('/profile')),
               ]),
             ]),
@@ -187,7 +190,7 @@ class _TabItem extends StatelessWidget {
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
-              style: GoogleFonts.inter(
+              style: context.af(
                 fontSize: 8.5,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                 color: active ? _cyan : Colors.white.withOpacity(0.45),

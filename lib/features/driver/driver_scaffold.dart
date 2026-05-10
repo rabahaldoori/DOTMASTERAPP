@@ -2,7 +2,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 class DriverScaffold extends StatelessWidget {
   final Widget child;
@@ -39,6 +41,7 @@ class _GlassTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s          = context.watch<LocaleProvider>().s;
     final safeBottom = MediaQuery.of(context).padding.bottom;
 
     return Padding(
@@ -123,14 +126,14 @@ class _GlassTabBar extends StatelessWidget {
                 // ── Tab items ─────────────────────────────────────────────
                 Row(
                   children: [
-                    _TabItem(icon: Icons.grid_view_rounded,  label: 'Home',        active: isDash,  onTap: () => context.go('/driver-dashboard')),
-                    _TabItem(icon: Icons.route_rounded,      label: 'Trips',       active: isTrips, onTap: () => context.go('/driver-trips')),
-                    _TabItem(icon: Icons.local_gas_station,  label: 'Fuel',        active: isFuel,  onTap: () => context.go('/driver-fuel')),
-                    _TabItem(icon: Icons.build_rounded,      label: 'Maintenance', active: isMaint, onTap: () => context.go('/driver-maintenance')),
-                    _TabItem(icon: Icons.person_rounded,     label: 'Profile',     active: isProf,  onTap: () => context.go('/driver-profile')),
+                    _TabItem(icon: Icons.grid_view_rounded,  label: s.navHome,        active: isDash,  onTap: () => context.go('/driver-dashboard')),
+                    _TabItem(icon: Icons.route_rounded,      label: s.navTrips,        active: isTrips, onTap: () => context.go('/driver-trips')),
+                    _TabItem(icon: Icons.local_gas_station,  label: s.navFuel,         active: isFuel,  onTap: () => context.go('/driver-fuel')),
+                    _TabItem(icon: Icons.build_rounded,      label: s.navMaintenance,  active: isMaint, onTap: () => context.go('/driver-maintenance')),
+                    _TabItem(icon: Icons.person_rounded,     label: s.navProfile,      active: isProf,  onTap: () => context.go('/driver-profile')),
                   ],
                 ),
-              ],   // Stack children
+              ],
             ),
           ),
         ),
@@ -151,7 +154,7 @@ class _TabItem extends StatelessWidget {
     required this.active, required this.onTap,
   });
 
-  static const _cyan = Color(0xFF06B6D4);  // same cyan accent as header
+  static const _cyan = Color(0xFF06B6D4);
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +186,7 @@ class _TabItem extends StatelessWidget {
             AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeOutCubic,
-              style: GoogleFonts.inter(
+              style: context.af(
                 fontSize: 8.5,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                 color: active ? _cyan : Colors.white.withOpacity(0.45),

@@ -1,9 +1,11 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../core/font_ext.dart';
+import '../../../core/l10n/locale_provider.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const _navy    = Color(0xFF031634);
@@ -15,6 +17,8 @@ const _grey    = Color(0xFF64748B);
 const _border  = Color(0xFFDCE2F3);
 const _green   = Color(0xFF15803D);
 const _red     = Color(0xFFB91C1C);
+
+bool _isAr(BuildContext ctx) => ctx.read<LocaleProvider>().locale.languageCode == 'ar';
 
 class InspectionDetailScreen extends StatelessWidget {
   final Map<String, dynamic> insp;
@@ -90,18 +94,18 @@ class InspectionDetailScreen extends StatelessWidget {
                           color: _cyan.withOpacity(0.18),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(color: _cyan.withOpacity(0.35))),
-                        child: Text('INSPECTION REPORT', style: GoogleFonts.inter(
+                        child: Text('INSPECTION REPORT', style: AppFont.s(_isAr(context),
                             fontSize: 10, fontWeight: FontWeight.w700,
                             color: _cyan, letterSpacing: 0.8)),
                       ),
                       const SizedBox(height: 6),
-                      Text('$inspNum', style: GoogleFonts.inter(
+                      Text('$inspNum', style: AppFont.s(_isAr(context),
                           fontSize: 22, fontWeight: FontWeight.w900,
                           color: _white, letterSpacing: -0.3)),
                       const SizedBox(height: 4),
                       Text(
                         allPassed ? '✅  All Clear — Vehicle Passed' : '⚠️  $failed Item${failed == 1 ? '' : 's'} Need Attention',
-                        style: GoogleFonts.inter(fontSize: 13,
+                        style: AppFont.s(_isAr(context),fontSize: 13,
                             color: allPassed ? const Color(0xFF86EFAC) : const Color(0xFFFCA5A5),
                             fontWeight: FontWeight.w600)),
                     ]),
@@ -131,9 +135,9 @@ class InspectionDetailScreen extends StatelessWidget {
                       color: _white, size: 28)),
                   const SizedBox(width: 14),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('Compliance Score', style: GoogleFonts.inter(
+                    Text('Compliance Score', style: AppFont.s(_isAr(context),
                         fontSize: 12, color: _grey, fontWeight: FontWeight.w500)),
-                    Text('$score%', style: GoogleFonts.inter(
+                    Text('$score%', style: AppFont.s(_isAr(context),
                         fontSize: 32, fontWeight: FontWeight.w900,
                         color: allPassed ? _green : _red, height: 1.1)),
                   ])),
@@ -237,8 +241,8 @@ class _StatBox extends StatelessWidget {
   Widget build(BuildContext context) => Column(mainAxisSize: MainAxisSize.min, children: [
     Icon(icon, size: 18, color: color),
     const SizedBox(height: 4),
-    Text(value, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
-    Text(label, style: GoogleFonts.inter(fontSize: 11, color: _grey)),
+    Text(value, style: AppFont.s(_isAr(context),fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+    Text(label, style: AppFont.s(_isAr(context),fontSize: 11, color: _grey)),
   ]);
 }
 
@@ -258,7 +262,7 @@ class _SmallBadge extends StatelessWidget {
     decoration: BoxDecoration(
       color: color.withOpacity(0.10),
       borderRadius: BorderRadius.circular(8)),
-    child: Text(label, style: GoogleFonts.inter(
+    child: Text(label, style: AppFont.s(_isAr(context),
         fontSize: 11, fontWeight: FontWeight.w700, color: color)),
   );
 }
@@ -272,9 +276,9 @@ class _Row extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 9),
     child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: GoogleFonts.inter(fontSize: 13, color: _grey, fontWeight: FontWeight.w500)),
+      Text(label, style: AppFont.s(_isAr(context),fontSize: 13, color: _grey, fontWeight: FontWeight.w500)),
       const SizedBox(width: 8),
-      Expanded(child: Text(value, textAlign: TextAlign.end, style: GoogleFonts.inter(
+      Expanded(child: Text(value, textAlign: TextAlign.end, style: AppFont.s(_isAr(context),
           fontSize: 13, color: valueColor, fontWeight: FontWeight.w700))),
     ]),
   );
@@ -288,14 +292,14 @@ class _SectionHeader extends StatelessWidget {
   const _SectionHeader(this.title, this.count, this.color);
   @override
   Widget build(BuildContext context) => Row(children: [
-    Text(title, style: GoogleFonts.inter(
+    Text(title, style: AppFont.s(_isAr(context),
         fontSize: 14, fontWeight: FontWeight.w800, color: _navy)),
     const Spacer(),
     Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
         color: color.withOpacity(0.10), borderRadius: BorderRadius.circular(12)),
-      child: Text('$count', style: GoogleFonts.inter(
+      child: Text('$count', style: AppFont.s(_isAr(context),
           fontSize: 12, fontWeight: FontWeight.w700, color: color)),
     ),
   ]);
@@ -322,13 +326,13 @@ class _IssueRow extends StatelessWidget {
             size: 18, color: isCritical ? _red : const Color(0xFFD97706)),
         const SizedBox(width: 10),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(iss['label']?.toString() ?? '—', style: GoogleFonts.inter(
+          Text(iss['label']?.toString() ?? '—', style: AppFont.s(_isAr(context),
               fontSize: 13, fontWeight: FontWeight.w700,
               color: isCritical ? _red : const Color(0xFF92400E))),
           if (iss['note']?.toString().isNotEmpty == true) ...[
             const SizedBox(height: 3),
             Text(iss['note'].toString(),
-                style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                style: AppFont.s(_isAr(context),fontSize: 12, color: _grey)),
           ],
         ])),
         Container(
@@ -336,7 +340,7 @@ class _IssueRow extends StatelessWidget {
           decoration: BoxDecoration(
             color: isCritical ? _red.withOpacity(0.12) : const Color(0xFFFDE68A),
             borderRadius: BorderRadius.circular(8)),
-          child: Text(severity.toUpperCase(), style: GoogleFonts.inter(
+          child: Text(severity.toUpperCase(), style: AppFont.s(_isAr(context),
               fontSize: 10, fontWeight: FontWeight.w800,
               color: isCritical ? _red : const Color(0xFF92400E),
               letterSpacing: 0.5)),
@@ -372,10 +376,10 @@ class _CategoryCard extends StatelessWidget {
           child: Row(children: [
             const Icon(Icons.category_outlined, size: 16, color: _blue),
             const SizedBox(width: 8),
-            Expanded(child: Text(category, style: GoogleFonts.inter(
+            Expanded(child: Text(category, style: AppFont.s(_isAr(context),
                 fontSize: 14, fontWeight: FontWeight.w800, color: _navy))),
             Text('$passedCount / ${items.length}',
-                style: GoogleFonts.inter(fontSize: 12, color: _blue, fontWeight: FontWeight.w700)),
+                style: AppFont.s(_isAr(context),fontSize: 12, color: _blue, fontWeight: FontWeight.w700)),
           ]),
         ),
         // Items
@@ -411,18 +415,18 @@ class _CategoryCard extends StatelessWidget {
                       Icon(passed ? Icons.check_circle_rounded : Icons.cancel_rounded,
                           size: 12, color: passed ? _green : _red),
                       const SizedBox(width: 4),
-                      Text(passed ? 'PASS' : 'FAIL', style: GoogleFonts.inter(
+                      Text(passed ? 'PASS' : 'FAIL', style: AppFont.s(_isAr(context),
                           fontSize: 10, fontWeight: FontWeight.w800,
                           color: passed ? _green : _red, letterSpacing: 0.4)),
                     ]),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(label, style: GoogleFonts.inter(
+                  Expanded(child: Text(label, style: AppFont.s(_isAr(context),
                       fontSize: 13, fontWeight: FontWeight.w500, color: _navy))),
                 ]),
                 if (note.isNotEmpty) ...[
                   const SizedBox(height: 5),
-                  Text('Note: $note', style: GoogleFonts.inter(
+                  Text('Note: $note', style: AppFont.s(_isAr(context),
                       fontSize: 11, color: _grey, fontStyle: FontStyle.italic)),
                 ],
                 // Photo

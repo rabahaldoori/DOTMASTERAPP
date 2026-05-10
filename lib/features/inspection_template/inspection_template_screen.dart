@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const _navy   = Color(0xFF031634);
@@ -42,7 +44,7 @@ class _State extends State<InspectionTemplateScreen> {
         });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = 'Failed to load template.'; _loading = false; });
+      if (mounted) setState(() { _error = context.read<LocaleProvider>().s.failedToLoadTapRetry; _loading = false; });
     }
   }
 
@@ -55,10 +57,10 @@ class _State extends State<InspectionTemplateScreen> {
         'name': result['name'], 'icon': result['icon'],
       });
       if (res.statusCode == 201 && mounted) {
-        _showSnack('Category added ✓');
+        _showSnack(context.read<LocaleProvider>().s.categoryAddedOk);
         _load();
       }
-    } catch (_) { _showSnack('Failed to add category', error: true); }
+    } catch (_) { _showSnack(context.read<LocaleProvider>().s.failedToAddCategory, error: true); }
   }
 
   Future<void> _editCategory(_TplCategory cat) async {
@@ -67,20 +69,21 @@ class _State extends State<InspectionTemplateScreen> {
     try {
       await ApiClient.updateInspectionCategory(cat.id,
           {'name': result['name'], 'icon': result['icon']});
-      _showSnack('Category updated ✓');
+      _showSnack(context.read<LocaleProvider>().s.categoryUpdatedOk);
       _load();
-    } catch (_) { _showSnack('Failed to update', error: true); }
+    } catch (_) { _showSnack(context.read<LocaleProvider>().s.failedToUpdateCategory, error: true); }
   }
 
   Future<void> _deleteCategory(_TplCategory cat) async {
+    final s = context.read<LocaleProvider>().s;
     final confirmed = await _showConfirm(
-        'Delete "${cat.name}"?\nAll items in this category will be removed.');
+        '${s.delete} "${cat.name}"?\n${s.deleteCategoryConfirmFmt}');
     if (!confirmed) return;
     try {
       await ApiClient.deleteInspectionCategory(cat.id);
-      _showSnack('Deleted');
+      _showSnack(s.itemRemovedOk);
       _load();
-    } catch (_) { _showSnack('Failed to delete', error: true); }
+    } catch (_) { _showSnack(s.failedToDeleteCategory, error: true); }
   }
 
   // ── Item CRUD ────────────────────────────────────────────────────────────────
@@ -91,9 +94,9 @@ class _State extends State<InspectionTemplateScreen> {
       await ApiClient.createInspectionItem({
         'category': cat.id, 'label': label.trim(),
       });
-      _showSnack('Item added ✓');
+      _showSnack(context.read<LocaleProvider>().s.itemAddedOk);
       _load();
-    } catch (_) { _showSnack('Failed to add item', error: true); }
+    } catch (_) { _showSnack(context.read<LocaleProvider>().s.failedToAddItem, error: true); }
   }
 
   Future<void> _editItem(_TplItem item) async {
@@ -101,26 +104,27 @@ class _State extends State<InspectionTemplateScreen> {
     if (label == null || label.trim().isEmpty) return;
     try {
       await ApiClient.updateInspectionItem(item.id, {'label': label.trim()});
-      _showSnack('Item updated ✓');
+      _showSnack(context.read<LocaleProvider>().s.itemUpdatedOk);
       _load();
-    } catch (_) { _showSnack('Failed to update', error: true); }
+    } catch (_) { _showSnack(context.read<LocaleProvider>().s.failedToUpdateItem, error: true); }
   }
 
   Future<void> _deleteItem(_TplItem item) async {
-    final confirmed = await _showConfirm('Remove "${item.label}"?');
+    final s = context.read<LocaleProvider>().s;
+    final confirmed = await _showConfirm('${s.delete} "${item.label}"?\n${s.removeItemConfirmFmt}');
     if (!confirmed) return;
     try {
       await ApiClient.deleteInspectionItem(item.id);
-      _showSnack('Removed');
+      _showSnack(s.itemRemovedOk);
       _load();
-    } catch (_) { _showSnack('Failed to delete', error: true); }
+    } catch (_) { _showSnack(s.failedToDeleteItem, error: true); }
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
   void _showSnack(String msg, {bool error = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: GoogleFonts.inter(color: _white)),
+      content: Text(msg, style: context.af(color: Colors.white)),
       backgroundColor: error ? Colors.red.shade700 : const Color(0xFF15803D),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -128,18 +132,19 @@ class _State extends State<InspectionTemplateScreen> {
   }
 
   Future<bool> _showConfirm(String msg) async {
+    final s = context.read<LocaleProvider>().s;
     return await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      title: Text('Confirm', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-      content: Text(msg, style: GoogleFonts.inter(fontSize: 14, color: _grey)),
+      title: Text(s.confirm, style: context.af(fontWeight: FontWeight.w700)),
+      content: Text(msg, style: context.af(fontSize: 14, color: _grey)),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel', style: GoogleFonts.inter(color: _grey))),
+            child: Text(s.cancel, style: context.af(color: _grey))),
         ElevatedButton(
           style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text('Delete', style: GoogleFonts.inter(color: _white, fontWeight: FontWeight.w700)),
+          child: Text(s.delete, style: context.af(color: Colors.white, fontWeight: FontWeight.w700)),
         ),
       ],
     )) ?? false;
@@ -234,7 +239,7 @@ class _State extends State<InspectionTemplateScreen> {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(Icons.add_rounded, color: _white, size: 16),
                 const SizedBox(width: 5),
-                Text('Add', style: GoogleFonts.inter(
+                Text(context.read<LocaleProvider>().s.add, style: context.af(
                     fontSize: 13, fontWeight: FontWeight.w700, color: _white)),
               ]),
             ),
@@ -277,24 +282,30 @@ class _State extends State<InspectionTemplateScreen> {
                       child: const Icon(Icons.fact_check_rounded, color: _white, size: 22)),
                     const SizedBox(width: 14),
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Inspection Templates',
-                        style: GoogleFonts.inter(fontSize: 20,
-                            fontWeight: FontWeight.w900, color: _white,
-                            letterSpacing: -0.3)),
-                      Text('Vehicle safety checklist builder',
-                        style: GoogleFonts.inter(fontSize: 12,
-                            color: Colors.white.withOpacity(0.55))),
+                      Builder(builder: (ctx) {
+                        final s = ctx.read<LocaleProvider>().s;
+                        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                          Text(s.inspectionTemplates, style: context.af(
+                              fontSize: 20, fontWeight: FontWeight.w900,
+                              color: _white, letterSpacing: -0.3)),
+                          Text(s.vehicleSafetyChecklist, style: context.af(
+                              fontSize: 12, color: Colors.white.withOpacity(0.55))),
+                        ]);
+                      }),
                     ]),
                   ]),
                   const SizedBox(height: 14),
                   // Stats row
-                  Row(children: [
-                    _HeaderChip(Icons.category_rounded,
-                        '${_categories.length} Categories', _cyan),
-                    const SizedBox(width: 10),
-                    _HeaderChip(Icons.checklist_rounded,
-                        '$totalItems Items', const Color(0xFF818CF8)),
-                  ]),
+                  Builder(builder: (ctx) {
+                    final s = ctx.read<LocaleProvider>().s;
+                    return Row(children: [
+                      _HeaderChip(Icons.category_rounded,
+                          '${_categories.length} ${s.categories}', _cyan),
+                      const SizedBox(width: 10),
+                      _HeaderChip(Icons.checklist_rounded,
+                          '$totalItems ${s.items}', const Color(0xFF818CF8)),
+                    ]);
+                  }),
                 ],
               ),
             ),
@@ -308,10 +319,10 @@ class _State extends State<InspectionTemplateScreen> {
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       const Icon(Icons.error_outline, size: 48, color: Colors.red),
       const SizedBox(height: 12),
-      Text(_error!, style: GoogleFonts.inter(color: _grey)),
+      Text(_error!, style: context.af(color: _grey)),
       const SizedBox(height: 16),
       ElevatedButton(onPressed: _load,
-          child: Text('Retry', style: GoogleFonts.inter())),
+          child: Text(context.read<LocaleProvider>().s.retry, style: context.af())),
     ]),
   );
 
@@ -323,11 +334,15 @@ class _State extends State<InspectionTemplateScreen> {
           borderRadius: BorderRadius.circular(20)),
         child: const Icon(Icons.checklist_rounded, size: 36, color: _blue)),
       const SizedBox(height: 16),
-      Text('No categories yet',
-          style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
-      const SizedBox(height: 6),
-      Text('Tap "Add Category" to build your checklist',
-          style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+      Builder(builder: (ctx) {
+        final s = ctx.read<LocaleProvider>().s;
+        return Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(s.noCategoriesYet, style: context.af(
+              fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+          const SizedBox(height: 6),
+          Text(s.tapAddCategoryHint, style: context.af(fontSize: 13, color: _grey)),
+        ]);
+      }),
     ]),
   );
 }
@@ -398,13 +413,16 @@ class _CategoryCardState extends State<_CategoryCard> {
                 // Name + count
                 Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(cat.name, style: GoogleFonts.inter(
+                  Text(cat.name, style: context.af(
                       fontSize: 15, fontWeight: FontWeight.w800,
                       color: _open ? _accent : _navy)),
                   const SizedBox(height: 2),
-                  Text('${cat.items.length} item${cat.items.length == 1 ? '' : 's'}',
-                    style: GoogleFonts.inter(fontSize: 12,
-                        color: _grey, fontWeight: FontWeight.w500)),
+                  Builder(builder: (ctx) {
+                    final s = ctx.read<LocaleProvider>().s;
+                    return Text('${cat.items.length} ${s.items}',
+                        style: context.af(fontSize: 12,
+                            color: _grey, fontWeight: FontWeight.w500));
+                  }),
                 ])),
                 // Edit
                 _ActionBtn(Icons.edit_outlined, _grey,
@@ -449,9 +467,10 @@ class _CategoryCardState extends State<_CategoryCard> {
                       borderRadius: BorderRadius.circular(8)),
                     child: Icon(Icons.add_rounded, size: 16, color: _accent)),
                   const SizedBox(width: 12),
-                  Text('Add item', style: GoogleFonts.inter(
-                      fontSize: 13, fontWeight: FontWeight.w700,
-                      color: _accent)),
+                  Builder(builder: (ctx) => Text(
+                    ctx.read<LocaleProvider>().s.addItem,
+                    style: context.af(fontSize: 13,
+                        fontWeight: FontWeight.w700, color: _accent))),
                 ]),
               ),
             ),
@@ -485,11 +504,11 @@ class _ItemRow extends StatelessWidget {
             color: accent.withOpacity(0.10),
             borderRadius: BorderRadius.circular(7)),
           child: Center(child: Text('${index + 1}',
-            style: GoogleFonts.inter(fontSize: 11,
+            style: context.af(fontSize: 11,
                 fontWeight: FontWeight.w800, color: accent))),
         ),
         const SizedBox(width: 12),
-        Expanded(child: Text(item.label, style: GoogleFonts.inter(
+        Expanded(child: Text(item.label, style: context.af(
             fontSize: 13, fontWeight: FontWeight.w500, color: _navy))),
         _ActionBtn(Icons.edit_outlined, _grey, onTap: onEdit, size: 16),
         _ActionBtn(Icons.remove_circle_outline,
@@ -536,7 +555,7 @@ class _HeaderChip extends StatelessWidget {
     child: Row(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 13, color: color),
       const SizedBox(width: 5),
-      Text(label, style: GoogleFonts.inter(
+      Text(label, style: context.af(
           fontSize: 11, fontWeight: FontWeight.w700, color: color)),
     ]),
   );
@@ -566,14 +585,19 @@ Future<Map<String, String>?> _showCategoryDialog(BuildContext context,
     context: context,
     builder: (ctx) => StatefulBuilder(builder: (ctx2, setS) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      title: Text(initial == null ? 'Add Category' : 'Edit Category',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: _navy)),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
+      title: Builder(builder: (ctx) => Text(
+          initial == null
+              ? ctx.read<LocaleProvider>().s.addCategory
+              : ctx.read<LocaleProvider>().s.editCategory,
+          style: ctx.af(fontWeight: FontWeight.w700, color: _navy))),
+      content: Builder(builder: (ctx2) {
+        final s2 = ctx2.read<LocaleProvider>().s;
+        return Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(
           controller: nameCtrl,
           decoration: InputDecoration(
-            labelText: 'Category name',
-            labelStyle: GoogleFonts.inter(color: _grey),
+            labelText: s2.categoryName,
+            labelStyle: ctx2.af(color: _grey),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -582,7 +606,7 @@ Future<Map<String, String>?> _showCategoryDialog(BuildContext context,
         ),
         const SizedBox(height: 16),
         Align(alignment: Alignment.centerLeft,
-          child: Text('Icon', style: GoogleFonts.inter(fontSize: 12,
+          child: Text('Icon', style: ctx2.af(fontSize: 12,
               fontWeight: FontWeight.w600, color: _grey))),
         const SizedBox(height: 8),
         Wrap(spacing: 8, runSpacing: 8, children: icons.entries.map((e) =>
@@ -600,10 +624,12 @@ Future<Map<String, String>?> _showCategoryDialog(BuildContext context,
                   color: selectedIcon == e.key ? _blue : _grey),
             ),
           )).toList()),
-      ]),
+      ]);
+      }),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.inter(color: _grey))),
+            child: Text(ctx.read<LocaleProvider>().s.cancel,
+                style: ctx.af(color: _grey))),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: _blue,
@@ -612,8 +638,8 @@ Future<Map<String, String>?> _showCategoryDialog(BuildContext context,
             if (nameCtrl.text.trim().isEmpty) return;
             Navigator.pop(ctx, {'name': nameCtrl.text.trim(), 'icon': selectedIcon});
           },
-          child: Text('Save', style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700, color: _white)),
+          child: Text(ctx.read<LocaleProvider>().s.save,
+              style: ctx.af(fontWeight: FontWeight.w700, color: Colors.white)),
         ),
       ],
     )),
@@ -622,18 +648,19 @@ Future<Map<String, String>?> _showCategoryDialog(BuildContext context,
 
 Future<String?> _showItemDialog(BuildContext context, {String? initial}) async {
   final ctrl = TextEditingController(text: initial ?? '');
+  final s = context.read<LocaleProvider>().s;
   return await showDialog<String?>(
     context: context,
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      title: Text(initial == null ? 'Add Item' : 'Edit Item',
-          style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: _navy)),
+      title: Text(initial == null ? s.addItem : s.editItem,
+          style: ctx.af(fontWeight: FontWeight.w700, color: _navy)),
       content: TextField(
         controller: ctrl,
         autofocus: true,
         decoration: InputDecoration(
-          labelText: 'Item label',
-          labelStyle: GoogleFonts.inter(color: _grey),
+          labelText: s.itemLabel,
+          labelStyle: ctx.af(color: _grey),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
@@ -642,14 +669,14 @@ Future<String?> _showItemDialog(BuildContext context, {String? initial}) async {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel', style: GoogleFonts.inter(color: _grey))),
+            child: Text(s.cancel, style: ctx.af(color: _grey))),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: _blue,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
           onPressed: () => Navigator.pop(ctx, ctrl.text),
-          child: Text('Save', style: GoogleFonts.inter(
-              fontWeight: FontWeight.w700, color: _white)),
+          child: Text(s.save, style: ctx.af(
+              fontWeight: FontWeight.w700, color: Colors.white)),
         ),
       ],
     ),

@@ -6,6 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
+import '../../core/l10n/language_picker.dart';
+import 'package:provider/provider.dart';
 
 const _navy  = Color(0xFF031634);
 const _blue  = Color(0xFF0453CD);
@@ -47,17 +51,17 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
       final res = await ApiClient.uploadDriverPhoto(_profile!['id'], picked.path);
       if (res.statusCode == 200 && res.data['photo'] != null) {
         setState(() => _profile!['photo'] = res.data['photo']);
-        if (mounted) _snack('Photo updated!', _green);
+        if (mounted) _snack(context.read<LocaleProvider>().s.photoUpdated, _green);
       }
     } catch (_) {
-      if (mounted) _snack('Upload failed.', _red);
+      if (mounted) _snack(context.read<LocaleProvider>().s.uploadFailed, _red);
     } finally {
       setState(() => _uploading = false);
     }
   }
 
   void _snack(String msg, Color col) => ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(msg, style: GoogleFonts.inter(color: Colors.white)),
+    SnackBar(content: Text(msg, style: context.af(color: Colors.white)),
       backgroundColor: col, behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
   );
@@ -73,10 +77,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               decoration: BoxDecoration(color: _red.withOpacity(0.10), shape: BoxShape.circle),
               child: const Icon(Icons.logout_rounded, color: _red, size: 26)),
             const SizedBox(height: 14),
-            Text('Sign Out', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: _navy)),
+            Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return Text(s.signOut, style: c.af(fontSize: 18, fontWeight: FontWeight.w800, color: _navy)); }),
             const SizedBox(height: 6),
-            Text('Are you sure you want to sign out?', textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+            Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return Text(s.areYouSureSignOut, textAlign: TextAlign.center, style: c.af(fontSize: 13, color: _grey)); }),
             const SizedBox(height: 22),
             Row(children: [
               Expanded(child: OutlinedButton(
@@ -85,7 +88,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     side: const BorderSide(color: Color(0xFFE2E8F0)),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12)),
-                child: Text('Cancel', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _grey)),
+                child: Builder(builder: (c) => Text(c.read<LocaleProvider>().s.cancel, style: c.af(fontWeight: FontWeight.w600, color: _grey))),
               )),
               const SizedBox(width: 10),
               Expanded(child: ElevatedButton(
@@ -93,7 +96,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 style: ElevatedButton.styleFrom(backgroundColor: _red,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12)),
-                child: Text('Sign Out', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)),
+                child: Builder(builder: (c) => Text(c.read<LocaleProvider>().s.signOut, style: c.af(fontWeight: FontWeight.w700, color: Colors.white))),
               )),
             ]),
           ]),
@@ -128,7 +131,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               decoration: BoxDecoration(color: _blue.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.person_outline_rounded, color: _blue, size: 20)),
             const SizedBox(width: 12),
-            Text('Personal Information', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+            Builder(builder: (c) => Text(c.read<LocaleProvider>().s.personalInformation, style: c.af(fontSize: 17, fontWeight: FontWeight.w700, color: _navy))),
           ]),
           const SizedBox(height: 20),
           GridView.count(
@@ -136,12 +139,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             physics: const NeverScrollableScrollPhysics(),
             childAspectRatio: 2.2, crossAxisSpacing: 12, mainAxisSpacing: 12,
             children: [
-              _DInfoCell(icon: Icons.badge_outlined,    label: 'Full Name', value: name.toString()),
-              _DInfoCell(icon: Icons.email_outlined,    label: 'Email',     value: email.toString()),
-              _DInfoCell(icon: Icons.phone_outlined,    label: 'Phone',     value: phone.toString()),
-              _DInfoCell(icon: Icons.business_outlined, label: 'Company',   value: company.toString()),
-              _DInfoCell(icon: Icons.badge_rounded,     label: 'CDL #',     value: cdl.toString()),
-              _DInfoCell(icon: Icons.map_outlined,      label: 'CDL State', value: state.toString()),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DInfoCell(icon: Icons.badge_outlined,    label: s.fullName,  value: name.toString()); }),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DInfoCell(icon: Icons.email_outlined,    label: s.email,     value: email.toString()); }),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DInfoCell(icon: Icons.phone_outlined,    label: s.phone,     value: phone.toString()); }),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DInfoCell(icon: Icons.business_outlined, label: s.company,   value: company.toString()); }),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DInfoCell(icon: Icons.badge_rounded,     label: s.cdlNumber, value: cdl.toString()); }),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DInfoCell(icon: Icons.map_outlined,      label: s.cdlState,  value: state.toString()); }),
             ],
           ),
           const SizedBox(height: 8),
@@ -165,7 +168,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               decoration: BoxDecoration(color: const Color(0xFF7C3AED).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF7C3AED), size: 20)),
             const SizedBox(width: 12),
-            Text('Security & Privacy', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+            Builder(builder: (c) => Text(c.read<LocaleProvider>().s.securityPrivacy, style: c.af(fontSize: 17, fontWeight: FontWeight.w700, color: _navy))),
           ]),
           const SizedBox(height: 20),
           // Change Password
@@ -179,8 +182,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   child: const Icon(Icons.key_outlined, size: 18, color: _grey)),
                 const SizedBox(width: 12),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Change Password', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)),
-                  Text('Update your login password', style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                  Builder(builder: (c) => Text(c.read<LocaleProvider>().s.changePassword, style: c.af(fontSize: 14, fontWeight: FontWeight.w600, color: _navy))),
+                  Builder(builder: (c) => Text(c.read<LocaleProvider>().s.updateLoginPassword, style: c.af(fontSize: 12, color: _grey))),
                 ])),
                 const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFCBD5E1)),
               ]),
@@ -198,8 +201,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   child: Icon(Icons.privacy_tip_outlined, size: 18, color: _green)),
                 const SizedBox(width: 12),
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('Privacy Policy', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: _navy)),
-                  Text('How we handle your data', style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                  Builder(builder: (c) => Text(c.read<LocaleProvider>().s.privacyPolicy, style: c.af(fontSize: 14, fontWeight: FontWeight.w600, color: _navy))),
+                  Builder(builder: (c) => Text(c.read<LocaleProvider>().s.howWeHandleData, style: c.af(fontSize: 12, color: _grey))),
                 ])),
                 const Icon(Icons.chevron_right_rounded, size: 20, color: Color(0xFFCBD5E1)),
               ]),
@@ -235,7 +238,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               Navigator.of(ctx, rootNavigator: true).pop();
               HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Password changed!', style: GoogleFonts.inter(color: Colors.white)),
+                content: Builder(builder: (c) => Text('Password changed!', style: c.af(color: Colors.white))),
                 backgroundColor: _green, behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))));
             }
@@ -254,7 +257,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 decoration: BoxDecoration(color: const Color(0xFF7C3AED).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF7C3AED), size: 20)),
               const SizedBox(width: 12),
-              Text('Change Password', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+              Builder(builder: (c) => Text(c.read<LocaleProvider>().s.changePassword, style: c.af(fontSize: 17, fontWeight: FontWeight.w700, color: _navy))),
             ]),
             const SizedBox(height: 20),
             if (errorMsg != null) ...[
@@ -263,15 +266,15 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 decoration: BoxDecoration(color: _red.withOpacity(0.08), borderRadius: BorderRadius.circular(10), border: Border.all(color: _red.withOpacity(0.25))),
                 child: Row(children: [
                   Icon(Icons.error_outline_rounded, color: _red, size: 16), const SizedBox(width: 8),
-                  Expanded(child: Text(errorMsg!, style: GoogleFonts.inter(fontSize: 13, color: _red, fontWeight: FontWeight.w500))),
+                  Expanded(child: Builder(builder: (c) => Text(errorMsg!, style: c.af(fontSize: 13, color: _red, fontWeight: FontWeight.w500)))),
                 ])),
               const SizedBox(height: 14),
             ],
-            _DPwdField(controller: oldCtrl, label: 'Current Password', obscure: oldObs, onToggle: () => setS(() => oldObs = !oldObs)),
+            Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DPwdField(controller: oldCtrl, label: s.currentPassword, obscure: oldObs, onToggle: () => setS(() => oldObs = !oldObs)); }),
             const SizedBox(height: 12),
-            _DPwdField(controller: newCtrl, label: 'New Password', obscure: newObs, onToggle: () => setS(() => newObs = !newObs)),
+            Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DPwdField(controller: newCtrl, label: s.newPassword, obscure: newObs, onToggle: () => setS(() => newObs = !newObs)); }),
             const SizedBox(height: 12),
-            _DPwdField(controller: confCtrl, label: 'Confirm New Password', obscure: confObs, onToggle: () => setS(() => confObs = !confObs)),
+            Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DPwdField(controller: confCtrl, label: s.confirmNewPassword, obscure: confObs, onToggle: () => setS(() => confObs = !confObs)); }),
             const SizedBox(height: 20),
             SizedBox(width: double.infinity, height: 52,
               child: ElevatedButton(
@@ -280,7 +283,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
                 child: loading
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text('Update Password', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                    : Builder(builder: (c) => Text(c.read<LocaleProvider>().s.updatePassword, style: c.af(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white))),
               )),
           ]),
         );
@@ -311,17 +314,17 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   decoration: BoxDecoration(color: _green.withOpacity(0.08), borderRadius: BorderRadius.circular(10)),
                   child: Icon(Icons.privacy_tip_outlined, color: _green, size: 20)),
                 const SizedBox(width: 12),
-                Text('Privacy Policy', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+                Builder(builder: (c) => Text(c.read<LocaleProvider>().s.privacyPolicy, style: c.af(fontSize: 17, fontWeight: FontWeight.w700, color: _navy))),
               ]),
               const SizedBox(height: 16),
               Container(height: 1, color: const Color(0xFFF1F5F9)),
             ])),
             Expanded(child: loading
                 ? const Center(child: CircularProgressIndicator(color: _blue, strokeWidth: 2))
-                : error != null ? Center(child: Text(error!, style: GoogleFonts.inter(fontSize: 13, color: _grey)))
-                : content.isEmpty ? Center(child: Text('Privacy Policy not set yet.', style: GoogleFonts.inter(fontSize: 14, color: _grey)))
+                : error != null ? Center(child: Builder(builder: (c) => Text(error!, style: c.af(fontSize: 13, color: _grey))))
+                : content.isEmpty ? Center(child: Builder(builder: (c) => Text('Privacy Policy not set yet.', style: c.af(fontSize: 14, color: _grey))))
                 : ListView(controller: scrollCtrl, padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-                    children: [SelectableText(content, style: GoogleFonts.inter(fontSize: 13.5, color: const Color(0xFF334155), height: 1.75))])),
+                    children: [Builder(builder: (c) => SelectableText(content, style: c.af(fontSize: 13.5, color: const Color(0xFF334155), height: 1.75)))])),
           ]),
         );
       }),
@@ -356,22 +359,19 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 decoration: BoxDecoration(color: const Color(0xFF06B6D4).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
                 child: const Icon(Icons.notifications_outlined, color: Color(0xFF06B6D4), size: 20)),
               const SizedBox(width: 12),
-              Text('Notification Settings', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
+              Builder(builder: (c) => Text(c.read<LocaleProvider>().s.notificationSettings, style: c.af(fontSize: 17, fontWeight: FontWeight.w700, color: _navy))),
             ]),
             const SizedBox(height: 8),
-            Text('Choose which notifications you want to receive.', style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+            Builder(builder: (c) => Text(c.read<LocaleProvider>().s.chooseNotifications, style: c.af(fontSize: 13, color: _grey))),
             const SizedBox(height: 16),
             if (loading)
               const Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Center(child: CircularProgressIndicator(color: _blue, strokeWidth: 2)))
             else ...[
-              _DToggleRow(icon: Icons.notifications_active_outlined, iconColor: const Color(0xFF06B6D4),
-                  label: 'Push Notifications', subtitle: 'Alerts, reminders & updates', value: push, onChanged: (v) => toggle(newPush: v)),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DToggleRow(icon: Icons.notifications_active_outlined, iconColor: const Color(0xFF06B6D4), label: s.pushNotifications, subtitle: s.pushNotifSubtitle, value: push, onChanged: (v) => toggle(newPush: v)); }),
               Container(height: 1, color: const Color(0xFFF1F5F9), margin: const EdgeInsets.symmetric(vertical: 4)),
-              _DToggleRow(icon: Icons.email_outlined, iconColor: _blue,
-                  label: 'Email Notifications', subtitle: 'Reports & important alerts', value: email, onChanged: (v) => toggle(newEmail: v)),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DToggleRow(icon: Icons.email_outlined, iconColor: _blue, label: s.emailNotifications, subtitle: s.emailNotifSubtitle, value: email, onChanged: (v) => toggle(newEmail: v)); }),
               Container(height: 1, color: const Color(0xFFF1F5F9), margin: const EdgeInsets.symmetric(vertical: 4)),
-              _DToggleRow(icon: Icons.sms_outlined, iconColor: _green,
-                  label: 'SMS Notifications', subtitle: 'Text message alerts', value: sms, onChanged: (v) => toggle(newSms: v)),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DToggleRow(icon: Icons.sms_outlined, iconColor: _green, label: s.smsNotifications, subtitle: s.smsNotifSubtitle, value: sms, onChanged: (v) => toggle(newSms: v)); }),
             ],
           ]),
         );
@@ -429,8 +429,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                         child: const Icon(Icons.help_outline_rounded, color: _grey, size: 20)),
                       const SizedBox(width: 12),
                       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Help & Support', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700, color: _navy)),
-                        Text("We're here to help", style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                        Builder(builder: (c) => Text(c.read<LocaleProvider>().s.helpSupport, style: c.af(fontSize: 17, fontWeight: FontWeight.w700, color: _navy))),
+                        Builder(builder: (c) => Text(c.read<LocaleProvider>().s.weAreHereToHelp, style: c.af(fontSize: 12, color: _grey))),
                       ]),
                     ]),
                     const SizedBox(height: 16),
@@ -450,7 +450,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     _SupportTile(icon: Icons.chat_bubble_outline_rounded, color: const Color(0xFF25D366), title: 'WhatsApp', subtitle: waLabel,
                       onTap: () async { final n = supportDialable.replaceAll('+', ''); final u = Uri.parse('https://wa.me/$n'); if (await canLaunchUrl(u)) launchUrl(u, mode: LaunchMode.externalApplication); }),
                     const SizedBox(height: 24),
-                    Text('Frequently Asked Questions', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: _navy)),
+                    Builder(builder: (c) => Text(c.read<LocaleProvider>().s.frequentlyAsked, style: c.af(fontSize: 13, fontWeight: FontWeight.w700, color: _navy))),
                     const SizedBox(height: 10),
                     ...List.generate(faqs.length, (i) {
                       final isOpen = open == i;
@@ -467,11 +467,11 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Padding(padding: const EdgeInsets.all(14),
                               child: Row(children: [
-                                Expanded(child: Text(faqs[i].q, style: GoogleFonts.inter(fontSize: 13.5, fontWeight: FontWeight.w600, color: isOpen ? _blue : _navy))),
+                                Expanded(child: Builder(builder: (c) => Text(faqs[i].q, style: c.af(fontSize: 13.5, fontWeight: FontWeight.w600, color: isOpen ? _blue : _navy)))),
                                 Icon(isOpen ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded, color: isOpen ? _blue : _grey, size: 20),
                               ])),
                             if (isOpen) Padding(padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                              child: Text(faqs[i].a, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF475569), height: 1.6))),
+                              child: Builder(builder: (c) => Text(faqs[i].a, style: c.af(fontSize: 13, color: const Color(0xFF475569), height: 1.6)))),
                           ]),
                         ),
                       );
@@ -519,7 +519,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   border: Border.all(color: Colors.white.withOpacity(0.15))),
               child: const Icon(Icons.person_outline_rounded, color: Colors.white, size: 14)),
             const SizedBox(width: 8),
-            Text('My Profile', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+            Builder(builder: (c) => Text(c.read<LocaleProvider>().s.myProfile, style: c.af(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white))),
             const Spacer(),
             GestureDetector(onTap: _logout,
               child: Container(padding: const EdgeInsets.all(6),
@@ -556,9 +556,9 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                               : const Icon(Icons.camera_alt_rounded, size: 12, color: Colors.white)))),
                   ]),
                   const SizedBox(height: 6),
-                  Text(name.toUpperCase(), style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
+                  Text(name.toUpperCase(), style: context.af(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 0.5)),
                   const SizedBox(height: 2),
-                  Text(email, style: GoogleFonts.inter(fontSize: 11, color: Colors.white54)),
+                  Text(email, style: context.af(fontSize: 11, color: Colors.white54)),
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -569,7 +569,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                     child: Row(mainAxisSize: MainAxisSize.min, children: [
                       Container(width: 5, height: 5, decoration: const BoxDecoration(color: _green, shape: BoxShape.circle)),
                       const SizedBox(width: 5),
-                      Text('ACTIVE', style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.w700, color: _green)),
+                      Builder(builder: (c) => Text(c.read<LocaleProvider>().s.active.toUpperCase(), style: c.af(fontSize: 9, fontWeight: FontWeight.w700, color: _green))),
                     ])),
                 ]),
               )),
@@ -592,66 +592,58 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   const Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 20),
                   const SizedBox(width: 10),
                   Expanded(child: Text('CDL expires in $cdlDays days. Renew soon.',
-                      style: GoogleFonts.inter(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600))),
+                      style: context.af(fontSize: 12, color: Colors.orange, fontWeight: FontWeight.w600))),
                 ])),
               const SizedBox(height: 16),
             ],
 
             // ── Profile info card ────────────────────────────────────────────
-            _DLabel('PROFILE'),
+            Builder(builder: (c) => _DLabel(c.read<LocaleProvider>().s.profileSection)),
             const SizedBox(height: 8),
             _DCard(children: [
-              _DRow(icon: Icons.email_outlined,      iconColor: _blue, label: 'Email',   value: email),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DRow(icon: Icons.email_outlined,    iconColor: _blue, label: s.email,   value: email); }),
               const _DDivider(),
-              _DRow(icon: Icons.phone_outlined,      iconColor: _blue, label: 'Phone',   value: phone),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DRow(icon: Icons.phone_outlined,    iconColor: _blue, label: s.phone,   value: phone); }),
               const _DDivider(),
-              _DRow(icon: Icons.business_outlined,   iconColor: _blue, label: 'Company', value: company),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DRow(icon: Icons.business_outlined, iconColor: _blue, label: s.company, value: company); }),
             ]),
             const SizedBox(height: 20),
 
             // ── License Info ─────────────────────────────────────────────────
-            _DLabel('LICENSE INFO'),
+            Builder(builder: (c) => _DLabel(c.read<LocaleProvider>().s.licenseInfoSection)),
             const SizedBox(height: 8),
             _DCard(children: [
-              _DRow(icon: Icons.badge_outlined,        iconColor: _blue, label: 'CDL Number', value: p?['cdl_number'] ?? '—'),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DRow(icon: Icons.badge_outlined, iconColor: _blue, label: s.cdlNumber, value: p?['cdl_number'] ?? '—'); }),
               const _DDivider(),
-              _DRow(icon: Icons.map_outlined,          iconColor: _blue, label: 'CDL State',  value: p?['cdl_state'] ?? '—'),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DRow(icon: Icons.map_outlined, iconColor: _blue, label: s.cdlState, value: p?['cdl_state'] ?? '—'); }),
               const _DDivider(),
-              _DRow(icon: Icons.event_outlined,        iconColor: cdlWarn ? Colors.orange : _blue,
-                    label: 'CDL Expires',
-                    value: cdlExpiryStr != null ? _fmt(cdlExpiryStr) : '—',
-                    valueColor: cdlWarn ? Colors.orange : null),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DRow(icon: Icons.event_outlined, iconColor: cdlWarn ? Colors.orange : _blue, label: s.cdlExpiry, value: cdlExpiryStr != null ? _fmt(cdlExpiryStr) : '—', valueColor: cdlWarn ? Colors.orange : null); }),
               const _DDivider(),
-              _DRow(icon: Icons.work_history_outlined, iconColor: _blue, label: 'Hire Date',
-                    value: p?['hire_date'] != null ? _fmt(p!['hire_date']) : '—'),
+              Builder(builder: (c) { final s = c.read<LocaleProvider>().s; return _DRow(icon: Icons.work_history_outlined, iconColor: _blue, label: s.hireDate, value: p?['hire_date'] != null ? _fmt(p!['hire_date']) : '—'); }),
             ]),
             const SizedBox(height: 20),
 
             // ── Settings ─────────────────────────────────────────────────────
-            _DLabel('SETTINGS'),
+            Builder(builder: (c) => _DLabel(c.read<LocaleProvider>().s.settingsSection)),
             const SizedBox(height: 8),
             _DCard(children: [
-              _DMenuItem(icon: Icons.person_outline_rounded, iconColor: _blue,
-                  label: 'Personal Information', onTap: _showPersonalInfo),
+              Builder(builder: (c) => _DMenuItem(icon: Icons.person_outline_rounded, iconColor: _blue, label: c.read<LocaleProvider>().s.personalInformation, onTap: _showPersonalInfo)),
               const _DDivider(),
-              _DMenuItem(icon: Icons.lock_outline_rounded, iconColor: const Color(0xFF8B5CF6),
-                  label: 'Security & Privacy', onTap: _showSecurity),
+              Builder(builder: (c) => _DMenuItem(icon: Icons.lock_outline_rounded, iconColor: const Color(0xFF8B5CF6), label: c.read<LocaleProvider>().s.securityPrivacy, onTap: _showSecurity)),
               const _DDivider(),
-              _DMenuItem(icon: Icons.notifications_outlined, iconColor: const Color(0xFF06B6D4),
-                  label: 'Notification Settings', onTap: _showNotifications),
+              Builder(builder: (c) => _DMenuItem(icon: Icons.notifications_outlined, iconColor: const Color(0xFF06B6D4), label: c.read<LocaleProvider>().s.notificationSettings, onTap: _showNotifications)),
+              const _DDivider(),
+              Builder(builder: (c) => _DMenuItem(icon: Icons.language_rounded, iconColor: const Color(0xFF0891B2), label: c.read<LocaleProvider>().s.changeLanguage, onTap: () => LanguagePicker.show(context))),
             ]),
             const SizedBox(height: 20),
 
             // ── Support ──────────────────────────────────────────────────────
-            _DLabel('SUPPORT'),
+            Builder(builder: (c) => _DLabel(c.read<LocaleProvider>().s.supportSection)),
             const SizedBox(height: 8),
             _DCard(children: [
-              _DMenuItem(icon: Icons.help_outline_rounded, iconColor: _grey,
-                  label: 'Help & Support', onTap: _showHelpSupport),
+              Builder(builder: (c) => _DMenuItem(icon: Icons.help_outline_rounded, iconColor: _grey, label: c.read<LocaleProvider>().s.helpSupport, onTap: _showHelpSupport)),
               const _DDivider(),
-              _DMenuItem(icon: Icons.info_outline_rounded, iconColor: _grey,
-                  label: 'About DOT Comply', trailing: 'v1.0.0',
-                  onTap: () => context.push('/about')),
+              Builder(builder: (c) => _DMenuItem(icon: Icons.info_outline_rounded, iconColor: _grey, label: c.read<LocaleProvider>().s.aboutDotComply, trailing: 'v1.0.0', onTap: () => context.push('/about'))),
             ]),
             const SizedBox(height: 16),
 
@@ -667,7 +659,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   const Icon(Icons.logout_rounded, color: _red, size: 20),
                   const SizedBox(width: 10),
-                  Text('Sign Out', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: _red)),
+                  Builder(builder: (c) => Text(c.read<LocaleProvider>().s.signOut, style: c.af(fontSize: 15, fontWeight: FontWeight.w700, color: _red))),
                 ]),
               ),
             ),
@@ -679,7 +671,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
 
   Widget _avatarFallback(String initials) => Container(
     color: _blue, alignment: Alignment.center,
-    child: Text(initials, style: GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white)));
+    child: Text(initials, style: context.af(fontSize: 30, fontWeight: FontWeight.w800, color: Colors.white)));
 
   static String _fmt(String d) {
     try { final dt = DateTime.parse(d); return '${dt.month}/${dt.day}/${dt.year}'; }
@@ -694,7 +686,7 @@ class _DLabel extends StatelessWidget {
   const _DLabel(this.text);
   @override
   Widget build(BuildContext context) => Text(text,
-      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700,
+      style: context.af(fontSize: 11, fontWeight: FontWeight.w700,
           color: _grey, letterSpacing: 0.8));
 }
 
@@ -730,8 +722,8 @@ class _DRow extends StatelessWidget {
         decoration: BoxDecoration(color: iconColor.withOpacity(0.10), borderRadius: BorderRadius.circular(9)),
         child: Icon(icon, size: 17, color: iconColor)),
       const SizedBox(width: 12),
-      Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 13, color: _grey))),
-      Text(value, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700,
+      Expanded(child: Text(label, style: context.af(fontSize: 13, color: _grey))),
+      Text(value, style: context.af(fontSize: 13, fontWeight: FontWeight.w700,
           color: valueColor ?? const Color(0xFF1E293B))),
     ]));
 }
@@ -754,9 +746,9 @@ class _DMenuItem extends StatelessWidget {
           decoration: BoxDecoration(color: iconColor.withOpacity(0.10), borderRadius: BorderRadius.circular(9)),
           child: Icon(icon, size: 17, color: iconColor)),
         const SizedBox(width: 12),
-        Expanded(child: Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w500, color: _navy))),
+        Expanded(child: Text(label, style: context.af(fontSize: 14, fontWeight: FontWeight.w500, color: _navy))),
         if (trailing != null) ...[
-          Text(trailing!, style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+          Text(trailing!, style: context.af(fontSize: 13, color: _grey)),
           const SizedBox(width: 4),
         ],
         const Icon(Icons.chevron_right_rounded, size: 18, color: Color(0xFFCBD5E1)),
@@ -785,9 +777,9 @@ class _SupportTile extends StatelessWidget {
           child: Icon(icon, color: color, size: 22)),
         const SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A))),
+          Text(title, style: context.af(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A))),
           const SizedBox(height: 2),
-          Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+          Text(subtitle, style: context.af(fontSize: 12, color: _grey)),
         ])),
         const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFFCBD5E1)),
       ]),
@@ -824,8 +816,8 @@ class _DToggleRow extends StatelessWidget {
           child: Icon(icon, size: 18, color: iconColor)),
       const SizedBox(width: 12),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF031634))),
-        Text(subtitle, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B))),
+        Text(label, style: context.af(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF031634))),
+        Text(subtitle, style: context.af(fontSize: 12, color: const Color(0xFF64748B))),
       ])),
       Switch.adaptive(value: value, onChanged: onChanged, activeColor: _blue),
     ]),
@@ -845,10 +837,10 @@ class _DInfoCell extends StatelessWidget {
     child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.center, children: [
       Icon(icon, size: 18, color: const Color(0xFF94A3B8)),
       const SizedBox(height: 5),
-      Text(label, style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w500)),
+      Text(label, style: context.af(fontSize: 10, color: const Color(0xFF94A3B8), fontWeight: FontWeight.w500)),
       const SizedBox(height: 3),
       Text(value, textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF031634))),
+          style: context.af(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF031634))),
     ]),
   );
 }
@@ -863,10 +855,10 @@ class _DPwdField extends StatelessWidget {
   Widget build(BuildContext context) => TextField(
     controller: controller,
     obscureText: obscure,
-    style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF0F172A)),
+    style: context.af(fontSize: 14, color: const Color(0xFF0F172A)),
     decoration: InputDecoration(
       labelText: label,
-      labelStyle: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B)),
+      labelStyle: context.af(fontSize: 13, color: const Color(0xFF64748B)),
       suffixIcon: IconButton(
           icon: Icon(obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
               size: 18, color: const Color(0xFF94A3B8)),

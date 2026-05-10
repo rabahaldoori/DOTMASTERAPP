@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../../../core/api_client.dart';
+import '../../../core/l10n/locale_provider.dart';
 import 'inspection_session.dart';
+import '../../../core/font_ext.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const _navy   = Color(0xFF031634);
@@ -13,6 +16,8 @@ const _white  = Colors.white;
 const _grey   = Color(0xFF75777E);
 const _border = Color(0xFFDCE2F3);
 const _bg     = Color(0xFFF0F4FA);
+
+bool _isAr(BuildContext ctx) => ctx.read<LocaleProvider>().locale.languageCode == 'ar';
 
 class ReviewSubmitScreen extends StatefulWidget {
   const ReviewSubmitScreen({super.key});
@@ -104,7 +109,7 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
       content: Row(children: [
         const Icon(Icons.error_outline, color: _white, size: 18),
         const SizedBox(width: 8),
-        Expanded(child: Text(msg, style: GoogleFonts.inter(color: _white, fontWeight: FontWeight.w600))),
+        Expanded(child: Text(msg, style: AppFont.s(_isAr(context),color: _white, fontWeight: FontWeight.w600))),
       ]),
       backgroundColor: const Color(0xFFB91C1C),
       behavior: SnackBarBehavior.floating,
@@ -119,7 +124,7 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
       content: Row(children: [
         const Icon(Icons.check_circle_outline, color: _white, size: 18),
         const SizedBox(width: 8),
-        Expanded(child: Text(msg, style: GoogleFonts.inter(color: _white, fontWeight: FontWeight.w600))),
+        Expanded(child: Text(msg, style: AppFont.s(_isAr(context),color: _white, fontWeight: FontWeight.w600))),
       ]),
       backgroundColor: const Color(0xFF15803D),
       behavior: SnackBarBehavior.floating,
@@ -208,17 +213,19 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                           Container(width: 6, height: 6,
                             decoration: const BoxDecoration(color: _cyan, shape: BoxShape.circle)),
                           const SizedBox(width: 6),
-                          Text('PRE-TRIP INSPECTION', style: GoogleFonts.inter(
-                              fontSize: 10, fontWeight: FontWeight.w800,
-                              color: _cyan, letterSpacing: 0.8)),
+                          Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                            Text(lp.strings.preTripInspection, style: AppFont.s(_isAr(context),
+                                fontSize: 10, fontWeight: FontWeight.w800,
+                                color: _cyan, letterSpacing: 0.8))),
                         ]),
                       ),
                       const SizedBox(height: 8),
-                      Text('Review & Sign', style: GoogleFonts.inter(
-                          fontSize: 26, fontWeight: FontWeight.w900,
-                          color: _white, letterSpacing: -0.5)),
+                      Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                        Text(lp.strings.reviewAndSign, style: AppFont.s(_isAr(context),
+                            fontSize: 26, fontWeight: FontWeight.w900,
+                            color: _white, letterSpacing: -0.5))),
                       const SizedBox(height: 4),
-                      Text('$dateStr  ·  $timeStr', style: GoogleFonts.inter(
+                      Text('$dateStr  ·  $timeStr', style: AppFont.s(_isAr(context),
                           fontSize: 13, color: Colors.white60, fontWeight: FontWeight.w500)),
                     ]),
                   ),
@@ -234,16 +241,16 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
               child: Column(children: [
 
                 // ── Stats row ─────────────────────────────────────────────────
-                Row(children: [
-                  _StatTile(value: '$total', label: 'Checked', icon: Icons.checklist_rounded,
-                      color: _navy),
+                Consumer<LocaleProvider>(builder: (_, lp, __) => Row(children: [
+                  _StatTile(value: '$total', label: lp.strings.checked,
+                      icon: Icons.checklist_rounded, color: _navy),
                   const SizedBox(width: 10),
-                  _StatTile(value: '$passed', label: 'Passed', icon: Icons.check_circle_rounded,
-                      color: const Color(0xFF15803D)),
+                  _StatTile(value: '$passed', label: lp.strings.passed,
+                      icon: Icons.check_circle_rounded, color: const Color(0xFF15803D)),
                   const SizedBox(width: 10),
-                  _StatTile(value: '$failed', label: 'Failed', icon: Icons.cancel_rounded,
-                      color: const Color(0xFFB91C1C)),
-                ]),
+                  _StatTile(value: '$failed', label: lp.strings.failed,
+                      icon: Icons.cancel_rounded, color: const Color(0xFFB91C1C)),
+                ])),
 
                 const SizedBox(height: 16),
 
@@ -258,11 +265,12 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                   ),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
-                      Text('Compliance Score', style: GoogleFonts.inter(
-                          fontSize: 13, fontWeight: FontWeight.w700, color: _navy)),
+                      Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                        Text(lp.strings.complianceScore, style: AppFont.s(_isAr(context),
+                            fontSize: 13, fontWeight: FontWeight.w700, color: _navy))),
                       const Spacer(),
                       Text(total > 0 ? '${((passed / total) * 100).round()}%' : '–',
-                          style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800,
+                          style: AppFont.s(_isAr(context),fontSize: 20, fontWeight: FontWeight.w800,
                               color: failed == 0 ? const Color(0xFF15803D) : _blue)),
                     ]),
                     const SizedBox(height: 10),
@@ -303,10 +311,15 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                                 color: _white, size: 16),
                           ),
                           const SizedBox(width: 10),
-                          Text('${issues.length} Issue${issues.length > 1 ? 's' : ''} Detected',
-                              style: GoogleFonts.inter(fontSize: 14,
+                          Consumer<LocaleProvider>(builder: (_, lp, __) {
+                            final count = issues.length;
+                            return Text(
+                              count == 1 ? '1 ${lp.strings.issueDetected}'
+                                  : '$count ${lp.strings.issueDetected}',
+                              style: AppFont.s(_isAr(context),fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF991B1B))),
+                                  color: const Color(0xFF991B1B)));
+                          }),
                         ]),
                       ),
                       const Divider(height: 1, color: Color(0xFFFECACA)),
@@ -321,7 +334,7 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                                 color: Color(0xFFB91C1C), shape: BoxShape.circle)),
                             const SizedBox(width: 10),
                             Expanded(child: Text(item['label'] ?? '',
-                                style: GoogleFonts.inter(fontSize: 13,
+                                style: AppFont.s(_isAr(context),fontSize: 13,
                                     fontWeight: FontWeight.w500,
                                     color: const Color(0xFF7F1D1D)))),
                             Container(
@@ -330,7 +343,7 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                                 color: const Color(0xFFFECACA),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text('FAIL', style: GoogleFonts.inter(
+                              child: Text('FAIL', style: AppFont.s(_isAr(context),
                                   fontSize: 10, fontWeight: FontWeight.w800,
                                   color: const Color(0xFF991B1B))),
                             ),
@@ -354,12 +367,10 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                     Icon(Icons.verified_user_outlined, size: 20,
                         color: _blue.withValues(alpha: 0.7)),
                     const SizedBox(width: 10),
-                    Expanded(child: Text(
-                      'I certify that this pre-trip inspection was performed in accordance '
-                      'with applicable safety regulations and all defects have been reported.',
-                      style: GoogleFonts.inter(fontSize: 12.5, color: _blue,
-                          fontWeight: FontWeight.w500, height: 1.5),
-                    )),
+                    Expanded(child: Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                      Text(lp.strings.certifyInspection,
+                        style: AppFont.s(_isAr(context),fontSize: 12.5, color: _blue,
+                            fontWeight: FontWeight.w500, height: 1.5)))),
                   ]),
                 ),
 
@@ -376,8 +387,9 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                     child: const Icon(Icons.draw_rounded, color: _white, size: 16),
                   ),
                   const SizedBox(width: 10),
-                  Text('Driver Signature', style: GoogleFonts.inter(
-                      fontSize: 15, fontWeight: FontWeight.w800, color: _navy)),
+                  Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                    Text(lp.strings.driverSignature, style: AppFont.s(_isAr(context),
+                        fontSize: 15, fontWeight: FontWeight.w800, color: _navy))),
                   const Spacer(),
                   if (_hasSig)
                     GestureDetector(
@@ -392,8 +404,9 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Icon(Icons.refresh_rounded, size: 14, color: Colors.red.shade600),
                           const SizedBox(width: 4),
-                          Text('Clear', style: GoogleFonts.inter(fontSize: 12,
-                              fontWeight: FontWeight.w700, color: Colors.red.shade600)),
+                          Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                            Text(lp.strings.clearSignature, style: AppFont.s(_isAr(context),fontSize: 12,
+                                fontWeight: FontWeight.w700, color: Colors.red.shade600))),
                         ]),
                       ),
                     ),
@@ -438,10 +451,11 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                                   Icon(Icons.gesture_rounded, size: 36,
                                       color: _grey.withValues(alpha: 0.3)),
                                   const SizedBox(height: 6),
-                                  Text('Sign here',
-                                      style: GoogleFonts.inter(fontSize: 13,
-                                          color: _grey.withValues(alpha: 0.4),
-                                          fontWeight: FontWeight.w500)),
+                                  Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                                    Text(lp.strings.signHere,
+                                        style: AppFont.s(_isAr(context),fontSize: 13,
+                                            color: _grey.withValues(alpha: 0.4),
+                                            fontWeight: FontWeight.w500))),
                                 ]))
                               : CustomPaint(
                                   painter: _SignaturePainter(_strokes),
@@ -458,9 +472,10 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                   Icon(Icons.lock_outline_rounded, size: 13,
                       color: _grey.withValues(alpha: 0.5)),
                   const SizedBox(width: 5),
-                  Text('Signature is securely encrypted',
-                      style: GoogleFonts.inter(fontSize: 11,
-                          color: _grey.withValues(alpha: 0.5))),
+                  Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                    Text(lp.strings.signatureEncrypted,
+                        style: AppFont.s(_isAr(context),fontSize: 11,
+                            color: _grey.withValues(alpha: 0.5)))),
                 ]),
 
                 const SizedBox(height: 28),
@@ -492,9 +507,10 @@ class _ReviewSubmitScreenState extends State<ReviewSubmitScreen>
                       else
                         const Icon(Icons.check_circle_rounded, color: _white, size: 22),
                       const SizedBox(width: 10),
-                      Text(_submitting ? 'Submitting…' : 'Submit Inspection',
-                          style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800,
-                              color: (_hasSig && !_submitting) ? _white : _grey)),
+                      Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                        Text(_submitting ? lp.strings.submitting : lp.strings.submitInspection,
+                            style: AppFont.s(_isAr(context),fontSize: 16, fontWeight: FontWeight.w800,
+                                color: (_hasSig && !_submitting) ? _white : _grey))),
                     ]),
                   ),
                 ),
@@ -542,10 +558,10 @@ class _StatTile extends StatelessWidget {
           child: Icon(icon, color: color, size: 20),
         ),
         const SizedBox(height: 8),
-        Text(value, style: GoogleFonts.inter(fontSize: 22,
+        Text(value, style: AppFont.s(_isAr(context),fontSize: 22,
             fontWeight: FontWeight.w800, color: color)),
         const SizedBox(height: 2),
-        Text(label, style: GoogleFonts.inter(fontSize: 11,
+        Text(label, style: AppFont.s(_isAr(context),fontSize: 11,
             color: const Color(0xFF75777E), fontWeight: FontWeight.w500)),
       ]),
     ),

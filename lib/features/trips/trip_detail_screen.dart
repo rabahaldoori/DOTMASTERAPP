@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
-const _navy = Color(0xFF031634);
-const _blue = Color(0xFF3B82F6);
-const _cyan = Color(0xFF0891B2);
-const _green = Color(0xFF059669);
+const _navy   = Color(0xFF031634);
+const _blue   = Color(0xFF3B82F6);
+const _cyan   = Color(0xFF0891B2);
+const _green  = Color(0xFF059669);
 const _orange = Color(0xFFF97316);
 const _purple = Color(0xFF7C3AED);
-const _grey = Color(0xFF64748B);
+const _grey   = Color(0xFF64748B);
 
 // ── Helper: resolve value from multiple possible key names ─────────────────────
 String _val(Map? data, List<String> keys, {String fallback = '—'}) {
@@ -72,7 +74,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
         } catch (_) {}
       }
     } catch (e) {
-      setState(() { _error = 'Could not load full trip details.'; });
+      setState(() {
+        _error = context.read<LocaleProvider>().s.couldNotLoadTrip;
+      });
     } finally {
       setState(() => _loading = false);
     }
@@ -84,7 +88,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     return raw == '—' ? '—' : 'TRUCK-${raw.toUpperCase()}';
   }
 
-  // origin_address = "Dallas, TX, USA" — primary; fallback to city+state
   String get _originFull {
     final addr = _val(_trip, ['origin_address'], fallback: '');
     if (addr.isNotEmpty) return addr;
@@ -93,7 +96,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     return [city, state].where((s) => s.isNotEmpty).join(', ');
   }
 
-  // destination_address = "Los Angeles, CA, USA" — primary
   String get _destFull {
     final addr = _val(_trip, ['destination_address'], fallback: '');
     if (addr.isNotEmpty) return addr;
@@ -102,17 +104,10 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
     return [city, state].where((s) => s.isNotEmpty).join(', ');
   }
 
-  // For the header chips — prefer short state code
-  String get _originState  => _val(_trip, ['origin_state'],      fallback: '');
-  String get _originCity   => _val(_trip, ['origin_city', 'origin_address'], fallback: '');
-  String get _destState    => _val(_trip, ['destination_state'], fallback: '');
-  String get _destCity     => _val(_trip, ['destination_city', 'destination_address'], fallback: '');
-
   String get _driverName  => _val(_trip, ['driver_name', 'driver__name', 'driver_full_name']);
   String get _tripNum     => _val(_trip, ['trip_number', 'reference_number', 'id']);
   String get _totalMiles  => _mi(_val(_trip, ['total_miles', 'total_distance'], fallback: '0'));
   String get _drivenMiles => _mi(_val(_trip, ['miles_driven', 'driven_miles'], fallback: '0'));
-  // Correct field names from serializer: start_odometer / end_odometer
   String get _odoStart    => _val(_trip, ['start_odometer', 'odometer_start', 'odo_start']);
   String get _odoEnd      => _val(_trip, ['end_odometer',   'odometer_end',   'odo_end']);
   String get _quarter     => _val(_trip, ['quarter', 'tax_quarter', 'ifta_quarter']);
@@ -123,17 +118,17 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
   String get _notes       => _val(_trip, ['notes', 'description', 'comments'], fallback: '');
   String get _status      => (_trip?['status'] ?? '').toString().toLowerCase();
   String get _departure   => _val(_trip, ['departure_time'], fallback: '');
-  String get _duration    => _val(_trip, ['duration_seconds', 'drive_duration'], fallback: '');
   String get _arrival     => _val(_trip, ['estimated_arrival'], fallback: '');
-
 
   @override
   Widget build(BuildContext context) {
+    final s        = context.watch<LocaleProvider>().s;
     final isActive = _status == 'active' || _status == 'in_progress';
     final isDone   = _status == 'completed' || _status == 'complete';
     final statusColor = isActive ? _cyan : isDone ? _green : _grey;
-    final statusLabel = isActive ? 'ACTIVE'
-        : isDone ? 'COMPLETE' : _status.toUpperCase().replaceAll('_', ' ');
+    final statusLabel = isActive ? s.statusActive
+        : isDone ? s.statusComplete
+        : _status.toUpperCase().replaceAll('_', ' ');
 
     return Scaffold(
       backgroundColor: const Color(0xFFF1F5F9),
@@ -152,7 +147,6 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               systemOverlayStyle: SystemUiOverlayStyle.light,
               automaticallyImplyLeading: false,
 
-              // ── Explicit back button ────────────────────────────────
               leading: GestureDetector(
                 onTap: () => Navigator.of(context).pop(),
                 child: Container(
@@ -169,7 +163,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               ),
 
               title: Text('Trip #$_tripNum',
-                  style: GoogleFonts.inter(
+                  style: context.af(
                       fontWeight: FontWeight.w800,
                       color: Colors.white, fontSize: 16)),
 
@@ -182,7 +176,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: statusColor.withOpacity(0.50), width: 1.5),
                   ),
-                  child: Text(statusLabel, style: GoogleFonts.inter(
+                  child: Text(statusLabel, style: context.af(
                       fontSize: 11, fontWeight: FontWeight.w800, color: statusColor,
                       letterSpacing: 0.3)),
                 ),
@@ -224,10 +218,10 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(_truckLabel,
-                                          style: GoogleFonts.inter(fontSize: 19,
+                                          style: context.af(fontSize: 19,
                                               fontWeight: FontWeight.w900, color: Colors.white)),
                                       Text(_fmtDate(_trip!['start_date']),
-                                          style: GoogleFonts.inter(
+                                          style: context.af(
                                               fontSize: 12, color: Colors.white54)),
                                     ],
                                   )),
@@ -243,13 +237,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                                     border: Border.all(color: Colors.white.withOpacity(0.12)),
                                   ),
                                   child: Row(children: [
-                                    // FROM
                                     Expanded(child: _HdrLoc(
-                                      label: 'FROM',
+                                      label: s.from,
                                       city: _originFull,
                                       state: '',
                                     )),
-                                    // Arrow
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 10),
                                       child: Column(children: [
@@ -261,9 +253,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                                         Container(width: 20, height: 1, color: Colors.white24),
                                       ]),
                                     ),
-                                    // TO
                                     Expanded(child: _HdrLoc(
-                                      label: 'TO',
+                                      label: s.to,
                                       city: _destFull,
                                       state: '',
                                       align: CrossAxisAlignment.end,
@@ -288,9 +279,11 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                   const Icon(Icons.error_outline, size: 48, color: _grey),
                   const SizedBox(height: 12),
-                  Text(_error!, style: GoogleFonts.inter(color: _grey)),
+                  Text(_error!, style: context.af(color: _grey)),
                   const SizedBox(height: 16),
-                  ElevatedButton(onPressed: _load, child: const Text('Retry')),
+                  ElevatedButton(
+                    onPressed: _load,
+                    child: Text(context.read<LocaleProvider>().s.retry)),
                 ]),
               ))
 
@@ -307,48 +300,52 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                     drivenMiles: _drivenMiles,
                     odoStart: _odoStart,
                     odoEnd: _odoEnd,
+                    labelTotal: s.totalMiles,
+                    labelDriven: s.driven,
+                    labelOdoStart: s.odoStart,
+                    labelOdoEnd: s.odoEnd,
                   ),
                   const SizedBox(height: 14),
 
                   // ── Driver & Truck ────────────────────────────────────
-                  _SectionCard(title: '🚚 Driver & Truck', children: [
+                  _SectionCard(title: s.driverAndTruck, children: [
                     _InfoGrid([
-                      _InfoCell('Driver',   _driverName),
-                      _InfoCell('Truck',    _truckLabel),
-                      _InfoCell('Carrier',  _carrier),
-                      _InfoCell('DOT #',    _dot),
+                      _InfoCell(s.driver,  _driverName),
+                      _InfoCell(s.truck,   _truckLabel),
+                      _InfoCell(s.carrier, _carrier),
+                      _InfoCell(s.dotNumber, _dot),
                     ]),
                   ]),
                   const SizedBox(height: 14),
 
                   // ── Route & Dates ─────────────────────────────────────
-                  _SectionCard(title: '📅 Route & Dates', children: [
+                  _SectionCard(title: s.routeAndDates, children: [
                     _InfoGrid([
-                      _InfoCell('Start Date', _fmtDate(_trip!['start_date'])),
-                      _InfoCell('End Date',   _fmtDate(_trip!['end_date'])),
-                      _InfoCell('From', _originFull.isNotEmpty ? _originFull : '—'),
-                      _InfoCell('To',   _destFull.isNotEmpty   ? _destFull   : '—'),
+                      _InfoCell(s.startDate, _fmtDate(_trip!['start_date'])),
+                      _InfoCell(s.endDate,   _fmtDate(_trip!['end_date'])),
+                      _InfoCell(s.from, _originFull.isNotEmpty ? _originFull : '—'),
+                      _InfoCell(s.to,   _destFull.isNotEmpty   ? _destFull   : '—'),
                       if (_departure.isNotEmpty)
-                        _InfoCell('Departure', _departure),
+                        _InfoCell(s.departure, _departure),
                       if (_arrival.isNotEmpty)
-                        _InfoCell('Est. Arrival', _fmtDateTime(_arrival)),
-                      _InfoCell('Quarter', _quarter),
-                      _InfoCell('Year',    _year),
+                        _InfoCell(s.estArrival, _fmtDateTime(_arrival)),
+                      _InfoCell(s.quarter, _quarter),
+                      _InfoCell(s.year,    _year),
                     ]),
                   ]),
                   const SizedBox(height: 14),
 
                   // ── States Traveled ───────────────────────────────────
                   if (_states.isNotEmpty) ...[
-                    _SectionCard(title: '🗺️ States Traveled', children: [
+                    _SectionCard(title: s.statesTraveled, children: [
                       const SizedBox(height: 4),
                       Wrap(
                         spacing: 8, runSpacing: 8,
                         children: _states
                             .split(',')
-                            .map((s) => s.trim())
-                            .where((s) => s.isNotEmpty)
-                            .map<Widget>((s) => _StateChip(state: s))
+                            .map((st) => st.trim())
+                            .where((st) => st.isNotEmpty)
+                            .map<Widget>((st) => _StateChip(state: st))
                             .toList(),
                       ),
                     ]),
@@ -357,7 +354,7 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
                   // ── Fuel Entries ──────────────────────────────────────
                   if (_fuelLogs.isNotEmpty) ...[
-                    _SectionCard(title: '⛽ Fuel Entries', children: [
+                    _SectionCard(title: s.fuelEntries, children: [
                       const SizedBox(height: 4),
                       ..._fuelLogs
                           .map<Widget>((f) => _FuelEntry(fuel: f as Map))
@@ -368,9 +365,9 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 
                   // ── Notes ─────────────────────────────────────────────
                   if (_notes.isNotEmpty && _notes != '—') ...[
-                    _SectionCard(title: '📝 Notes', children: [
+                    _SectionCard(title: s.notes, children: [
                       const SizedBox(height: 4),
-                      Text(_notes, style: GoogleFonts.inter(
+                      Text(_notes, style: context.af(
                           fontSize: 13, color: _grey, height: 1.6)),
                     ]),
                     const SizedBox(height: 14),
@@ -407,20 +404,23 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
 // ── Quick 4-stat strip ────────────────────────────────────────────────────────
 class _QuickStats extends StatelessWidget {
   final String totalMiles, drivenMiles, odoStart, odoEnd;
+  final String labelTotal, labelDriven, labelOdoStart, labelOdoEnd;
   const _QuickStats({
     required this.totalMiles, required this.drivenMiles,
     required this.odoStart,   required this.odoEnd,
+    required this.labelTotal, required this.labelDriven,
+    required this.labelOdoStart, required this.labelOdoEnd,
   });
 
   @override
   Widget build(BuildContext context) => Row(children: [
-    _QStat(label: 'Total Miles',  value: totalMiles, icon: Icons.route_rounded,           color: _blue),
+    _QStat(label: labelTotal,    value: totalMiles,  icon: Icons.route_rounded,           color: _blue),
     const SizedBox(width: 10),
-    _QStat(label: 'Driven',       value: drivenMiles, icon: Icons.speed_rounded,           color: _cyan),
+    _QStat(label: labelDriven,   value: drivenMiles, icon: Icons.speed_rounded,           color: _cyan),
     const SizedBox(width: 10),
-    _QStat(label: 'Odo Start',    value: odoStart,    icon: Icons.radio_button_unchecked,  color: _orange),
+    _QStat(label: labelOdoStart, value: odoStart,    icon: Icons.radio_button_unchecked,  color: _orange),
     const SizedBox(width: 10),
-    _QStat(label: 'Odo End',      value: odoEnd,      icon: Icons.adjust_rounded,           color: _purple),
+    _QStat(label: labelOdoEnd,   value: odoEnd,      icon: Icons.adjust_rounded,          color: _purple),
   ]);
 }
 
@@ -444,11 +444,11 @@ class _QStat extends StatelessWidget {
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Icon(icon, size: 14, color: color),
       const SizedBox(height: 6),
-      Text(value, style: GoogleFonts.inter(
+      Text(value, style: context.af(
           fontSize: 13, fontWeight: FontWeight.w800, color: _navy),
           maxLines: 1, overflow: TextOverflow.ellipsis),
       const SizedBox(height: 2),
-      Text(label, style: GoogleFonts.inter(
+      Text(label, style: context.af(
           fontSize: 9, color: _grey, fontWeight: FontWeight.w600,
           letterSpacing: 0.2)),
     ]),
@@ -467,19 +467,19 @@ class _HdrLoc extends StatelessWidget {
     crossAxisAlignment: align,
     mainAxisSize: MainAxisSize.min,
     children: [
-      Text(label, style: GoogleFonts.inter(
+      Text(label, style: context.af(
           fontSize: 9, color: Colors.white38,
           fontWeight: FontWeight.w700, letterSpacing: 0.8)),
       const SizedBox(height: 2),
       if (city.isNotEmpty && city != '—')
-        Text(city, style: GoogleFonts.inter(
+        Text(city, style: context.af(
             fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
             maxLines: 1, overflow: TextOverflow.ellipsis),
       if (state.isNotEmpty)
-        Text(state.toUpperCase(), style: GoogleFonts.inter(
+        Text(state.toUpperCase(), style: context.af(
             fontSize: 11, color: Colors.white60, fontWeight: FontWeight.w600)),
       if ((city.isEmpty || city == '—') && state.isEmpty)
-        Text('—', style: GoogleFonts.inter(fontSize: 12, color: Colors.white38)),
+        Text('—', style: context.af(fontSize: 12, color: Colors.white38)),
     ],
   );
 }
@@ -502,7 +502,7 @@ class _SectionCard extends StatelessWidget {
           blurRadius: 8, offset: const Offset(0, 2))],
     ),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: GoogleFonts.inter(
+      Text(title, style: context.af(
           fontSize: 13, fontWeight: FontWeight.w700, color: _navy)),
       const SizedBox(height: 14),
       ...children,
@@ -538,11 +538,11 @@ class _InfoCell extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(label, style: GoogleFonts.inter(
+      Text(label, style: context.af(
           fontSize: 10, color: _grey,
           fontWeight: FontWeight.w600, letterSpacing: 0.4)),
       const SizedBox(height: 3),
-      Text(value, style: GoogleFonts.inter(
+      Text(value, style: context.af(
           fontSize: 14, fontWeight: FontWeight.w700, color: _navy),
           maxLines: 2, overflow: TextOverflow.ellipsis),
     ],
@@ -562,7 +562,7 @@ class _StateChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: _blue.withOpacity(0.20)),
     ),
-    child: Text(state, style: GoogleFonts.inter(
+    child: Text(state, style: context.af(
         fontSize: 12, fontWeight: FontWeight.w700, color: _navy)),
   );
 }
@@ -574,7 +574,8 @@ class _FuelEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final station = fuel['station_name'] ?? fuel['vendor'] ?? 'Fuel Stop';
+    final s       = context.watch<LocaleProvider>().s;
+    final station = fuel['station_name'] ?? fuel['vendor'] ?? s.fuelStop;
     final state   = fuel['state'] ?? fuel['purchase_state'] ?? '';
     final gal     = double.tryParse((fuel['gallons'] ?? fuel['quantity'] ?? 0).toString()) ?? 0;
     final cost    = double.tryParse((fuel['total_cost'] ?? fuel['amount'] ?? 0).toString()) ?? 0;
@@ -598,21 +599,21 @@ class _FuelEntry extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(station, style: GoogleFonts.inter(
+          Text(station, style: context.af(
               fontSize: 13, fontWeight: FontWeight.w700, color: _navy)),
           Row(children: [
             if (state.isNotEmpty) ...[
-              Text(state, style: GoogleFonts.inter(fontSize: 11, color: _grey)),
+              Text(state, style: context.af(fontSize: 11, color: _grey)),
               const SizedBox(width: 6),
             ],
             if (date.isNotEmpty)
-              Text(_fmtDate(date), style: GoogleFonts.inter(fontSize: 11, color: _grey)),
+              Text(_fmtDate(date), style: context.af(fontSize: 11, color: _grey)),
           ]),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text('\$${cost.toStringAsFixed(2)}', style: GoogleFonts.inter(
+          Text('\$${cost.toStringAsFixed(2)}', style: context.af(
               fontSize: 14, fontWeight: FontWeight.w800, color: _navy)),
-          Text('${gal.toStringAsFixed(1)} gal', style: GoogleFonts.inter(
+          Text('${gal.toStringAsFixed(1)} ${s.gallons}', style: context.af(
               fontSize: 11, color: _grey)),
         ]),
       ]),

@@ -4,8 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:provider/provider.dart';
 import 'dart:io';
 import '../../core/api_client.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 import 'trip_detail_sheet.dart';
 import 'route_picker_sheet.dart';
 
@@ -36,7 +40,9 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
   late AnimationController _fadeCtrl;
   late Animation<double> _fadeAnim;
 
-  final _filters = ['All', 'Active', 'Completed', 'Pending'];
+  // Filter keys — matched against _filter state string (keep English keys for logic)
+  final _filterKeys = ['All', 'Active', 'Completed', 'Pending'];
+  List<String> _filterLabels(AppStrings s) => [s.filterAll, s.activeLabel, s.completed, s.pending];
   final _searchCtrl = TextEditingController();
 
   @override
@@ -144,12 +150,15 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
           child: const Icon(Icons.route_rounded, color: Colors.white, size: 14),
         ),
         const SizedBox(width: 8),
-        Text('My Trips',
-          style: GoogleFonts.inter(
-            fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+        Builder(builder: (ctx) {
+          final s = ctx.read<LocaleProvider>().s;
+          return Text(s.myTripsTitle, style: ctx.af(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white));
+        }),
         const Spacer(),
-        Text('${_trips.length} total',
-          style: GoogleFonts.inter(fontSize: 11, color: Colors.white54)),
+        Builder(builder: (ctx) {
+          final s = ctx.read<LocaleProvider>().s;
+          return Text('${_trips.length} ${s.totalLabel.toLowerCase()}', style: ctx.af(fontSize: 11, color: Colors.white54));
+        }),
       ],
     ),
     titleSpacing: 16,
@@ -189,22 +198,23 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('TOTAL DISTANCE',
-                              style: GoogleFonts.inter(fontSize: 9, letterSpacing: 1.1,
-                                  color: _white.withOpacity(0.5))),
+                            Builder(builder: (ctx) {
+                              final s = ctx.read<LocaleProvider>().s;
+                              return Text(s.totalDistance, style: ctx.af(fontSize: 9, letterSpacing: 1.1, color: _white.withOpacity(0.5)));
+                            }),
                             const SizedBox(height: 2),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                  Text(_totalMiles.toStringAsFixed(1),
-                                   style: GoogleFonts.inter(fontSize: 22,
-                                       fontWeight: FontWeight.w800, color: _white, height: 1)),
+                                   style: context.af(fontSize: 22, fontWeight: FontWeight.w800, color: _white, height: 1)),
                                 const SizedBox(width: 4),
                                 Padding(
                                   padding: const EdgeInsets.only(bottom: 2),
-                                  child: Text('mi',
-                                    style: GoogleFonts.inter(fontSize: 14,
-                                        color: _white.withOpacity(0.6))),
+                                  child: Builder(builder: (ctx) {
+                                    final s = ctx.read<LocaleProvider>().s;
+                                    return Text(s.milesLeft.split(' ').last, style: ctx.af(fontSize: 14, color: _white.withOpacity(0.6)));
+                                  }),
                                 ),
                               ],
                             ),
@@ -212,17 +222,16 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                         ),
                         const Spacer(),
                         // Stat pills — compact inline
-                        Row(children: [
-                          _StatPill(label: 'Total', value: '${_trips.length}',
-                              icon: Icons.list_alt_rounded),
-                          const SizedBox(width: 6),
-                          _StatPill(label: 'Active', value: '$_activeCount',
-                              icon: Icons.local_shipping_rounded, accent: _cyan),
-                          const SizedBox(width: 6),
-                          _StatPill(label: 'Done', value: '$_completedCount',
-                              icon: Icons.check_circle_rounded,
-                              accent: const Color(0xFF22C55E)),
-                        ]),
+                        Builder(builder: (ctx) {
+                          final s = ctx.read<LocaleProvider>().s;
+                          return Row(children: [
+                            _StatPill(label: s.totalLabel, value: '${_trips.length}', icon: Icons.list_alt_rounded),
+                            const SizedBox(width: 6),
+                            _StatPill(label: s.activeLabel, value: '$_activeCount', icon: Icons.local_shipping_rounded, accent: _cyan),
+                            const SizedBox(width: 6),
+                            _StatPill(label: s.doneLabel, value: '$_completedCount', icon: Icons.check_circle_rounded, accent: const Color(0xFF22C55E)),
+                          ]);
+                         }),
                       ],
                     ),
                   ],
@@ -252,10 +261,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
           child: TextField(
             controller: _searchCtrl,
             onChanged: (v) { _search = v; _applyFilter(); },
-            style: GoogleFonts.inter(fontSize: 14, color: _navy),
+            style: context.af(fontSize: 14, color: _navy),
             decoration: InputDecoration(
-              hintText: 'Search trips, routes…',
-              hintStyle: GoogleFonts.inter(fontSize: 14, color: _grey),
+              hintText: context.read<LocaleProvider>().s.searchTripsRoutes,
+              hintStyle: context.af(fontSize: 14, color: _grey),
               prefixIcon: Icon(Icons.search_rounded, color: _grey, size: 20),
               suffixIcon: _search.isNotEmpty
                   ? IconButton(
@@ -274,44 +283,46 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
         const SizedBox(height: 14),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _filters.map((f) {
-              final sel = _filter == f;
-              return GestureDetector(
-                onTap: () { setState(() => _filter = f); _applyFilter(); },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                  decoration: BoxDecoration(
-                    gradient: sel ? const LinearGradient(
-                        colors: [_blue, Color(0xFF1E40AF)]) : null,
-                    color: sel ? null : _card,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                        color: sel ? Colors.transparent : _grey.withOpacity(0.2)),
-                    boxShadow: sel ? [BoxShadow(
-                        color: _blue.withOpacity(0.3),
-                        blurRadius: 8, offset: const Offset(0, 3))] : [],
+          child: Builder(builder: (ctx) {
+            final s = ctx.read<LocaleProvider>().s;
+            final labels = _filterLabels(s);
+            return Row(
+              children: List.generate(_filterKeys.length, (i) {
+                final f = _filterKeys[i];
+                final label = labels[i];
+                final sel = _filter == f;
+                return GestureDetector(
+                  onTap: () { setState(() => _filter = f); _applyFilter(); },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                    decoration: BoxDecoration(
+                      gradient: sel ? const LinearGradient(colors: [_blue, Color(0xFF1E40AF)]) : null,
+                      color: sel ? null : _card,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: sel ? Colors.transparent : _grey.withOpacity(0.2)),
+                      boxShadow: sel ? [BoxShadow(color: _blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))] : [],
+                    ),
+                    child: Text(label, style: ctx.af(fontSize: 13, fontWeight: FontWeight.w600, color: sel ? _white : _grey)),
                   ),
-                  child: Text(f,
-                    style: GoogleFonts.inter(fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: sel ? _white : _grey)),
-                ),
-              );
-            }).toList(),
-          ),
+                );
+              }),
+            );
+          }),
         ),
         const SizedBox(height: 18),
         Row(
           children: [
-            Text('TRIP HISTORY',
-              style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700,
-                  color: _grey, letterSpacing: 1.2)),
+            Builder(builder: (ctx) {
+              final s = ctx.read<LocaleProvider>().s;
+              return Text(s.tripHistory, style: ctx.af(fontSize: 11, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 1.2));
+            }),
             const Spacer(),
-            Text('${_filtered.length} result${_filtered.length == 1 ? '' : 's'}',
-              style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+            Builder(builder: (ctx) {
+              final s = ctx.read<LocaleProvider>().s;
+              return Text('${_filtered.length} ${s.resultsCount}', style: ctx.af(fontSize: 12, color: _grey));
+            }),
           ],
         ),
         const SizedBox(height: 10),
@@ -329,8 +340,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
               SizedBox(width: 40, height: 40,
                   child: CircularProgressIndicator(color: _blue, strokeWidth: 3)),
               const SizedBox(height: 12),
-              Text('Loading trips…',
-                  style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+              Builder(builder: (ctx) {
+                final s = ctx.read<LocaleProvider>().s;
+                return Text(s.loadingTrips, style: ctx.af(fontSize: 13, color: _grey));
+              }),
             ],
           ),
         ),
@@ -350,14 +363,14 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                     color: _blue.withOpacity(0.5)),
               ),
               const SizedBox(height: 16),
-              Text('No trips found',
-                  style: GoogleFonts.inter(fontSize: 16,
-                      fontWeight: FontWeight.w600, color: _navy)),
-              const SizedBox(height: 6),
-              Text(_filter != 'All'
-                  ? 'Try selecting a different filter'
-                  : 'Your trip history will appear here',
-                  style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+              Builder(builder: (ctx) {
+                final s = ctx.read<LocaleProvider>().s;
+                return Column(mainAxisSize: MainAxisSize.min, children: [
+                  Text(s.noTripsFound, style: ctx.af(fontSize: 16, fontWeight: FontWeight.w600, color: _navy)),
+                  const SizedBox(height: 6),
+                  Text(_filter != 'All' ? s.tryDifferentFilter : s.tripHistoryHere, style: ctx.af(fontSize: 13, color: _grey)),
+                ]);
+              }),
             ],
           ),
         ),
@@ -456,18 +469,22 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
               Row(children: [
                 const Icon(Icons.speed_rounded, color: Color(0xFF1A56DB), size: 22),
                 const SizedBox(width: 8),
-                Text('Confirm Start Odometer',
-                  style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
+                Builder(builder: (ctx) {
+                  final s = ctx.read<LocaleProvider>().s;
+                  return Text(s.confirmStartOdo, style: ctx.af(fontSize: 16, fontWeight: FontWeight.w700));
+                }),
               ]),
               const SizedBox(height: 8),
-              Text('Verify the truck odometer reading before departing.',
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.grey[600])),
+              Builder(builder: (ctx) {
+                final s = ctx.read<LocaleProvider>().s;
+                return Text(s.verifyOdoBefore, style: ctx.af(fontSize: 13, color: Colors.grey[600]));
+              }),
               const SizedBox(height: 18),
               TextField(
                 controller: odoCtrl,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                  labelText: 'Odometer (miles)',
+                  labelText: context.read<LocaleProvider>().s.odometerMiles,
                   hintText: 'e.g. 125,430',
                   prefixIcon: const Icon(Icons.speed_rounded),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -478,8 +495,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                label: Text('Start Trip',
-                  style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700)),
+                label: Builder(builder: (ctx) {
+                  final s = ctx.read<LocaleProvider>().s;
+                  return Text(s.startTrip, style: ctx.af(fontSize: 14, fontWeight: FontWeight.w700));
+                }),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A56DB),
                   foregroundColor: Colors.white,
@@ -495,8 +514,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
               const SizedBox(height: 8),
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(null),
-                child: Text('Cancel',
-                  style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 13)),
+                child: Builder(builder: (ctx) {
+                  final s = ctx.read<LocaleProvider>().s;
+                  return Text(s.cancel, style: ctx.af(color: Colors.grey[600], fontSize: 13));
+                }),
               ),
             ],
           ),
@@ -584,8 +605,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                   Row(children: [
                     const Icon(Icons.flag_rounded, color: Color(0xFF16A34A), size: 22),
                     const SizedBox(width: 8),
-                    Text('Complete Trip',
-                      style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
+                    Builder(builder: (ctx) {
+                      final s = ctx.read<LocaleProvider>().s;
+                      return Text(s.completeTrip, style: ctx.af(fontSize: 16, fontWeight: FontWeight.w700));
+                    }),
                   ]),
                   const SizedBox(height: 16),
 
@@ -600,8 +623,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                       child: Row(children: [
                         const Icon(Icons.trip_origin, size: 14, color: Color(0xFF1A56DB)),
                         const SizedBox(width: 8),
-                        Text('Start odometer: ',
-                          style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[600])),
+                        Builder(builder: (ctx) {
+                          final s = ctx.read<LocaleProvider>().s;
+                          return Text(s.startOdometerRef, style: ctx.af(fontSize: 12, color: Colors.grey[600]));
+                        }),
                         Text('${start.toStringAsFixed(0)} mi',
                           style: GoogleFonts.inter(fontSize: 13,
                               fontWeight: FontWeight.w700, color: const Color(0xFF1A56DB))),
@@ -616,7 +641,7 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                     autofocus: true,
                     onChanged: onChanged,
                     decoration: InputDecoration(
-                      labelText: 'End Odometer (miles)',
+                      labelText: context.read<LocaleProvider>().s.endOdometerLabel,
                       hintText: 'e.g. 124,600',
                       prefixIcon: const Icon(Icons.speed_rounded),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -642,9 +667,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                         ),
                       ),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('Actual Miles Driven',
-                          style: GoogleFonts.inter(fontSize: 11,
-                              fontWeight: FontWeight.w600, color: Colors.grey[500])),
+                        Builder(builder: (ctx) {
+                          final s = ctx.read<LocaleProvider>().s;
+                          return Text(s.actualMilesDriven, style: ctx.af(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey[500]));
+                        }),
                         const SizedBox(height: 4),
                         Row(children: [
                           Text(
@@ -669,8 +695,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
 
                   ElevatedButton.icon(
                     icon: const Icon(Icons.check_circle_rounded, size: 18),
-                    label: Text('Save & Complete',
-                      style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700)),
+                    label: Builder(builder: (ctx) {
+                      final s = ctx.read<LocaleProvider>().s;
+                      return Text(s.saveAndComplete, style: ctx.af(fontSize: 14, fontWeight: FontWeight.w700));
+                    }),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF16A34A),
                       foregroundColor: Colors.white,
@@ -686,8 +714,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(null),
-                    child: Text('Keep Going',
-                      style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 13)),
+                    child: Builder(builder: (ctx) {
+                    final s = ctx.read<LocaleProvider>().s;
+                    return Text(s.keepGoing, style: ctx.af(color: Colors.grey[600], fontSize: 13));
+                  }),
                   ),
                 ],
               ),
@@ -748,14 +778,15 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Cancel Trip?',
-                style: GoogleFonts.inter(
-                    fontSize: 18, fontWeight: FontWeight.w700)),
+              Builder(builder: (ctx) {
+                final s = ctx.read<LocaleProvider>().s;
+                return Text(s.cancelTripTitle, style: ctx.af(fontSize: 18, fontWeight: FontWeight.w700));
+              }),
               const SizedBox(height: 10),
-              Text(
-                'This will stop the trip and reset it to Active status.',
-                style: GoogleFonts.inter(fontSize: 14, color: Colors.grey[700]),
-              ),
+              Builder(builder: (ctx) {
+                final s = ctx.read<LocaleProvider>().s;
+                return Text(s.cancelTripBody, style: ctx.af(fontSize: 14, color: Colors.grey[700]));
+              }),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => Navigator.of(ctx).pop(true),
@@ -767,9 +798,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                       borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: Text('Cancel Trip',
-                  style: GoogleFonts.inter(
-                      fontSize: 14, fontWeight: FontWeight.w700)),
+                child: Builder(builder: (ctx) {
+                  final s = ctx.read<LocaleProvider>().s;
+                  return Text(s.cancelTripTitle.replaceAll('?',''), style: ctx.af(fontSize: 14, fontWeight: FontWeight.w700));
+                }),
               ),
               const SizedBox(height: 10),
               TextButton(
@@ -779,11 +811,10 @@ class _DriverTripsScreenState extends State<DriverTripsScreen>
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text('Keep Going',
-                  style: GoogleFonts.inter(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[600])),
+                child: Builder(builder: (ctx) {
+                  final s = ctx.read<LocaleProvider>().s;
+                  return Text(s.keepGoing, style: ctx.af(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.grey[600]));
+                }),
               ),
             ],
           ),
@@ -883,10 +914,11 @@ class _TripCard extends StatelessWidget {
                     ? const Color(0xFFF59E0B)
                     : _grey;
 
-    final String statusLabel = isInRoute  ? 'IN ROUTE'
-        : isActive    ? 'ACTIVE'
-        : isCompleted ? 'COMPLETED'
-        : isPending   ? 'PENDING'
+    final s = context.read<LocaleProvider>().s;
+    final String statusLabel = isInRoute  ? s.inRoute
+        : isActive    ? s.active.toUpperCase()
+        : isCompleted ? s.completed.toUpperCase()
+        : isPending   ? s.pending.toUpperCase()
         : status.toUpperCase().replaceAll('_', ' ');
 
     final miles  = (trip['total_miles'] as num?)?.toDouble() ?? 0;
@@ -1122,10 +1154,10 @@ class _TripCard extends StatelessWidget {
                                     const Icon(Icons.description_rounded, size: 12,
                                         color: Color(0xFF16A34A)),
                                     const SizedBox(width: 5),
-                                    Text('BOL uploaded ✓',
-                                      style: GoogleFonts.inter(fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF16A34A))),
+                                     Builder(builder: (ctx) {
+                                       final s = ctx.read<LocaleProvider>().s;
+                                       return Text(s.bolUploaded, style: ctx.af(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF16A34A)));
+                                     }),
                                   ]),
                                 )
                               : GestureDetector(
@@ -1144,10 +1176,10 @@ class _TripCard extends StatelessWidget {
                                       const Icon(Icons.upload_file_rounded, size: 12,
                                           color: Color(0xFFF97316)),
                                       const SizedBox(width: 5),
-                                      Text('Upload BOL',
-                                        style: GoogleFonts.inter(fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: const Color(0xFFF97316))),
+                                      Builder(builder: (ctx) {
+                                       final s = ctx.read<LocaleProvider>().s;
+                                       return Text(s.uploadBol, style: ctx.af(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFFF97316)));
+                                     }),
                                     ]),
                                   ),
                                 ),
@@ -1159,9 +1191,10 @@ class _TripCard extends StatelessWidget {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   icon: const Icon(Icons.check_circle_rounded, size: 14),
-                                  label: Text('Complete',
-                                    style: GoogleFonts.inter(fontSize: 11,
-                                        fontWeight: FontWeight.w700)),
+                                   label: Builder(builder: (ctx) {
+                                     final s = ctx.read<LocaleProvider>().s;
+                                     return Text(s.complete, style: ctx.af(fontSize: 11, fontWeight: FontWeight.w700));
+                                   }),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF16A34A),
                                     foregroundColor: Colors.white,
@@ -1177,9 +1210,10 @@ class _TripCard extends StatelessWidget {
                               Expanded(
                                 child: ElevatedButton.icon(
                                   icon: const Icon(Icons.cancel_rounded, size: 14),
-                                  label: Text('Cancel',
-                                    style: GoogleFonts.inter(fontSize: 11,
-                                        fontWeight: FontWeight.w700)),
+                                   label: Builder(builder: (ctx) {
+                                     final s = ctx.read<LocaleProvider>().s;
+                                     return Text(s.cancel, style: ctx.af(fontSize: 11, fontWeight: FontWeight.w700));
+                                   }),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFFDC2626),
                                     foregroundColor: Colors.white,
@@ -1200,9 +1234,10 @@ class _TripCard extends StatelessWidget {
                             height: 36,
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.play_arrow_rounded, size: 15),
-                              label: Text('Start the Trip',
-                                style: GoogleFonts.inter(fontSize: 12,
-                                    fontWeight: FontWeight.w700)),
+                               label: Builder(builder: (ctx) {
+                                 final s = ctx.read<LocaleProvider>().s;
+                                 return Text(s.startTheTrip, style: ctx.af(fontSize: 12, fontWeight: FontWeight.w700));
+                               }),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF1A56DB),
                                 foregroundColor: Colors.white,
@@ -1360,10 +1395,13 @@ class _BolUploadSheetState extends State<_BolUploadSheet> {
             ),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Upload Bill of Lading',
-                style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800)),
-              Text('Take a photo or choose a file',
-                style: GoogleFonts.inter(fontSize: 12, color: Colors.grey[500])),
+              Builder(builder: (ctx) {
+                final s = ctx.read<LocaleProvider>().s;
+                return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(s.uploadBolTitle, style: ctx.af(fontSize: 16, fontWeight: FontWeight.w800)),
+                  Text(s.takePhotoOrFile, style: ctx.af(fontSize: 12, color: Colors.grey[500])),
+                ]);
+              }),
             ])),
             // Close / Skip
             InkWell(
@@ -1382,28 +1420,16 @@ class _BolUploadSheetState extends State<_BolUploadSheet> {
           const SizedBox(height: 20),
 
           // Picker buttons row
-          Row(children: [
-            Expanded(child: _PickButton(
-              icon:  Icons.camera_alt_rounded,
-              label: 'Camera',
-              color: const Color(0xFF1A56DB),
-              onTap: _pickCamera,
-            )),
-            const SizedBox(width: 10),
-            Expanded(child: _PickButton(
-              icon:  Icons.photo_library_rounded,
-              label: 'Gallery',
-              color: const Color(0xFF7C3AED),
-              onTap: _pickGallery,
-            )),
-            const SizedBox(width: 10),
-            Expanded(child: _PickButton(
-              icon:  Icons.attach_file_rounded,
-              label: 'File',
-              color: const Color(0xFF059669),
-              onTap: _pickFile,
-            )),
-          ]),
+          Builder(builder: (ctx) {
+            final s = ctx.read<LocaleProvider>().s;
+            return Row(children: [
+              Expanded(child: _PickButton(icon: Icons.camera_alt_rounded, label: s.cameraLabel, color: const Color(0xFF1A56DB), onTap: _pickCamera)),
+              const SizedBox(width: 10),
+              Expanded(child: _PickButton(icon: Icons.photo_library_rounded, label: s.galleryLabel, color: const Color(0xFF7C3AED), onTap: _pickGallery)),
+              const SizedBox(width: 10),
+              Expanded(child: _PickButton(icon: Icons.attach_file_rounded, label: s.fileLabel, color: const Color(0xFF059669), onTap: _pickFile)),
+            ]);
+          }),
           const SizedBox(height: 16),
 
           // Preview
@@ -1442,8 +1468,10 @@ class _BolUploadSheetState extends State<_BolUploadSheet> {
                     child: CircularProgressIndicator(strokeWidth: 2,
                         valueColor: AlwaysStoppedAnimation(Colors.white)))
                 : const Icon(Icons.cloud_upload_rounded, size: 18),
-            label: Text(_uploading ? 'Uploading…' : 'Upload BOL',
-              style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700)),
+            label: Builder(builder: (ctx) {
+              final s = ctx.read<LocaleProvider>().s;
+              return Text(_uploading ? s.uploadingLabel : s.uploadBol, style: ctx.af(fontSize: 14, fontWeight: FontWeight.w700));
+            }),
             style: ElevatedButton.styleFrom(
               backgroundColor: _filePath != null
                   ? const Color(0xFF1A56DB)
@@ -1483,8 +1511,7 @@ class _PickButton extends StatelessWidget {
         child: Column(children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 4),
-          Text(label, style: GoogleFonts.inter(
-              fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+          Text(label, style: context.af(fontSize: 11, fontWeight: FontWeight.w600, color: color)),
         ]),
       ),
     );

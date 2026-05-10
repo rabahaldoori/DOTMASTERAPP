@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/app_strings.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 import 'truck_edit_screen.dart';
 
 const _navy  = Color(0xFF031634);
@@ -41,7 +44,8 @@ class _TruckScreenState extends State<TruckScreen> {
       setState(() { _trucks = list.cast<Map>(); _loading = false; });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = 'Could not load trucks.'; _loading = false; });
+      final s = context.read<LocaleProvider>().s;
+      setState(() { _error = s.couldNotLoadTrucks; _loading = false; });
     }
   }
 
@@ -55,6 +59,12 @@ class _TruckScreenState extends State<TruckScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
+    final count = _trucks.length;
+    final countLabel = count == 1
+        ? '$count ${s.truckRegistered}'
+        : '$count ${s.trucksRegistered}';
+
     return Scaffold(
       backgroundColor: _surf,
       body: RefreshIndicator(
@@ -68,10 +78,10 @@ class _TruckScreenState extends State<TruckScreen> {
             backgroundColor: _navy,
             systemOverlayStyle: SystemUiOverlayStyle.light,
             automaticallyImplyLeading: false,
-            title: Text('My Trucks', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+            title: Text(s.myTrucks, style: context.af(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
             actions: [
               IconButton(
-                tooltip: 'Add Truck',
+                tooltip: s.addTruck,
                 onPressed: _openAddModal,
                 icon: Container(
                   padding: const EdgeInsets.all(6),
@@ -96,9 +106,8 @@ class _TruckScreenState extends State<TruckScreen> {
                     ),
                     const SizedBox(width: 12),
                     Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text('Fleet Management', style: GoogleFonts.inter(fontSize: 11, color: Colors.white54, fontWeight: FontWeight.w500)),
-                      Text('${_trucks.length} truck${_trucks.length == 1 ? '' : 's'} registered',
-                          style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+                      Text(s.fleetManagement, style: context.af(fontSize: 11, color: Colors.white54, fontWeight: FontWeight.w500)),
+                      Text(countLabel, style: context.af(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
                     ]),
                     const Spacer(),
                     GestureDetector(
@@ -112,7 +121,7 @@ class _TruckScreenState extends State<TruckScreen> {
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           const Icon(Icons.add_rounded, color: Colors.white, size: 16),
                           const SizedBox(width: 5),
-                          Text('Add Truck', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
+                          Text(s.addTruck, style: context.af(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white)),
                         ]),
                       ),
                     ),
@@ -129,11 +138,13 @@ class _TruckScreenState extends State<TruckScreen> {
             SliverFillRemaining(child: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               const Icon(Icons.error_outline, size: 48, color: _red),
               const SizedBox(height: 12),
-              Text(_error!, style: GoogleFonts.inter(color: _grey)),
+              Text(_error!, style: context.af(color: _grey)),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _load,
+              ElevatedButton(
+                onPressed: _load,
                 style: ElevatedButton.styleFrom(backgroundColor: _navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                child: Text('Retry', style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700))),
+                child: Text(s.retry, style: context.af(color: Colors.white, fontWeight: FontWeight.w700)),
+              ),
             ])))
           else if (_trucks.isEmpty)
             SliverFillRemaining(child: _EmptyTrucks(onAdd: _openAddModal))
@@ -166,13 +177,16 @@ class _TruckCard extends StatelessWidget {
     }
   }
 
-  String get _statusLabel => {
-    'active': 'Active', 'maintenance': 'Maintenance',
-    'inactive': 'Inactive', 'retired': 'Retired',
-  }[(truck['status'] ?? 'active').toString()] ?? 'Active';
+  String _statusLabel(AppStrings s) => {
+    'active':      s.statusActive,
+    'maintenance': s.statusMaintenance,
+    'inactive':    s.statusInactive,
+    'retired':     s.statusRetired,
+  }[(truck['status'] ?? 'active').toString()] ?? s.statusActive;
 
   @override
   Widget build(BuildContext context) {
+    final s      = context.watch<LocaleProvider>().s;
     final unit   = truck['unit_number'] ?? '—';
     final year   = truck['year']?.toString() ?? '';
     final make   = truck['make'] ?? '';
@@ -190,9 +204,7 @@ class _TruckCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: _bord),
-          boxShadow: [BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8, offset: const Offset(0, 3))],
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 8, offset: const Offset(0, 3))],
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -201,13 +213,10 @@ class _TruckCard extends StatelessWidget {
             Container(
               width: 44, height: 44,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                    colors: [_navy, _navy2],
-                    begin: Alignment.topLeft, end: Alignment.bottomRight),
+                gradient: const LinearGradient(colors: [_navy, _navy2], begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.local_shipping_rounded,
-                  color: Colors.white, size: 22),
+              child: const Icon(Icons.local_shipping_rounded, color: Colors.white, size: 22),
             ),
             const SizedBox(width: 12),
 
@@ -215,20 +224,16 @@ class _TruckCard extends StatelessWidget {
             Expanded(child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$year $make $model',
-                    style: GoogleFonts.inter(
-                        fontSize: 14, fontWeight: FontWeight.w800, color: _navy)),
+                Text('$year $make $model', style: context.af(fontSize: 14, fontWeight: FontWeight.w800, color: _navy)),
                 const SizedBox(height: 3),
                 Row(children: [
-                  _Tag(label: plate + (state.isNotEmpty ? ' · $state' : ''),
-                      icon: Icons.credit_card_rounded),
+                  _Tag(label: plate + (state.isNotEmpty ? ' · $state' : ''), icon: Icons.credit_card_rounded),
                   const SizedBox(width: 6),
                   _Tag(label: fuel, icon: Icons.local_gas_station_rounded),
                 ]),
                 if (driver != null) ...[
                   const SizedBox(height: 3),
-                  Text('👤 $driver',
-                      style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+                  Text('👤 $driver', style: context.af(fontSize: 10, color: _grey)),
                 ],
               ],
             )),
@@ -242,14 +247,10 @@ class _TruckCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: _statusColor.withOpacity(0.35)),
                 ),
-                child: Text(_statusLabel,
-                    style: GoogleFonts.inter(
-                        fontSize: 9, fontWeight: FontWeight.w700,
-                        color: _statusColor)),
+                child: Text(_statusLabel(s), style: context.af(fontSize: 9, fontWeight: FontWeight.w700, color: _statusColor)),
               ),
               const SizedBox(height: 4),
-              Text(unit, style: GoogleFonts.inter(
-                  fontSize: 10, color: _grey, fontWeight: FontWeight.w500)),
+              Text(unit, style: context.af(fontSize: 10, color: _grey, fontWeight: FontWeight.w500)),
               const SizedBox(height: 4),
               const Icon(Icons.chevron_right_rounded, size: 18, color: _grey),
             ]),
@@ -276,33 +277,40 @@ class _Tag extends StatelessWidget {
   Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min, children: [
     Icon(icon, size: 10, color: _grey),
     const SizedBox(width: 3),
-    Text(label, style: GoogleFonts.inter(fontSize: 10, color: _grey, fontWeight: FontWeight.w500),
+    Text(label, style: context.af(fontSize: 10, color: _grey, fontWeight: FontWeight.w500),
         maxLines: 1, overflow: TextOverflow.ellipsis),
   ]);
 }
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 class _EmptyTrucks extends StatelessWidget {
   final VoidCallback onAdd;
   const _EmptyTrucks({required this.onAdd});
   @override
-  Widget build(BuildContext context) => Center(child: Padding(
-    padding: const EdgeInsets.all(40),
-    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Container(width: 80, height: 80, decoration: BoxDecoration(color: _blue.withOpacity(0.08), shape: BoxShape.circle),
-        child: const Icon(Icons.local_shipping_outlined, size: 40, color: _blue)),
-      const SizedBox(height: 16),
-      Text('No Trucks Yet', style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w800, color: _navy)),
-      const SizedBox(height: 8),
-      Text('Add your first truck to start tracking mileage and fuel.', textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 13, color: _grey)),
-      const SizedBox(height: 24),
-      ElevatedButton.icon(
-        onPressed: onAdd,
-        style: ElevatedButton.styleFrom(backgroundColor: _navy, padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)), elevation: 0),
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: Text('Add Truck', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)),
-      ),
-    ]),
-  ));
+  Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
+    return Center(child: Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Container(width: 80, height: 80, decoration: BoxDecoration(color: _blue.withOpacity(0.08), shape: BoxShape.circle),
+          child: const Icon(Icons.local_shipping_outlined, size: 40, color: _blue)),
+        const SizedBox(height: 16),
+        Text(s.noTrucksYet, style: context.af(fontSize: 18, fontWeight: FontWeight.w800, color: _navy)),
+        const SizedBox(height: 8),
+        Text(s.addFirstTruck, textAlign: TextAlign.center, style: context.af(fontSize: 13, color: _grey)),
+        const SizedBox(height: 24),
+        ElevatedButton.icon(
+          onPressed: onAdd,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _navy,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            elevation: 0,
+          ),
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: Text(s.addTruck, style: context.af(fontWeight: FontWeight.w700, color: Colors.white)),
+        ),
+      ]),
+    ));
+  }
 }

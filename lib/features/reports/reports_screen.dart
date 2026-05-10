@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:dio/dio.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 import 'report_detail_screen.dart';
 
 const _navy    = Color(0xFF031634);
@@ -74,6 +76,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s   = context.watch<LocaleProvider>().s;
     final pct = _reports.isEmpty ? 0.0 : _filed / _reports.length;
     return Scaffold(
       backgroundColor: _surface,
@@ -94,9 +97,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 decoration: BoxDecoration(color: Colors.white.withOpacity(0.10), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withOpacity(0.15))),
                 child: const Icon(Icons.bar_chart_rounded, color: Colors.white, size: 14)),
               const SizedBox(width: 8),
-              Text('IFTA Reports', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+              Text(s.iftaReports, style: context.af(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
               const Spacer(),
-              Text('${_reports.length} total', style: GoogleFonts.inter(fontSize: 11, color: Colors.white54)),
+              Text('${_reports.length} total', style: context.af(fontSize: 11, color: Colors.white54)),
               const SizedBox(width: 8),
               GestureDetector(
                 onTap: _showGenerateSheet,
@@ -113,35 +116,35 @@ class _ReportsScreenState extends State<ReportsScreen> {
               collapseMode: CollapseMode.parallax,
               background: Container(
                 decoration: const BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [_navy, _navy2])),
-                child: Stack(children: [
-                  Positioned(right: -30, top: -30, child: Container(width: 150, height: 150, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.04)))),
-                  Positioned(right: 50, top: 70, child: Container(width: 70, height: 70, decoration: BoxDecoration(shape: BoxShape.circle, color: _blue.withOpacity(0.15)))),
-                  SafeArea(child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                    child: Column(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
-                        Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text('COMPLIANCE', style: GoogleFonts.inter(fontSize: 9, letterSpacing: 1.1, color: Colors.white54)),
-                          const SizedBox(height: 2),
-                          Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                            Container(width: 8, height: 8, decoration: BoxDecoration(color: pct >= 1 ? _green : _amber, shape: BoxShape.circle)),
-                            const SizedBox(width: 6),
-                            Text(pct >= 1 ? 'Fully Compliant' : _reports.isEmpty ? 'No Reports' : 'In Progress', style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white, height: 1)),
-                          ]),
-                          Text('$_filed of ${_reports.length} Quarters Filed', style: GoogleFonts.inter(fontSize: 12, color: Colors.white54)),
-                        ]),
-                        const Spacer(),
-                        Row(children: [
-                          _MiniPill(label: 'Tax Due', value: '\$${_totalTax.toStringAsFixed(0)}', icon: Icons.account_balance_outlined),
-                          const SizedBox(width: 6),
-                          _MiniPill(label: 'Miles', value: '${(_totalMi / 1000).toStringAsFixed(1)}k', icon: Icons.route_outlined),
-                          const SizedBox(width: 6),
-                          _MiniPill(label: 'Drafts', value: '$_drafts', icon: Icons.pending_actions_outlined),
-                        ]),
-                      ]),
-                    ]),
-                  )),
-                ]),
+                  child: Stack(children: [
+                   Positioned(right: -30, top: -30, child: Container(width: 150, height: 150, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withOpacity(0.04)))),
+                   Positioned(right: 50, top: 70, child: Container(width: 70, height: 70, decoration: BoxDecoration(shape: BoxShape.circle, color: _blue.withOpacity(0.15)))),
+                   SafeArea(child: Padding(
+                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                     child: Column(mainAxisAlignment: MainAxisAlignment.end, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                       Row(children: [
+                         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                           Text(s.compliance, style: context.af(fontSize: 9, letterSpacing: 1.1, color: Colors.white54)),
+                           const SizedBox(height: 2),
+                           Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                             Container(width: 8, height: 8, decoration: BoxDecoration(color: pct >= 1 ? _green : _amber, shape: BoxShape.circle)),
+                             const SizedBox(width: 6),
+                             Text(pct >= 1 ? s.fullyCompliant : _reports.isEmpty ? s.noReports : s.inProgress, style: context.af(fontSize: 20, fontWeight: FontWeight.w800, color: Colors.white, height: 1)),
+                           ]),
+                           Text('$_filed ${s.quartersFiledOf} ${_reports.length} Quarters Filed', style: context.af(fontSize: 12, color: Colors.white54)),
+                         ]),
+                         const Spacer(),
+                         Row(children: [
+                           _MiniPill(label: s.taxDue, value: '\$${_totalTax.toStringAsFixed(0)}', icon: Icons.account_balance_outlined),
+                           const SizedBox(width: 6),
+                           _MiniPill(label: s.miles, value: '${(_totalMi / 1000).toStringAsFixed(1)}k', icon: Icons.route_outlined),
+                           const SizedBox(width: 6),
+                           _MiniPill(label: s.drafts, value: '$_drafts', icon: Icons.pending_actions_outlined),
+                         ]),
+                       ]),
+                     ]),
+                   )),
+                 ]),
               ),
             ),
           ),
@@ -167,9 +170,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     Icon(Icons.warning_amber_rounded, color: Colors.red.shade500, size: 18),
                     const SizedBox(width: 8),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('Data Quality Warning — Abnormal MPG Detected', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.red.shade700)),
+                      Text(s.dataQualityWarning, style: context.af(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.red.shade700)),
                       const SizedBox(height: 2),
-                      Text('${_iftaCurrent!['average_mpg'].toStringAsFixed(2)} MPG detected. Typical diesel trucking MPG is 5–8. Please verify trip odometer readings and fuel log entries.', style: GoogleFonts.inter(fontSize: 11, color: Colors.red.shade600)),
+                      Text('${_iftaCurrent!["average_mpg"].toStringAsFixed(2)} ${s.abnormalMpgDetected}', style: context.af(fontSize: 11, color: Colors.red.shade600)),
                     ])),
                   ]),
                 ),
@@ -193,11 +196,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             SliverToBoxAdapter(child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Row(children: [
-                Expanded(child: _StatCard(icon: Icons.verified_outlined, color: _green, label: 'Filed', value: '$_filed')),
+                Expanded(child: _StatCard(icon: Icons.verified_outlined, color: _green, label: s.filed, value: '$_filed')),
                 const SizedBox(width: 10),
-                Expanded(child: _StatCard(icon: Icons.edit_note_rounded, color: _amber, label: 'Drafts', value: '$_drafts')),
+                Expanded(child: _StatCard(icon: Icons.edit_note_rounded, color: _amber, label: s.drafts, value: '$_drafts')),
                 const SizedBox(width: 10),
-                Expanded(child: _StatCard(icon: Icons.attach_money_rounded, color: _blue, label: 'Tax Due', value: '\$${_totalTax.toStringAsFixed(0)}')),
+                Expanded(child: _StatCard(icon: Icons.attach_money_rounded, color: _blue, label: s.taxDue, value: '\$${_totalTax.toStringAsFixed(0)}')),
               ]),
             )),
 
@@ -215,10 +218,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                 child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text('REPORT HISTORY', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.8)),
-                    Text('All quarterly IFTA filings', style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+                    Text(s.reportHistory, style: context.af(fontSize: 11, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.8)),
+                    Text(s.allQuarterlyFilings, style: context.af(fontSize: 10, color: _grey)),
                   ]),
-                  Text('${DateTime.now().year}', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: _blue)),
+                  Text('${DateTime.now().year}', style: context.af(fontSize: 11, fontWeight: FontWeight.w600, color: _blue)),
                 ]),
               )),
 
@@ -240,6 +243,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   // ── QTD metrics builder ──────────────────────────────────────────────────
   Widget _buildQtdMetrics() {
+    final s       = context.read<LocaleProvider>().s;
     final qm      = (_summary?['quarter_metrics'] as Map?) ?? {};
     final est     = (_summary?['ifta_estimate'] as Map?) ?? {};
     final miles   = _iftaCurrent != null ? _n(_iftaCurrent!['total_miles'])   : _n(qm['total_miles']);
@@ -250,18 +254,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final mpgWarn = mpg > 0 && mpg < 5;
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('QTD METRICS · $qLabel', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.7)),
+      Text('${s.qtdMetrics} · $qLabel', style: context.af(fontSize: 10, fontWeight: FontWeight.w700, color: _grey, letterSpacing: 0.7)),
       const SizedBox(height: 10),
       Row(children: [
-        Expanded(child: _KpiTile(label: 'Total Miles', value: '${miles.toStringAsFixed(1)}', unit: 'mi', icon: Icons.route_outlined, color: _blue)),
+        Expanded(child: _KpiTile(label: s.totalMiles, value: '${miles.toStringAsFixed(1)}', unit: 'mi', icon: Icons.route_outlined, color: _blue)),
         const SizedBox(width: 10),
-        Expanded(child: _KpiTile(label: 'Total Gallons', value: gallons.toStringAsFixed(1), unit: 'gal', icon: Icons.local_gas_station_outlined, color: const Color(0xFF06B6D4))),
+        Expanded(child: _KpiTile(label: s.totalGallons, value: gallons.toStringAsFixed(1), unit: 'gal', icon: Icons.local_gas_station_outlined, color: const Color(0xFF06B6D4))),
       ]),
       const SizedBox(height: 10),
       Row(children: [
-        Expanded(child: _KpiTile(label: 'Avg MPG', value: mpg.toStringAsFixed(2), unit: '', icon: Icons.speed_rounded, color: mpgWarn ? Colors.red : const Color(0xFF7C3AED), warn: mpgWarn)),
+        Expanded(child: _KpiTile(label: s.avgMpg, value: mpg.toStringAsFixed(2), unit: '', icon: Icons.speed_rounded, color: mpgWarn ? Colors.red : const Color(0xFF7C3AED), warn: mpgWarn)),
         const SizedBox(width: 10),
-        Expanded(child: _KpiTile(label: 'Est. Tax Due', value: '\$${taxDue.toStringAsFixed(2)}', unit: '', icon: Icons.account_balance_outlined, color: _navy, dark: true)),
+        Expanded(child: _KpiTile(label: s.estTaxDue, value: '\$${taxDue.toStringAsFixed(2)}', unit: '', icon: Icons.account_balance_outlined, color: _navy, dark: true)),
       ]),
     ]);
   }
@@ -283,13 +287,13 @@ class _KpiTile extends StatelessWidget {
       Row(children: [
         Icon(icon, size: 14, color: dark ? Colors.white54 : color),
         const SizedBox(width: 5),
-        Text(label, style: GoogleFonts.inter(fontSize: 10, color: dark ? Colors.white60 : _grey)),
+        Text(label, style: context.af(fontSize: 10, color: dark ? Colors.white60 : _grey)),
         if (warn) ...[const Spacer(), const Icon(Icons.warning_amber_rounded, size: 12, color: Colors.red)],
       ]),
       const SizedBox(height: 6),
       Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Flexible(child: Text(value, style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800, color: warn ? Colors.red : dark ? Colors.white : _navy), overflow: TextOverflow.ellipsis)),
-        if (unit.isNotEmpty) ...[const SizedBox(width: 3), Padding(padding: const EdgeInsets.only(bottom: 3), child: Text(unit, style: GoogleFonts.inter(fontSize: 11, color: dark ? Colors.white54 : _grey)))],
+        Flexible(child: Text(value, style: context.af(fontSize: 20, fontWeight: FontWeight.w800, color: warn ? Colors.red : dark ? Colors.white : _navy), overflow: TextOverflow.ellipsis)),
+        if (unit.isNotEmpty) ...[const SizedBox(width: 3), Padding(padding: const EdgeInsets.only(bottom: 3), child: Text(unit, style: context.af(fontSize: 11, color: dark ? Colors.white54 : _grey)))],
       ]),
     ]),
   );
@@ -301,36 +305,33 @@ class _ComplianceHealthCard extends StatelessWidget {
   const _ComplianceHealthCard({required this.summary});
   @override
   Widget build(BuildContext context) {
+    final s  = context.watch<LocaleProvider>().s;
     final qm = (summary['quarter_metrics'] as Map?) ?? {};
     final missingReceipts  = (qm['missing_receipts']  as int?) ?? 0;
     final needsReview      = (qm['trips_needing_review'] as int?) ?? 0;
     final missingMileage   = (qm['trips_missing_mileage'] as int?) ?? 0;
-
-    // Score based on issues
     int issues = 0;
     if (missingReceipts > 0) issues++;
     if (needsReview > 0)     issues++;
     if (missingMileage > 0)  issues++;
     final pct = ((3 - issues) / 3 * 100).round();
-
     final checks = [
-      (missingReceipts == 0, '$missingReceipts missing fuel receipts'),
-      (needsReview == 0,     '$needsReview trips needing review'),
-      (missingMileage == 0,  '$missingMileage trips missing mileage'),
-      (true,                 'Odometer continuity verified'),
+      (missingReceipts == 0, '$missingReceipts ${s.missingFuelReceipts}'),
+      (needsReview == 0,     '$needsReview ${s.tripsNeedingReview}'),
+      (missingMileage == 0,  '$missingMileage ${s.tripsMissingMileage}'),
+      (true,                 s.odometerVerified),
     ];
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Text('Compliance Health', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: _navy)),
+          Text(s.complianceHealth, style: context.af(fontSize: 14, fontWeight: FontWeight.w700, color: _navy)),
           const Spacer(),
           Container(
             width: 44, height: 44,
             decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: pct >= 80 ? _green : _amber, width: 3)),
-            child: Center(child: Text('$pct%', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: pct >= 80 ? _green : _amber))),
+            child: Center(child: Text('$pct%', style: context.af(fontSize: 11, fontWeight: FontWeight.w800, color: pct >= 80 ? _green : _amber))),
           ),
         ]),
         const SizedBox(height: 12),
@@ -339,14 +340,14 @@ class _ComplianceHealthCard extends StatelessWidget {
           child: Row(children: [
             Icon(c.$1 ? Icons.check_circle_outline_rounded : Icons.warning_amber_rounded, size: 15, color: c.$1 ? _green : _amber),
             const SizedBox(width: 8),
-            Text(c.$2, style: GoogleFonts.inter(fontSize: 12, color: c.$1 ? _grey : _amber)),
+            Text(c.$2, style: context.af(fontSize: 12, color: c.$1 ? _grey : _amber)),
           ]),
         )),
         const SizedBox(height: 10),
         Row(children: [
-          _SumChip(label: 'Missing Receipts', value: '$missingReceipts', warn: missingReceipts > 0),
+          _SumChip(label: s.missingReceipts, value: '$missingReceipts', warn: missingReceipts > 0),
           const SizedBox(width: 12),
-          _SumChip(label: 'Trips for Review', value: '$needsReview', warn: needsReview > 0),
+          _SumChip(label: s.tripsForReview, value: '$needsReview', warn: needsReview > 0),
         ]),
       ]),
     );
@@ -358,8 +359,8 @@ class _SumChip extends StatelessWidget {
   const _SumChip({required this.label, required this.value, this.warn = false});
   @override
   Widget build(BuildContext context) => Column(children: [
-    Text(value, style: GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w800, color: warn ? _amber : _navy)),
-    Text(label, style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+    Text(value, style: context.af(fontSize: 20, fontWeight: FontWeight.w800, color: warn ? _amber : _navy)),
+    Text(label, style: context.af(fontSize: 10, color: _grey)),
   ]);
 }
 
@@ -376,17 +377,17 @@ class _JurisdictionChartState extends State<_JurisdictionChart> {
 
   @override
   Widget build(BuildContext context) {
+    final s       = context.watch<LocaleProvider>().s;
     final sorted  = [...widget.jurisdictions]..sort((a, b) => _n(b['miles']).compareTo(_n(a['miles'])));
     final visible = _showAll ? sorted : sorted.take(4).toList();
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: _border)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Text('Miles by Jurisdiction', style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: _navy)),
+          Text(s.milesByJurisdiction, style: context.af(fontSize: 14, fontWeight: FontWeight.w700, color: _navy)),
           const Spacer(),
-          Text('Current quarter', style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+          Text(s.currentQuarter, style: context.af(fontSize: 10, color: _grey)),
         ]),
         const SizedBox(height: 14),
         // ── Animated rows ─────────────────────────────────────────────
@@ -401,12 +402,12 @@ class _JurisdictionChartState extends State<_JurisdictionChart> {
               final state  = j['state']?.toString() ?? '??';
               return Padding(padding: const EdgeInsets.only(bottom: 10), child:
                 Row(children: [
-                  SizedBox(width: 28, child: Text(state, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: _navy))),
+                  SizedBox(width: 28, child: Text(state, style: context.af(fontSize: 12, fontWeight: FontWeight.w700, color: _navy))),
                   const SizedBox(width: 8),
                   Expanded(child: ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: pct, minHeight: 8, backgroundColor: _border, valueColor: const AlwaysStoppedAnimation(_navy)))),
                   const SizedBox(width: 8),
-                  SizedBox(width: 60, child: Text('${miles.toStringAsFixed(0)} mi', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 11, color: _grey))),
-                  SizedBox(width: 48, child: Text('\$${tax.toStringAsFixed(2)}', textAlign: TextAlign.right, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: tax > 0 ? _blue : _grey))),
+                  SizedBox(width: 60, child: Text('${miles.toStringAsFixed(0)} mi', textAlign: TextAlign.right, style: context.af(fontSize: 11, color: _grey))),
+                  SizedBox(width: 48, child: Text('\$${tax.toStringAsFixed(2)}', textAlign: TextAlign.right, style: context.af(fontSize: 11, fontWeight: FontWeight.w600, color: tax > 0 ? _blue : _grey))),
                 ]),
               );
             }).toList(),
@@ -432,8 +433,8 @@ class _JurisdictionChartState extends State<_JurisdictionChart> {
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  _showAll ? 'Hide' : 'Show All ${sorted.length} States',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: _blue),
+                  _showAll ? s.hide : '${s.showAllStates} ${sorted.length} States',
+                  style: context.af(fontSize: 12, fontWeight: FontWeight.w700, color: _blue),
                 ),
               ]),
             ),
@@ -455,8 +456,8 @@ class _MiniPill extends StatelessWidget {
     child: Column(mainAxisSize: MainAxisSize.min, children: [
       Icon(icon, size: 11, color: Colors.white60),
       const SizedBox(height: 2),
-      Text(value, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-      Text(label, style: GoogleFonts.inter(fontSize: 8, color: Colors.white54)),
+      Text(value, style: context.af(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
+      Text(label, style: context.af(fontSize: 8, color: Colors.white54)),
     ]),
   );
 }
@@ -472,8 +473,8 @@ class _StatCard extends StatelessWidget {
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Container(width: 32, height: 32, decoration: BoxDecoration(color: color.withOpacity(0.10), borderRadius: BorderRadius.circular(9)), child: Icon(icon, size: 17, color: color)),
       const SizedBox(height: 8),
-      Text(value, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: _navy)),
-      Text(label, style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+      Text(value, style: context.af(fontSize: 14, fontWeight: FontWeight.w700, color: _navy)),
+      Text(label, style: context.af(fontSize: 10, color: _grey)),
     ]),
   );
 }
@@ -503,9 +504,10 @@ class _ReportCardState extends State<_ReportCard> {
   }
 
   Future<void> _confirmDelete(BuildContext context) async {
+    final s       = context.read<LocaleProvider>().s;
     final isFiled = (widget.report['status'] ?? '').toString().toLowerCase() == 'filed';
     if (isFiled) {
-      _showInfoModal(context, 'Cannot Delete', 'Filed reports cannot be deleted to maintain compliance records.', isError: true);
+      _showInfoModal(context, s.deleteFailed, s.cannotDeleteFiled, isError: true);
       return;
     }
 
@@ -520,22 +522,22 @@ class _ReportCardState extends State<_ReportCard> {
           Container(width: 56, height: 56, decoration: BoxDecoration(color: Colors.red.shade50, shape: BoxShape.circle),
             child: Icon(Icons.delete_outline_rounded, color: Colors.red.shade500, size: 28)),
           const SizedBox(height: 16),
-          Text('Delete Report?', style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w800, color: _navy)),
+          Text(s.deleteReport, style: context.af(fontSize: 17, fontWeight: FontWeight.w800, color: _navy)),
           const SizedBox(height: 8),
-          Text('Q$q $year IFTA report will be permanently removed. This action cannot be undone.',
-            textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 13, color: _grey, height: 1.4)),
+          Text('Q$q $year ${s.deleteReportConfirm}',
+            textAlign: TextAlign.center, style: context.af(fontSize: 13, color: _grey, height: 1.4)),
           const SizedBox(height: 24),
           Row(children: [
             Expanded(child: OutlinedButton(
               onPressed: () => Navigator.of(ctx).pop(false),
               style: OutlinedButton.styleFrom(side: const BorderSide(color: _border), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 13)),
-              child: Text('Cancel', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _navy)),
+              child: Text(s.cancel, style: context.af(fontWeight: FontWeight.w600, color: _navy)),
             )),
             const SizedBox(width: 12),
             Expanded(child: ElevatedButton(
               onPressed: () => Navigator.of(ctx).pop(true),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade500, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(vertical: 13), elevation: 0),
-              child: Text('Delete', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)),
+              child: Text(s.delete, style: context.af(fontWeight: FontWeight.w700, color: Colors.white)),
             )),
           ]),
         ])),
@@ -554,7 +556,10 @@ class _ReportCardState extends State<_ReportCard> {
       await ApiClient.deleteIftaReport(id is int ? id : int.parse(id.toString()));
       widget.onRefresh();
     } catch (e) {
-      if (mounted) _showInfoModal(context, 'Delete Failed', 'Could not delete the report. Please try again.', isError: true);
+      if (mounted) {
+        final s = context.read<LocaleProvider>().s;
+        _showInfoModal(context, s.deleteFailed, s.couldNotDeleteReport, isError: true);
+      }
     } finally {
       if (mounted) setState(() => _deleting = false);
     }
@@ -569,14 +574,14 @@ class _ReportCardState extends State<_ReportCard> {
           Icon(isError ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
             size: 40, color: isError ? Colors.red.shade400 : _green),
           const SizedBox(height: 12),
-          Text(title, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: _navy)),
+          Text(title, style: context.af(fontSize: 16, fontWeight: FontWeight.w800, color: _navy)),
           const SizedBox(height: 6),
-          Text(msg, textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 13, color: _grey)),
+          Text(msg, textAlign: TextAlign.center, style: context.af(fontSize: 13, color: _grey)),
           const SizedBox(height: 20),
           SizedBox(width: double.infinity, child: ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(),
             style: ElevatedButton.styleFrom(backgroundColor: _navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0),
-            child: Text('OK', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)),
+            child: Text(context.read<LocaleProvider>().s.ok, style: context.af(fontWeight: FontWeight.w700, color: Colors.white)),
           )),
         ])),
       ),
@@ -585,19 +590,18 @@ class _ReportCardState extends State<_ReportCard> {
 
   @override
   Widget build(BuildContext context) {
+    final s        = context.watch<LocaleProvider>().s;
     final status   = (widget.report['status'] ?? 'draft').toString().toLowerCase();
     final isReady  = status == 'ready' || status == 'ready_to_file' || status == 'validation_complete';
     final isFiled  = status == 'filed';
-
     final quarter  = widget.report['quarter'] as int? ?? 1;
     final year     = widget.report['year'] as int? ?? DateTime.now().year;
     final taxDue   = _n(widget.report['net_tax_due']);
     final miles    = _n(widget.report['total_miles']);
     final juris    = (widget.report['lines'] as List?)?.length ?? (widget.report['jurisdiction_count'] as int? ?? 0);
     final netTax   = _n(widget.report['net_tax_due']);
-
     final Color statusColor = isFiled ? _green : isReady ? _blue : _amber;
-    final String statusLabel = isFiled ? 'FILED' : isReady ? 'READY TO FILE' : 'DRAFT';
+    final String statusLabel = isFiled ? s.filedLabel : isReady ? s.readyToFileLabel : s.draftLabel;
 
     return Dismissible(
       key: ValueKey(widget.report['id']),
@@ -614,7 +618,7 @@ class _ReportCardState extends State<_ReportCard> {
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           const Icon(Icons.delete_outline_rounded, color: Colors.white, size: 24),
           const SizedBox(height: 4),
-          Text('Delete', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+          Text(context.read<LocaleProvider>().s.delete, style: context.af(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
         ]),
       ),
       child: AnimatedOpacity(
@@ -631,13 +635,13 @@ class _ReportCardState extends State<_ReportCard> {
                 child: Icon(isFiled ? Icons.check_circle_outline : isReady ? Icons.task_alt_outlined : Icons.edit_note_rounded, color: statusColor, size: 22)),
               const SizedBox(width: 12),
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(_qLabel(quarter), style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: _navy)),
-                Text('$year', style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                Text(_qLabel(quarter), style: context.af(fontSize: 15, fontWeight: FontWeight.w700, color: _navy)),
+                Text('$year', style: context.af(fontSize: 12, color: _grey)),
               ])),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(color: statusColor.withOpacity(0.10), borderRadius: BorderRadius.circular(8)),
-                child: Text(statusLabel, style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w700, color: statusColor, letterSpacing: 0.3)),
+                child: Text(statusLabel, style: context.af(fontSize: 10, fontWeight: FontWeight.w700, color: statusColor, letterSpacing: 0.3)),
               ),
               // Delete icon button
               if (!isFiled) ...[
@@ -659,13 +663,13 @@ class _ReportCardState extends State<_ReportCard> {
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(color: const Color(0xFFF8FAFF), borderRadius: BorderRadius.circular(12)),
               child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                _MiniStat(label: 'Total Miles', value: '${miles.toStringAsFixed(0)} mi'),
+                _MiniStat(label: s.totalMiles, value: '${miles.toStringAsFixed(0)} mi'),
                 _Divider(),
-                _MiniStat(label: 'Jurisdictions', value: '$juris'),
+                _MiniStat(label: s.jurisdictions, value: '$juris'),
                 _Divider(),
-                _MiniStat(label: 'Tax Due', value: '\$${taxDue.toStringAsFixed(2)}', highlight: taxDue > 0),
+                _MiniStat(label: s.taxDue, value: '\$${taxDue.toStringAsFixed(2)}', highlight: taxDue > 0),
                 _Divider(),
-                _MiniStat(label: 'Net Tax', value: '\$${netTax.toStringAsFixed(2)}', highlight: netTax > 0),
+                _MiniStat(label: s.netTax, value: '\$${netTax.toStringAsFixed(2)}', highlight: netTax > 0),
               ]),
             ),
 
@@ -675,20 +679,20 @@ class _ReportCardState extends State<_ReportCard> {
                 Expanded(child: OutlinedButton(
                   onPressed: () => _openDetail(context),
                   style: OutlinedButton.styleFrom(side: const BorderSide(color: _border), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), padding: const EdgeInsets.symmetric(vertical: 11)),
-                  child: Text('Details', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: _navy, fontSize: 13)),
+                  child: Text(s.details, style: context.af(fontWeight: FontWeight.w600, color: _navy, fontSize: 13)),
                 )),
                 const SizedBox(width: 10),
                 Expanded(child: ElevatedButton(
                   onPressed: () => _openDetail(context),
                   style: ElevatedButton.styleFrom(backgroundColor: _navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), padding: const EdgeInsets.symmetric(vertical: 11), elevation: 0),
-                  child: Text(isReady ? 'Ready to File' : 'Resume', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13)),
+                  child: Text(isReady ? s.readyToFile : s.resume, style: context.af(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13)),
                 )),
               ]))
             else
               GestureDetector(
                 onTap: () => _openDetail(context),
                 child: Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text('Ref: #IFT-${widget.report['id'] ?? '—'}', style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                  Text('Ref: #IFT-${widget.report['id'] ?? '—'}', style: context.af(fontSize: 12, color: _grey)),
                   Icon(Icons.chevron_right_rounded, size: 18, color: Colors.grey.shade400),
                 ])),
               ),
@@ -704,9 +708,9 @@ class _MiniStat extends StatelessWidget {
   const _MiniStat({required this.label, required this.value, this.highlight = false});
   @override
   Widget build(BuildContext context) => Column(children: [
-    Text(value, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: highlight ? _blue : _navy)),
+    Text(value, style: context.af(fontSize: 13, fontWeight: FontWeight.w700, color: highlight ? _blue : _navy)),
     const SizedBox(height: 2),
-    Text(label, style: GoogleFonts.inter(fontSize: 9, color: _grey, letterSpacing: 0.2)),
+    Text(label, style: context.af(fontSize: 9, color: _grey, letterSpacing: 0.2)),
   ]);
 }
 
@@ -720,23 +724,26 @@ class _EmptyState extends StatelessWidget {
   final VoidCallback onGenerate; final bool generating;
   const _EmptyState({required this.onGenerate, required this.generating});
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(width: 72, height: 72, decoration: BoxDecoration(color: _border, borderRadius: BorderRadius.circular(20)), child: Icon(Icons.bar_chart_rounded, size: 34, color: Colors.grey.shade400)),
-      const SizedBox(height: 14),
-      Text('No reports yet', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600, color: _grey)),
-      const SizedBox(height: 4),
-      Text('Generate your first IFTA quarterly report', textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade400)),
-      const SizedBox(height: 20),
-      ElevatedButton.icon(
-        onPressed: generating ? null : onGenerate,
-        style: ElevatedButton.styleFrom(backgroundColor: _navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
-        icon: generating ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.add, color: Colors.white, size: 18),
-        label: Text('Generate Q Report', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: Colors.white)),
-      ),
-    ]),
-  );
+  Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 32),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(width: 72, height: 72, decoration: BoxDecoration(color: _border, borderRadius: BorderRadius.circular(20)), child: Icon(Icons.bar_chart_rounded, size: 34, color: Colors.grey.shade400)),
+        const SizedBox(height: 14),
+        Text(s.noReportsYet, style: context.af(fontSize: 15, fontWeight: FontWeight.w600, color: _grey)),
+        const SizedBox(height: 4),
+        Text(s.generateFirstReport, textAlign: TextAlign.center, style: context.af(fontSize: 12, color: Colors.grey.shade400)),
+        const SizedBox(height: 20),
+        ElevatedButton.icon(
+          onPressed: generating ? null : onGenerate,
+          style: ElevatedButton.styleFrom(backgroundColor: _navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
+          icon: generating ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.add, color: Colors.white, size: 18),
+          label: Text(s.generateQReport, style: context.af(fontWeight: FontWeight.w700, color: Colors.white)),
+        ),
+      ]),
+    );
+  }
 }
 
 // ── Generate Report Bottom Sheet ──────────────────────────────────────────────
@@ -800,6 +807,7 @@ class _GenerateReportSheetState extends State<_GenerateReportSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final s       = context.watch<LocaleProvider>().s;
     final screenH = MediaQuery.of(context).size.height;
     return Container(
       constraints: BoxConstraints(maxHeight: screenH * 0.75),
@@ -808,11 +816,8 @@ class _GenerateReportSheetState extends State<_GenerateReportSheet> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
-        // Handle
         Container(margin: const EdgeInsets.only(top: 12), width: 40, height: 4,
           decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
-
-        // Title
         Padding(padding: const EdgeInsets.fromLTRB(20, 20, 20, 4), child:
           Row(children: [
             Container(padding: const EdgeInsets.all(8),
@@ -820,8 +825,8 @@ class _GenerateReportSheetState extends State<_GenerateReportSheet> {
               child: const Icon(Icons.add_chart_rounded, color: _navy, size: 20)),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Generate IFTA Report', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: _navy)),
-              Text('Select quarter from completed trips', style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+              Text(s.generateIftaReport, style: context.af(fontSize: 16, fontWeight: FontWeight.w800, color: _navy)),
+              Text(s.selectQuarterFromTrips, style: context.af(fontSize: 12, color: _grey)),
             ])),
             IconButton(icon: const Icon(Icons.close_rounded, color: _grey), onPressed: () => Navigator.pop(context)),
           ]),
@@ -835,9 +840,9 @@ class _GenerateReportSheetState extends State<_GenerateReportSheet> {
           Padding(padding: const EdgeInsets.all(32), child: Column(children: [
             Icon(Icons.route_outlined, size: 48, color: Colors.grey.shade300),
             const SizedBox(height: 12),
-            Text('No completed trips found', style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: _navy)),
+            Text(s.noCompletedTrips, style: context.af(fontWeight: FontWeight.w700, color: _navy)),
             const SizedBox(height: 4),
-            Text('Complete trips first to generate IFTA reports.', textAlign: TextAlign.center, style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+            Text(s.completeTripsFirst, textAlign: TextAlign.center, style: context.af(fontSize: 12, color: _grey)),
           ]))
         else ...[
           // Quarter picker list
@@ -868,11 +873,11 @@ class _GenerateReportSheetState extends State<_GenerateReportSheet> {
                       decoration: BoxDecoration(
                         color: isSelected ? Colors.white.withOpacity(0.12) : _blue.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(10)),
-                      child: Center(child: Text('Q$qNum', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w800, color: isSelected ? Colors.white : _blue)))),
+                      child: Center(child: Text('Q$qNum', style: context.af(fontSize: 13, fontWeight: FontWeight.w800, color: isSelected ? Colors.white : _blue)))),
                     const SizedBox(width: 14),
                     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: isSelected ? Colors.white : _navy)),
-                      Text('$year', style: GoogleFonts.inter(fontSize: 12, color: isSelected ? Colors.white60 : _grey)),
+                      Text(label, style: context.af(fontSize: 14, fontWeight: FontWeight.w700, color: isSelected ? Colors.white : _navy)),
+                      Text('$year', style: context.af(fontSize: 12, color: isSelected ? Colors.white60 : _grey)),
                     ])),
                     if (isSelected) const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
                   ]),
@@ -889,7 +894,7 @@ class _GenerateReportSheetState extends State<_GenerateReportSheet> {
                 child: Row(children: [
                   Icon(Icons.error_outline, size: 16, color: Colors.red.shade400),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(_error!, style: GoogleFonts.inter(fontSize: 12, color: Colors.red.shade700))),
+                  Expanded(child: Text(_error!, style: context.af(fontSize: 12, color: Colors.red.shade700))),
                 ]),
               ),
             ),
@@ -909,11 +914,11 @@ class _GenerateReportSheetState extends State<_GenerateReportSheet> {
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
               label: Text(
-                _generating ? 'Generating…'
+                _generating ? s.generating
                     : _selected != null
-                        ? 'Generate Q${_selected!['quarter']} ${_selected!['year']}'
-                        : 'Select a Quarter',
-                style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700, color: _generating || _selected == null ? _grey : Colors.white),
+                        ? '${s.generateQReport} Q${_selected!["quarter"]} ${_selected!["year"]}'
+                        : s.selectQuarter,
+                style: context.af(fontSize: 15, fontWeight: FontWeight.w700, color: _generating || _selected == null ? _grey : Colors.white),
               ),
             )),
           ),

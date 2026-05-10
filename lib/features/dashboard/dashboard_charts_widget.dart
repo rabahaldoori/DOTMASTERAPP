@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 /// Dark-themed dual area charts for the dashboard.
 /// Drop this into DashboardScreen's body: `const DashboardChartsWidget()`
@@ -66,23 +69,25 @@ class _DashboardChartsWidgetState extends State<DashboardChartsWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
+
     if (_loading) return _buildSkeleton();
     if (_error != null) return const SizedBox.shrink();
 
     return Column(
       children: [
         _ChartCard(
-          title: 'Trips Activity',
-          subtitle: 'Last 30 Days',
+          title: s.tripsActivity,
+          subtitle: s.lastThirtyDays,
           accentColor: const Color(0xFF60A5FA),
           secondColor: const Color(0xFF34D399),
           glowColor:   const Color(0xFF3B82F6),
-          legend1: 'Trips',
-          legend2: 'Miles',
-          stat1Label: 'Total Trips',
+          legend1: s.trips,
+          legend2: s.miles,
+          stat1Label: s.totalTrips,
           stat1Value: _totalTrips.toString(),
           stat1Color: const Color(0xFF60A5FA),
-          stat2Label: 'Total Miles',
+          stat2Label: s.totalMiles,
           stat2Value: '${_commas(_totalMiles.round())} mi',
           stat2Color: const Color(0xFF34D399),
           spots1: _normalize(_toSpots(_dailyTrips, 'count')),
@@ -91,17 +96,17 @@ class _DashboardChartsWidgetState extends State<DashboardChartsWidget> {
         ),
         const SizedBox(height: 16),
         _ChartCard(
-          title: 'Fuel Expenses',
-          subtitle: 'Last 30 Days',
+          title: s.fuelExpenses,
+          subtitle: s.lastThirtyDays,
           accentColor: const Color(0xFFFBBF24),
           secondColor: const Color(0xFFF87171),
           glowColor:   const Color(0xFFF59E0B),
-          legend1: 'Cost (\$)',
-          legend2: 'Gallons',
-          stat1Label: 'Total Spent',
+          legend1: s.cost,
+          legend2: s.gallons,
+          stat1Label: s.totalSpent,
           stat1Value: '\$${_totalCost.toStringAsFixed(2)}',
           stat1Color: const Color(0xFFFBBF24),
-          stat2Label: 'Gallons',
+          stat2Label: s.gallons,
           stat2Value: '${_commas(_totalGallons.round())} gal',
           stat2Color: const Color(0xFFF87171),
           spots1: _normalize(_toSpots(_dailyFuel, 'cost')),
@@ -250,11 +255,11 @@ class _ChartCardState extends State<_ChartCard>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(widget.title, style: const TextStyle(
+                      Text(widget.title, style: context.af(
                         color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12,
                       )),
                       const SizedBox(height: 1),
-                      Text(widget.subtitle, style: TextStyle(
+                      Text(widget.subtitle, style: context.af(
                         color: Colors.white.withOpacity(0.4), fontSize: 10,
                       )),
                     ]),
@@ -388,7 +393,7 @@ class _Legend extends StatelessWidget {
       color: color, borderRadius: BorderRadius.circular(2),
     )),
     const SizedBox(width: 5),
-    Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
+    Text(label, style: context.af(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
   ]);
 }
 
@@ -399,9 +404,9 @@ class _Stat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(children: [
-    Text(value, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w700)),
+    Text(value, style: context.af(color: color, fontSize: 14, fontWeight: FontWeight.w700)),
     const SizedBox(height: 2),
-    Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 9)),
+    Text(label, style: context.af(color: Colors.white.withOpacity(0.4), fontSize: 9)),
   ]);
 }
 

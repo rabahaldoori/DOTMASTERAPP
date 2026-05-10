@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
-// ── Design tokens (matches driver design) ─────────────────────────────────────
+// ── Design tokens ──────────────────────────────────────────────────────────────
 const _navy    = Color(0xFF031634);
 const _navy2   = Color(0xFF0D2952);
 const _blue    = Color(0xFF0453CD);
@@ -66,6 +68,8 @@ class _FuelLogsScreenState extends State<FuelLogsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
+
     return Scaffold(
       backgroundColor: _surface,
       body: RefreshIndicator(
@@ -91,11 +95,11 @@ class _FuelLogsScreenState extends State<FuelLogsScreen> {
                     color: Colors.white, size: 14),
               ),
               const SizedBox(width: 8),
-              Text('Fuel Logs', style: GoogleFonts.inter(
+              Text(s.fuelLogs, style: context.af(
                   fontSize: 15, fontWeight: FontWeight.w700,
                   color: Colors.white)),
               const Spacer(),
-              Text('${_logs.length} logs', style: GoogleFonts.inter(
+              Text('${_logs.length} ${s.logs}', style: context.af(
                   fontSize: 11, color: Colors.white54)),
               const SizedBox(width: 8),
               GestureDetector(
@@ -138,26 +142,26 @@ class _FuelLogsScreenState extends State<FuelLogsScreen> {
                         children: [
                           Row(children: [
                             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text('TOTAL SPENT', style: GoogleFonts.inter(
+                              Text(s.totalSpent.toUpperCase(), style: context.af(
                                   fontSize: 9, letterSpacing: 1.1,
                                   color: Colors.white54)),
                               const SizedBox(height: 2),
                               Text('\$${_totalCost.toStringAsFixed(2)}',
-                                  style: GoogleFonts.inter(fontSize: 22,
+                                  style: context.af(fontSize: 22,
                                       fontWeight: FontWeight.w800,
                                       color: Colors.white, height: 1)),
                             ]),
                             const Spacer(),
                             Row(children: [
-                              _MiniPill(label: 'Gallons',
+                              _MiniPill(label: s.gallons,
                                   value: _totalGallons.toStringAsFixed(1),
                                   icon: Icons.water_drop_outlined),
                               const SizedBox(width: 6),
-                              _MiniPill(label: 'Stops',
+                              _MiniPill(label: s.stops,
                                   value: '${_logs.length}',
                                   icon: Icons.pin_drop_outlined),
                               const SizedBox(width: 6),
-                              _MiniPill(label: 'Pending',
+                              _MiniPill(label: s.pending,
                                   value: '$_pending',
                                   icon: Icons.receipt_long_outlined),
                             ]),
@@ -180,15 +184,15 @@ class _FuelLogsScreenState extends State<FuelLogsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
               child: Row(children: [
                 Expanded(child: _StatCard(icon: Icons.attach_money_rounded,
-                    color: _green, label: 'Total Spend',
+                    color: _green, label: s.totalSpent,
                     value: '\$${_totalCost.toStringAsFixed(2)}')),
                 const SizedBox(width: 10),
                 Expanded(child: _StatCard(icon: Icons.water_drop_outlined,
-                    color: _blue, label: 'Gallons',
+                    color: _blue, label: s.gallons,
                     value: _totalGallons.toStringAsFixed(1))),
                 const SizedBox(width: 10),
                 Expanded(child: _StatCard(icon: Icons.pending_actions_outlined,
-                    color: const Color(0xFF7C3AED), label: 'Pending',
+                    color: const Color(0xFF7C3AED), label: s.pending,
                     value: '$_pending')),
               ]),
             )),
@@ -207,10 +211,10 @@ class _FuelLogsScreenState extends State<FuelLogsScreen> {
                     child: TextField(
                       controller: _searchCtrl,
                       onSubmitted: (_) => _load(),
-                      style: GoogleFonts.inter(fontSize: 13, color: _navy),
+                      style: context.af(fontSize: 13, color: _navy),
                       decoration: InputDecoration(
-                        hintText: 'Search by Truck ID…',
-                        hintStyle: GoogleFonts.inter(
+                        hintText: s.searchByTruckId,
+                        hintStyle: context.af(
                             fontSize: 13, color: _grey.withOpacity(0.6)),
                         prefixIcon: const Icon(Icons.search,
                             size: 18, color: _grey),
@@ -236,7 +240,7 @@ class _FuelLogsScreenState extends State<FuelLogsScreen> {
             if (_logs.isNotEmpty)
               SliverToBoxAdapter(child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                child: Text('RECENT PURCHASES', style: GoogleFonts.inter(
+                child: Text(s.recentPurchases, style: context.af(
                     fontSize: 11, fontWeight: FontWeight.w700,
                     color: _grey, letterSpacing: 0.8)),
               )),
@@ -263,8 +267,7 @@ class _FuelLogsScreenState extends State<FuelLogsScreen> {
 class _MiniPill extends StatelessWidget {
   final String label, value;
   final IconData icon;
-  const _MiniPill(
-      {required this.label, required this.value, required this.icon});
+  const _MiniPill({required this.label, required this.value, required this.icon});
   @override
   Widget build(BuildContext context) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
@@ -276,9 +279,9 @@ class _MiniPill extends StatelessWidget {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 11, color: Colors.white60),
           const SizedBox(height: 2),
-          Text(value, style: GoogleFonts.inter(
+          Text(value, style: context.af(
               fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white)),
-          Text(label, style: GoogleFonts.inter(fontSize: 8, color: Colors.white54)),
+          Text(label, style: context.af(fontSize: 8, color: Colors.white54)),
         ]),
       );
 }
@@ -288,8 +291,7 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String label, value;
-  const _StatCard(
-      {required this.icon, required this.color,
+  const _StatCard({required this.icon, required this.color,
        required this.label, required this.value});
   @override
   Widget build(BuildContext context) => Container(
@@ -303,9 +305,9 @@ class _StatCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(9)),
             child: Icon(icon, size: 17, color: color)),
           const SizedBox(height: 8),
-          Text(value, style: GoogleFonts.inter(
+          Text(value, style: context.af(
               fontSize: 14, fontWeight: FontWeight.w700, color: _navy)),
-          Text(label, style: GoogleFonts.inter(fontSize: 10, color: _grey)),
+          Text(label, style: context.af(fontSize: 10, color: _grey)),
         ]),
       );
 }
@@ -317,11 +319,12 @@ class _FuelCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s        = context.watch<LocaleProvider>().s;
     final cost     = _n(fuel['total_cost']);
     final gallons  = _n(fuel['gallons']);
     final ppg      = _n(fuel['price_per_gallon']);
     final station  = fuel['station_name'] as String? ??
-                     fuel['vendor_name'] as String? ?? 'Fuel Stop';
+                     fuel['vendor_name'] as String? ?? s.fuelStop;
     final city     = fuel['vendor_city'] as String? ?? '';
     final jur      = fuel['state'] as String? ??
                      fuel['jurisdiction'] as String? ?? '—';
@@ -357,10 +360,10 @@ class _FuelCard extends StatelessWidget {
                   color: _green, size: 22)),
             const SizedBox(width: 14),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Truck #$truckId', style: GoogleFonts.inter(
+              Text('Truck #$truckId', style: context.af(
                   fontSize: 14, fontWeight: FontWeight.w700, color: _navy)),
               Text(city.isNotEmpty ? '$station • $jur' : '$station, $jur',
-                  style: GoogleFonts.inter(fontSize: 12, color: _grey)),
+                  style: context.af(fontSize: 12, color: _grey)),
               const SizedBox(height: 6),
               Row(children: [
                 _Chip('${gallons.toStringAsFixed(2)} gal',
@@ -374,9 +377,9 @@ class _FuelCard extends StatelessWidget {
               ]),
             ])),
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('\$${cost.toStringAsFixed(2)}', style: GoogleFonts.inter(
+              Text('\$${cost.toStringAsFixed(2)}', style: context.af(
                   fontSize: 17, fontWeight: FontWeight.w800, color: _green)),
-              Text(date, style: GoogleFonts.inter(fontSize: 11, color: _grey)),
+              Text(date, style: context.af(fontSize: 11, color: _grey)),
             ]),
           ]),
           const SizedBox(height: 10),
@@ -389,8 +392,8 @@ class _FuelCard extends StatelessWidget {
                 size: 15,
                 color: hasReceipt ? _green : _grey),
             const SizedBox(width: 6),
-            Text(hasReceipt ? 'Receipt attached' : 'Pending receipt',
-                style: GoogleFonts.inter(fontSize: 12,
+            Text(hasReceipt ? s.receiptAttached : s.pendingReceipt,
+                style: context.af(fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: hasReceipt ? _green : _grey)),
             const Spacer(),
@@ -403,8 +406,8 @@ class _FuelCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                  hasReceipt ? 'COMPLIANT' : 'PENDING',
-                  style: GoogleFonts.inter(fontSize: 9,
+                  hasReceipt ? s.compliant : s.pending.toUpperCase(),
+                  style: context.af(fontSize: 9,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.3,
                       color: hasReceipt ? _green : Colors.red.shade600)),
@@ -412,44 +415,47 @@ class _FuelCard extends StatelessWidget {
           ]),
         ]),
       ),      // Padding
-    ),       // Container
-    );       // GestureDetector
+      ),       // Container
+    );         // GestureDetector
   }
 }
 
 Widget _Chip(String l, Color bg, Color text) => Container(
   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
   decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(6)),
-  child: Text(l, style: GoogleFonts.inter(
-      fontSize: 10, fontWeight: FontWeight.w600, color: text)));
+  child: Text(l, style: TextStyle(
+      fontFamily: 'monospace', fontSize: 10, fontWeight: FontWeight.w600, color: text)));
 
 // ── Empty state ────────────────────────────────────────────────────────────────
 class _EmptyState extends StatelessWidget {
   final VoidCallback onAdd;
   const _EmptyState({required this.onAdd});
   @override
-  Widget build(BuildContext context) => Center(child: Column(
-    mainAxisAlignment: MainAxisAlignment.center, children: [
-    Container(width: 72, height: 72,
-        decoration: BoxDecoration(color: _border,
-            borderRadius: BorderRadius.circular(20)),
-        child: Icon(Icons.local_gas_station_outlined,
-            size: 34, color: Colors.grey.shade400)),
-    const SizedBox(height: 14),
-    Text('No fuel logs yet', style: GoogleFonts.inter(
-        fontSize: 15, fontWeight: FontWeight.w600, color: _grey)),
-    const SizedBox(height: 4),
-    Text('Tap below to add your first entry',
-        style: GoogleFonts.inter(fontSize: 12, color: Colors.grey.shade400)),
-    const SizedBox(height: 20),
-    ElevatedButton.icon(
-      onPressed: onAdd,
-      style: ElevatedButton.styleFrom(backgroundColor: _navy,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
-      icon: const Icon(Icons.add, color: Colors.white, size: 18),
-      label: Text('Add Fuel Log', style: GoogleFonts.inter(
-          fontWeight: FontWeight.w700, color: Colors.white)),
-    ),
-  ]));
+  Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
+    return Center(child: Column(
+      mainAxisAlignment: MainAxisAlignment.center, children: [
+      Container(width: 72, height: 72,
+          decoration: BoxDecoration(color: _border,
+              borderRadius: BorderRadius.circular(20)),
+          child: Icon(Icons.local_gas_station_outlined,
+              size: 34, color: Colors.grey.shade400)),
+      const SizedBox(height: 14),
+      Text(s.noFuelLogsYet, style: context.af(
+          fontSize: 15, fontWeight: FontWeight.w600, color: _grey)),
+      const SizedBox(height: 4),
+      Text(s.tapToAddFirst,
+          style: context.af(fontSize: 12, color: Colors.grey.shade400)),
+      const SizedBox(height: 20),
+      ElevatedButton.icon(
+        onPressed: onAdd,
+        style: ElevatedButton.styleFrom(backgroundColor: _navy,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12)),
+        icon: const Icon(Icons.add, color: Colors.white, size: 18),
+        label: Text(s.addFuelLog, style: context.af(
+            fontWeight: FontWeight.w700, color: Colors.white)),
+      ),
+    ]));
+  }
 }

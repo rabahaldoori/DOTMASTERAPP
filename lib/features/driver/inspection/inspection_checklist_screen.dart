@@ -5,8 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../core/api_client.dart';
+import '../../../core/l10n/locale_provider.dart';
 import 'inspection_session.dart';
+import '../../../core/font_ext.dart';
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const _navy    = Color(0xFF031634);
@@ -16,6 +19,8 @@ const _surface = Color(0xFFF0F4FA);
 const _white   = Colors.white;
 const _grey    = Color(0xFF75777E);
 const _border  = Color(0xFFDCE2F3);
+
+bool _isAr(BuildContext ctx) => ctx.read<LocaleProvider>().locale.languageCode == 'ar';
 
 class InspectionChecklistScreen extends StatefulWidget {
   const InspectionChecklistScreen({super.key});
@@ -328,7 +333,7 @@ class _State extends State<InspectionChecklistScreen> {
                         color: Colors.white.withValues(alpha: 0.10),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.2))),
-                      child: Text('#$inspNum', style: GoogleFonts.inter(
+                      child: Text('#$inspNum', style: AppFont.s(_isAr(context),
                           fontSize: 12, fontWeight: FontWeight.w600, color: _white))),
                   ]),
                   const SizedBox(height: 20),
@@ -343,7 +348,7 @@ class _State extends State<InspectionChecklistScreen> {
                         decoration: const BoxDecoration(
                             color: _cyan, shape: BoxShape.circle)),
                       const SizedBox(width: 6),
-                      Text(typeLabel, style: GoogleFonts.inter(
+                      Text(typeLabel, style: AppFont.s(_isAr(context),
                           fontSize: 10, fontWeight: FontWeight.w800,
                           color: _cyan, letterSpacing: 0.8)),
                     ]),
@@ -369,14 +374,21 @@ class _State extends State<InspectionChecklistScreen> {
                     const SizedBox(width: 16),
                     Expanded(child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(allPassed ? 'All Clear!' : '$failed Issue${failed > 1 ? 's' : ''} Found',
-                          style: GoogleFonts.inter(fontSize: 24,
-                              fontWeight: FontWeight.w900, color: _white,
-                              letterSpacing: -0.5)),
+                      Consumer<LocaleProvider>(builder: (_, lp, __) {
+                        final txt = allPassed
+                            ? lp.strings.allClear
+                            : failed == 1 ? lp.strings.issueFoundSingle
+                            : '$failed ${lp.strings.issueFoundPlural}';
+                        return Text(txt,
+                            style: AppFont.s(_isAr(context),fontSize: 24,
+                                fontWeight: FontWeight.w900, color: _white,
+                                letterSpacing: -0.5));
+                      }),
                       const SizedBox(height: 4),
-                      Text(dateStr.isEmpty ? 'Today' : '$dateStr  ·  $timeStr',
-                          style: GoogleFonts.inter(fontSize: 12,
-                              color: Colors.white60, fontWeight: FontWeight.w500)),
+                      Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                        Text(dateStr.isEmpty ? lp.strings.today : '$dateStr  ·  $timeStr',
+                            style: AppFont.s(_isAr(context),fontSize: 12,
+                                color: Colors.white60, fontWeight: FontWeight.w500))),
                     ])),
                   ]),
                 ]),
@@ -388,16 +400,16 @@ class _State extends State<InspectionChecklistScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 40),
             child: Column(children: [
-              Row(children: [
-                _CompletedStat('$passed', 'Passed',
+              Consumer<LocaleProvider>(builder: (_, lp, __) => Row(children: [
+                _CompletedStat('$passed', lp.strings.passed,
                     Icons.check_circle_rounded, const Color(0xFF15803D)),
                 const SizedBox(width: 10),
-                _CompletedStat('$failed', 'Failed',
+                _CompletedStat('$failed', lp.strings.failed,
                     Icons.cancel_rounded, const Color(0xFFB91C1C)),
                 const SizedBox(width: 10),
-                _CompletedStat('$total', 'Total',
+                _CompletedStat('$total', lp.strings.total,
                     Icons.checklist_rounded, _navy),
-              ]),
+              ])),
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(18),
@@ -409,10 +421,11 @@ class _State extends State<InspectionChecklistScreen> {
                     blurRadius: 8, offset: const Offset(0, 2))]),
                 child: Column(children: [
                   Row(children: [
-                    Text('Compliance Score', style: GoogleFonts.inter(
-                        fontSize: 13, fontWeight: FontWeight.w700, color: _navy)),
+                    Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                      Text(lp.strings.complianceScore, style: AppFont.s(_isAr(context),
+                          fontSize: 13, fontWeight: FontWeight.w700, color: _navy))),
                     const Spacer(),
-                    Text('$score%', style: GoogleFonts.inter(
+                    Text('$score%', style: AppFont.s(_isAr(context),
                         fontSize: 22, fontWeight: FontWeight.w800,
                         color: allPassed ? const Color(0xFF15803D) : _blue)),
                   ]),
@@ -429,10 +442,11 @@ class _State extends State<InspectionChecklistScreen> {
                       const Icon(Icons.verified_user_rounded,
                           size: 15, color: Color(0xFF15803D)),
                       const SizedBox(width: 6),
-                      Text('Vehicle passed all safety checks',
-                          style: GoogleFonts.inter(fontSize: 12,
-                              color: const Color(0xFF15803D),
-                              fontWeight: FontWeight.w600)),
+                      Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                        Text(lp.strings.vehiclePassedSafety,
+                            style: AppFont.s(_isAr(context),fontSize: 12,
+                                color: const Color(0xFF15803D),
+                                fontWeight: FontWeight.w600))),
                     ])],
                 ]),
               ),
@@ -452,17 +466,18 @@ class _State extends State<InspectionChecklistScreen> {
                       child: const Icon(Icons.warning_amber_rounded,
                           color: _white, size: 18)),
                     const SizedBox(width: 12),
-                    Expanded(child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text('$failed Item${failed > 1 ? 's' : ''} Need Attention',
-                          style: GoogleFonts.inter(fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF991B1B))),
-                      const SizedBox(height: 2),
-                      Text('Review failed items and schedule maintenance.',
-                          style: GoogleFonts.inter(fontSize: 12,
-                              color: const Color(0xFFB91C1C))),
-                    ])),
+                    Expanded(child: Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(failed == 1 ? lp.strings.itemNeedAttentionSingle
+                            : '$failed ${lp.strings.itemNeedAttentionPlural}',
+                            style: AppFont.s(_isAr(context),fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF991B1B))),
+                        const SizedBox(height: 2),
+                        Text(lp.strings.reviewScheduleMaint,
+                            style: AppFont.s(_isAr(context),fontSize: 12,
+                                color: const Color(0xFFB91C1C))),
+                      ]))),
                   ]),
                 )],
               const SizedBox(height: 24),
@@ -486,8 +501,9 @@ class _State extends State<InspectionChecklistScreen> {
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     const Icon(Icons.edit_rounded, color: _white, size: 20),
                     const SizedBox(width: 10),
-                    Text('Edit This Inspection', style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w800, color: _white)),
+                    Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                      Text(lp.strings.editThisInspection, style: AppFont.s(_isAr(context),
+                          fontSize: 15, fontWeight: FontWeight.w800, color: _white))),
                   ])),
               ),
               const SizedBox(height: 12),
@@ -502,8 +518,9 @@ class _State extends State<InspectionChecklistScreen> {
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Icons.history_rounded, color: _navy, size: 18),
                     const SizedBox(width: 8),
-                    Text('View History', style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w600, color: _navy)),
+                    Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                      Text(lp.strings.viewHistory, style: AppFont.s(_isAr(context),
+                          fontSize: 15, fontWeight: FontWeight.w600, color: _navy))),
                   ])),
               ),
               const SizedBox(height: 12),
@@ -518,8 +535,9 @@ class _State extends State<InspectionChecklistScreen> {
                   child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Icons.arrow_back_rounded, color: _grey, size: 18),
                     const SizedBox(width: 8),
-                    Text('Go Back', style: GoogleFonts.inter(
-                        fontSize: 15, fontWeight: FontWeight.w600, color: _grey)),
+                    Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                      Text(lp.strings.goBack, style: AppFont.s(_isAr(context),
+                          fontSize: 15, fontWeight: FontWeight.w600, color: _grey))),
                   ])),
               ),
 
@@ -548,10 +566,10 @@ class _State extends State<InspectionChecklistScreen> {
                 borderRadius: BorderRadius.circular(11)),
               child: Icon(icon, color: color, size: 20)),
             const SizedBox(height: 8),
-            Text(value, style: GoogleFonts.inter(
+            Text(value, style: AppFont.s(_isAr(context),
                 fontSize: 22, fontWeight: FontWeight.w800, color: color)),
             const SizedBox(height: 2),
-            Text(label, style: GoogleFonts.inter(
+            Text(label, style: AppFont.s(_isAr(context),
                 fontSize: 11, color: _grey, fontWeight: FontWeight.w500)),
           ]),
         ),
@@ -620,30 +638,39 @@ class _State extends State<InspectionChecklistScreen> {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Row(children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _cyan.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _cyan.withOpacity(0.35)),
+                  Builder(builder: (ctx) {
+                    final s = ctx.read<LocaleProvider>().strings;
+                    final session = InspectionSession.instance;
+                    final typeLabel = session.inspectionType.isEmpty
+                        ? s.preTrip2
+                        : session.inspectionType.replaceAll('_', ' ');
+                    return Row(children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _cyan.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: _cyan.withOpacity(0.35)),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Container(width: 6, height: 6,
+                            decoration: const BoxDecoration(
+                              color: _cyan, shape: BoxShape.circle)),
+                          const SizedBox(width: 5),
+                          Text(typeLabel, style: AppFont.s(_isAr(context),
+                              fontSize: 10, fontWeight: FontWeight.w700,
+                              color: _cyan, letterSpacing: 0.5)),
+                        ]),
                       ),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Container(width: 6, height: 6,
-                          decoration: const BoxDecoration(
-                            color: _cyan, shape: BoxShape.circle)),
-                        const SizedBox(width: 5),
-                        Text('Pre-Trip', style: GoogleFonts.inter(
-                            fontSize: 10, fontWeight: FontWeight.w700,
-                            color: _cyan, letterSpacing: 0.5)),
-                      ]),
-                    ),
-                  ]),
+                    ]);
+                  }),
                   const SizedBox(height: 6),
-                  Text('Inspection Checklist',
-                    style: GoogleFonts.inter(fontSize: 22,
-                        fontWeight: FontWeight.w900, color: _white,
-                        letterSpacing: -0.3)),
+                  Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                    Text(lp.strings.inspectionChecklist,
+                      style: AppFont.s(_isAr(context),fontSize: 22,
+                          fontWeight: FontWeight.w900, color: _white,
+                          letterSpacing: -0.3)),
+                  ),
                 ]),
             ),
           ),
@@ -668,15 +695,18 @@ class _State extends State<InspectionChecklistScreen> {
             decoration: BoxDecoration(color: const Color(0xFFDCE2F3),
                 borderRadius: BorderRadius.circular(2))),
           const SizedBox(height: 16),
-          Text('Attach Photo', style: GoogleFonts.inter(
-              fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF031634))),
+          Consumer<LocaleProvider>(builder: (_, lp, __) =>
+            Text(lp.strings.attachPhoto, style: AppFont.s(_isAr(context),
+                fontSize: 16, fontWeight: FontWeight.w700, color: const Color(0xFF031634)))),
           const SizedBox(height: 20),
-          _photoSourceTile(Icons.camera_alt_rounded, 'Take a Photo', ImageSource.camera),
-          const SizedBox(height: 10),
-          _photoSourceTile(Icons.photo_library_rounded, 'Choose from Gallery', ImageSource.gallery),
-          const SizedBox(height: 10),
-          if (item.photoPath != null)
-            GestureDetector(
+          Consumer<LocaleProvider>(builder: (_, lp, __) => Column(children: [
+            _photoSourceTile(Icons.camera_alt_rounded, lp.strings.takeAPhoto, ImageSource.camera),
+            const SizedBox(height: 10),
+            _photoSourceTile(Icons.photo_library_rounded, lp.strings.chooseFromGallery, ImageSource.gallery),
+          ])),
+          Consumer<LocaleProvider>(builder: (_, lp, __) {
+            if (item.photoPath == null) return const SizedBox.shrink();
+            return GestureDetector(
               onTap: () { Navigator.pop(context, null); setState(() => item.photoPath = null); },
               child: Container(
                 width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 14),
@@ -687,11 +717,12 @@ class _State extends State<InspectionChecklistScreen> {
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   Icon(Icons.delete_outline, size: 20, color: Colors.red.shade700),
                   const SizedBox(width: 8),
-                  Text('Remove Photo', style: GoogleFonts.inter(
+                  Text(lp.strings.removePhoto, style: AppFont.s(_isAr(context),
                       fontSize: 14, fontWeight: FontWeight.w600, color: Colors.red.shade700)),
                 ]),
               ),
-            ),
+            );
+          }),
         ]),
       ),
     );
@@ -711,7 +742,7 @@ class _State extends State<InspectionChecklistScreen> {
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(icon, size: 20, color: const Color(0xFF0453CD)),
             const SizedBox(width: 10),
-            Text(label, style: GoogleFonts.inter(
+            Text(label, style: AppFont.s(_isAr(context),
                 fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF031634))),
           ]),
         ),
@@ -757,24 +788,26 @@ class _State extends State<InspectionChecklistScreen> {
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Inspection Progress',
-              style: GoogleFonts.inter(fontSize: 11, color: Colors.white60,
-                  fontWeight: FontWeight.w500, letterSpacing: 0.4)),
+          Consumer<LocaleProvider>(builder: (_, lp, __) =>
+            Text(lp.strings.inspectionProgress,
+                style: AppFont.s(_isAr(context),fontSize: 11, color: Colors.white60,
+                    fontWeight: FontWeight.w500, letterSpacing: 0.4))),
           const SizedBox(height: 4),
           Text('${(_progress * 100).round()}% Complete',
-              style: GoogleFonts.inter(fontSize: 22,
+              style: AppFont.s(_isAr(context),fontSize: 22,
                   fontWeight: FontWeight.w800, color: _white)),
         ])),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text('$_checkedItems / $_totalItems tasks',
-              style: GoogleFonts.inter(fontSize: 12,
-                  fontWeight: FontWeight.w700, color: _white)),
-        ),
+        Consumer<LocaleProvider>(builder: (_, lp, __) =>
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text('$_checkedItems / $_totalItems ${lp.strings.tasks}',
+                style: AppFont.s(_isAr(context),fontSize: 12,
+                    fontWeight: FontWeight.w700, color: _white)),
+          )),
       ]),
       const SizedBox(height: 14),
       ClipRRect(
@@ -814,12 +847,13 @@ class _State extends State<InspectionChecklistScreen> {
         const SizedBox(width: 14),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text('Assigned Vehicle',
-              style: GoogleFonts.inter(fontSize: 11,
-                  color: _grey, fontWeight: FontWeight.w500)),
+          Consumer<LocaleProvider>(builder: (_, lp, __) =>
+            Text(lp.strings.assignedVehicle,
+                style: AppFont.s(_isAr(context),fontSize: 11,
+                    color: _grey, fontWeight: FontWeight.w500))),
           const SizedBox(height: 3),
           Text(_truckUnit,
-              style: GoogleFonts.inter(fontSize: 15,
+              style: AppFont.s(_isAr(context),fontSize: 15,
                   fontWeight: FontWeight.w700, color: _navy)),
         ])),
         Container(
@@ -833,9 +867,10 @@ class _State extends State<InspectionChecklistScreen> {
               decoration: const BoxDecoration(
                 color: Color(0xFF22C55E), shape: BoxShape.circle)),
             const SizedBox(width: 5),
-            Text('Active', style: GoogleFonts.inter(
-                fontSize: 11, fontWeight: FontWeight.w700,
-                color: Color(0xFF15803D))),
+            Consumer<LocaleProvider>(builder: (_, lp, __) =>
+              Text(lp.strings.active, style: AppFont.s(_isAr(context),
+                  fontSize: 11, fontWeight: FontWeight.w700,
+                  color: Color(0xFF15803D)))),
           ]),
         ),
       ]),
@@ -875,10 +910,11 @@ class _State extends State<InspectionChecklistScreen> {
 
       // Status label
       final allDone = done == cat.items.length;
+      final s = context.read<LocaleProvider>().strings;
       final statusLabel = allDone
-          ? '✓ Completed'
-          : isOpen ? 'In Progress'
-          : 'Not started';
+          ? s.completedStatus
+          : isOpen ? s.inProgressStatus
+          : s.notStarted;
       final statusColor = allDone
           ? const Color(0xFF15803D)
           : isOpen ? _blue : _grey;
@@ -925,11 +961,11 @@ class _State extends State<InspectionChecklistScreen> {
                   const SizedBox(width: 12),
                   Expanded(child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(cat.name, style: GoogleFonts.inter(
+                    Text(cat.name, style: AppFont.s(_isAr(context),
                         fontSize: 15, fontWeight: FontWeight.w700,
                         color: isOpen ? _blue : _navy)),
                     const SizedBox(height: 2),
-                    Text(statusLabel, style: GoogleFonts.inter(
+                    Text(statusLabel, style: AppFont.s(_isAr(context),
                         fontSize: 12, fontWeight: FontWeight.w500,
                         color: statusColor)),
                   ])),
@@ -942,16 +978,17 @@ class _State extends State<InspectionChecklistScreen> {
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.red.shade200),
                       ),
-                      child: Text('Issue', style: GoogleFonts.inter(
-                          fontSize: 10, fontWeight: FontWeight.w700,
-                          color: Colors.red.shade700)),
+                      child: Consumer<LocaleProvider>(builder: (_, lp, __) =>
+                        Text(lp.strings.issue, style: AppFont.s(_isAr(context),
+                            fontSize: 10, fontWeight: FontWeight.w700,
+                            color: Colors.red.shade700))),
                     ),
                   // Progress indicator
                   if (!allDone)
                     Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: Text('$done/${cat.items.length}',
-                        style: GoogleFonts.inter(fontSize: 11,
+                        style: AppFont.s(_isAr(context),fontSize: 11,
                             fontWeight: FontWeight.w600, color: _grey)),
                     ),
                   AnimatedRotation(
@@ -978,7 +1015,7 @@ class _State extends State<InspectionChecklistScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
-          Expanded(child: Text(item.label, style: GoogleFonts.inter(
+          Expanded(child: Text(item.label, style: AppFont.s(_isAr(context),
               fontSize: 14, fontWeight: FontWeight.w500, color: _navy))),
           GestureDetector(
             onTap: () => _pickPhoto(item),
@@ -1099,18 +1136,24 @@ class _State extends State<InspectionChecklistScreen> {
             strokeWidth: 5,
           ),
           Text('${(_progress * 100).round()}%',
-              style: GoogleFonts.inter(fontSize: 11,
+              style: AppFont.s(_isAr(context),fontSize: 11,
                   fontWeight: FontWeight.w800, color: _white)),
         ]),
       ),
       const SizedBox(width: 16),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Daily Compliance',
-            style: GoogleFonts.inter(fontSize: 15,
-                fontWeight: FontWeight.w700, color: _white)),
+        Consumer<LocaleProvider>(builder: (_, lp, __) =>
+          Text(lp.strings.dailyCompliance,
+              style: AppFont.s(_isAr(context),fontSize: 15,
+                  fontWeight: FontWeight.w700, color: _white))),
         const SizedBox(height: 2),
-        Text('Safety rating: ${_progress >= 0.8 ? '🟢 High' : _progress >= 0.5 ? '🟡 Medium' : '🔴 Low'}',
-            style: GoogleFonts.inter(fontSize: 12, color: Colors.white60)),
+        Consumer<LocaleProvider>(builder: (_, lp, __) {
+          final rating = _progress >= 0.8 ? lp.strings.safetyRatingHigh
+              : _progress >= 0.5 ? lp.strings.safetyRatingMedium
+              : lp.strings.safetyRatingLow;
+          return Text('Safety rating: $rating',
+              style: AppFont.s(_isAr(context),fontSize: 12, color: Colors.white60));
+        }),
       ])),
       Container(
         padding: const EdgeInsets.all(8),
@@ -1149,9 +1192,10 @@ class _State extends State<InspectionChecklistScreen> {
     backgroundColor: _blue,
     elevation: 6,
     icon: const Icon(Icons.arrow_forward_rounded, color: _white, size: 18),
-    label: Text('Review & Submit',
-        style: GoogleFonts.inter(fontSize: 13,
-            fontWeight: FontWeight.w700, color: _white)),
+    label: Consumer<LocaleProvider>(builder: (_, lp, __) =>
+      Text(lp.strings.reviewSubmit,
+          style: AppFont.s(_isAr(context),fontSize: 13,
+              fontWeight: FontWeight.w700, color: _white))),
   );
 
   BoxDecoration _cardDeco() => BoxDecoration(
@@ -1213,7 +1257,7 @@ class _PassFailBtn extends StatelessWidget {
             Icon(icon, size: 16,
                 color: selected ? _white : (isPass ? _grey : _grey)),
             const SizedBox(width: 6),
-            Text(label, style: GoogleFonts.inter(
+            Text(label, style: AppFont.s(_isAr(context),
                 fontSize: 13, fontWeight: FontWeight.w700,
                 color: selected ? _white : _grey)),
           ]),
@@ -1242,12 +1286,12 @@ class _ResultBadge extends StatelessWidget {
           ),
           child: Center(
             child: Text('$count',
-              style: GoogleFonts.inter(fontSize: 20,
+              style: AppFont.s(_isAr(context),fontSize: 20,
                   fontWeight: FontWeight.w800, color: color)),
           ),
         ),
         const SizedBox(height: 6),
-        Text(label, style: GoogleFonts.inter(
+        Text(label, style: AppFont.s(_isAr(context),
             fontSize: 12, fontWeight: FontWeight.w500,
             color: const Color(0xFF75777E))),
       ],

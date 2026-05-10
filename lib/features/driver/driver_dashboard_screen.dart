@@ -2,9 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 import 'trip_detail_sheet.dart';
 
 class DriverDashboardScreen extends StatefulWidget {
@@ -125,7 +127,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       child: const Icon(Icons.local_shipping_rounded,
                           color: Color(0xFF0453CD), size: 20))),
                 const SizedBox(width: 8),
-                Text('DOT Master', style: GoogleFonts.inter(
+                Text('DOT Master', style: context.af(
                     fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
                 const Spacer(),
                 // Notification bell
@@ -158,7 +160,7 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       radius: 17, backgroundColor: const Color(0xFF0453CD),
                       backgroundImage: _userPhoto != null ? NetworkImage(_userPhoto!) : null,
                       child: _userPhoto == null
-                          ? Text(initials, style: GoogleFonts.inter(
+                          ? Text(initials, style: context.af(
                               color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12))
                           : null,
                     ),
@@ -218,17 +220,21 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                 Expanded(child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Good ${_greeting()}', style: GoogleFonts.inter(
-                                        fontSize: 11, fontWeight: FontWeight.w500,
-                                        color: Colors.white54, letterSpacing: 0.3)),
+                                    Builder(builder: (bCtx) {
+                                      // read (not watch) — FlexibleSpaceBar uses LayoutBuilder
+                                      // internally; calling watch here triggers a rebuild during
+                                      // layout, causing the !_debugDoingThisLayout assertion.
+                                      final s = bCtx.read<LocaleProvider>().s;
+                                      return Text('${s.goodEvening.split(' ').first} ${_greeting()}',
+                                          style: bCtx.af(fontSize: 11, fontWeight: FontWeight.w500,
+                                              color: Colors.white54, letterSpacing: 0.3));
+                                    }),
                                     const SizedBox(height: 2),
                                     Text(_userName.isNotEmpty ? _userName.toUpperCase() : 'DRIVER',
-                                        style: GoogleFonts.inter(
-                                            fontSize: 18, fontWeight: FontWeight.w800,
+                                        style: context.af(fontSize: 18, fontWeight: FontWeight.w800,
                                             color: Colors.white, letterSpacing: -0.3)),
                                     const SizedBox(height: 2),
-                                    Text(_companyName, style: GoogleFonts.inter(
-                                        fontSize: 11,
+                                    Text(_companyName, style: context.af(fontSize: 11,
                                         color: const Color(0xFF06B6D4).withOpacity(0.9),
                                         fontWeight: FontWeight.w600)),
                                   ],
@@ -240,11 +246,9 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                     color: Colors.white.withOpacity(0.10),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(color: Colors.white.withOpacity(0.15))),
-                                  child: Text(
-                                    _dateLabel(),
-                                    style: GoogleFonts.inter(
-                                        fontSize: 11, fontWeight: FontWeight.w600,
-                                        color: Colors.white)),
+                                  child: Text(_dateLabel(),
+                                    style: context.af(fontSize: 11,
+                                        fontWeight: FontWeight.w600, color: Colors.white)),
                                 ),
                               ]),
                               const SizedBox(height: 10),
@@ -256,30 +260,29 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(color: Colors.white.withOpacity(0.12)),
                                 ),
-                                child: IntrinsicHeight(
-                                  child: Row(children: [
-                                    _HeroStat(
-                                        value: '${_data?["tripCount"] ?? 0}',
-                                        label: 'Trips',
-                                        icon: Icons.route_rounded,
-                                        color: const Color(0xFF06B6D4)),
-                                    VerticalDivider(width: 1,
-                                        color: Colors.white.withOpacity(0.12)),
-                                    _HeroStat(
-                                        value: compliant ? 'OK' : '⚠',
-                                        label: 'CDL Status',
-                                        icon: Icons.verified_rounded,
-                                        color: compliant
-                                            ? const Color(0xFF22C55E)
-                                            : const Color(0xFFF97316)),
-                                    VerticalDivider(width: 1,
-                                        color: Colors.white.withOpacity(0.12)),
-                                    _HeroStat(
-                                        value: '${(_data?["totalMiles"] as double? ?? 0).toStringAsFixed(0)}',
-                                        label: 'Miles',
-                                        icon: Icons.speed_rounded,
-                                        color: const Color(0xFFF97316)),
-                                  ]),
+                                // IntrinsicHeight is banned inside FlexibleSpaceBar (unbounded height via
+                                // LayoutBuilder). Use a fixed-height SizedBox + explicit divider Container instead.
+                                child: SizedBox(
+                                  height: 70,
+                                  child: Builder(builder: (bCtx) {
+                                    final s = bCtx.read<LocaleProvider>().s;
+                                    return Row(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: [
+                                        _HeroStat(value: '${_data?["tripCount"] ?? 0}',
+                                            label: s.trips, icon: Icons.route_rounded,
+                                            color: const Color(0xFF06B6D4)),
+                                        Container(width: 1, height: 36, color: Colors.white.withOpacity(0.12)),
+                                        _HeroStat(value: compliant ? 'OK' : '⚠',
+                                            label: s.cdlStatus, icon: Icons.verified_rounded,
+                                            color: compliant ? const Color(0xFF22C55E) : const Color(0xFFF97316)),
+                                        Container(width: 1, height: 36, color: Colors.white.withOpacity(0.12)),
+                                        _HeroStat(value: '${(_data?["totalMiles"] as double? ?? 0).toStringAsFixed(0)}',
+                                            label: s.miles, icon: Icons.speed_rounded,
+                                            color: const Color(0xFFF97316)),
+                                      ],
+                                    );
+                                  }),
                                 ),
                               ),
                               const SizedBox(height: 28),
@@ -323,8 +326,8 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   const SizedBox(height: 24),
 
                   // ── Quick Actions ─────────────────────────────────────
-                  Text('QUICK ACTIONS',
-                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700,
+                  Text(context.watch<LocaleProvider>().s.quickActions,
+                      style: context.af(fontSize: 11, fontWeight: FontWeight.w700,
                           color: AppColors.onSurfaceVariant, letterSpacing: 0.8)),
 
                   const SizedBox(height: 12),
@@ -339,16 +342,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
 
                   // ── Recent Trips ──────────────────────────────────────
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text('Recent Trips',
-                        style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700,
-                            color: AppColors.onSurface)),
-                    TextButton(
-                      onPressed: () => context.go('/driver-trips'),
-                      child: Text('See All', style: GoogleFonts.inter(
-                          fontSize: 13, color: AppColors.accent, fontWeight: FontWeight.w600)),
-                    ),
-                  ]),
+                  Builder(builder: (bCtx) {
+                    final s = bCtx.watch<LocaleProvider>().s;
+                    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text(s.recentTrips, style: bCtx.af(fontSize: 17,
+                          fontWeight: FontWeight.w700, color: AppColors.onSurface)),
+                      TextButton(
+                        onPressed: () => context.go('/driver-trips'),
+                        child: Text(s.seeAll, style: bCtx.af(fontSize: 13,
+                            color: AppColors.accent, fontWeight: FontWeight.w600)),
+                      ),
+                    ]);
+                  }),
                   const SizedBox(height: 8),
                   _RecentTrips(
                     trips: ((_data?['trips'] as List?) ?? []).take(3).toList(),
@@ -357,16 +362,18 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                   const SizedBox(height: 24),
 
                   // ── Recent Fuel Logs ──────────────────────────────────
-                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                    Text('Recent Fuel Logs',
-                        style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700,
-                            color: AppColors.onSurface)),
-                    TextButton(
-                      onPressed: () => context.go('/driver-fuel'),
-                      child: Text('See All', style: GoogleFonts.inter(
-                          fontSize: 13, color: AppColors.accent, fontWeight: FontWeight.w600)),
-                    ),
-                  ]),
+                  Builder(builder: (bCtx) {
+                    final s = bCtx.watch<LocaleProvider>().s;
+                    return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                      Text(s.recentFuelLogs, style: bCtx.af(fontSize: 17,
+                          fontWeight: FontWeight.w700, color: AppColors.onSurface)),
+                      TextButton(
+                        onPressed: () => context.go('/driver-fuel'),
+                        child: Text(s.seeAll, style: bCtx.af(fontSize: 13,
+                            color: AppColors.accent, fontWeight: FontWeight.w600)),
+                      ),
+                    ]);
+                  }),
                   const SizedBox(height: 8),
                   _RecentFuel(fuel: ((_data?['fuel'] as List?) ?? []).take(2).toList()),
                   const SizedBox(height: 100),
@@ -433,10 +440,10 @@ class _HeroStat extends StatelessWidget {
         child: Icon(icon, size: 15, color: color),
       ),
       const SizedBox(height: 5),
-      Text(value, style: GoogleFonts.inter(
+      Text(value, style: context.af(
           fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
       const SizedBox(height: 1),
-      Text(label, style: GoogleFonts.inter(
+      Text(label, style: context.af(
           fontSize: 9, color: Colors.white38, letterSpacing: 0.2)),
     ]),
   );
@@ -461,7 +468,8 @@ class _ComplianceGaugeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cdlDays = data?['cdlDaysLeft'] as int? ?? 999;
     final pct     = (cdlDays >= 365) ? 0.94 : math.max(0.0, cdlDays / 365.0);
-    final label   = cdlDays > 90 ? 'Compliant' : cdlDays > 0 ? 'Expiring' : 'Expired';
+    final s       = context.read<LocaleProvider>().s;
+    final label   = cdlDays > 90 ? s.compliant : cdlDays > 0 ? s.expiring : s.expired;
     final arcColor = cdlDays > 90 ? const Color(0xFF0453CD) : Colors.orange;
 
     return Container(
@@ -475,7 +483,7 @@ class _ComplianceGaugeCard extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('Compliance', style: GoogleFonts.inter(fontSize: 14,
+          Text(s.compliance, style: context.af(fontSize: 14,
               fontWeight: FontWeight.w600, color: AppColors.onSurface)),
           const SizedBox(height: 16),
           // Custom arc — text is never inside the painter so no overlap
@@ -487,7 +495,7 @@ class _ComplianceGaugeCard extends StatelessWidget {
                 painter: _ArcPainter(pct, arcColor),
               ),
               Text('${(pct * 100).round()}%',
-                  style: GoogleFonts.inter(fontSize: 16,
+                  style: context.af(fontSize: 16,
                       fontWeight: FontWeight.w700, color: AppColors.primary)),
             ]),
           ),
@@ -499,7 +507,7 @@ class _ComplianceGaugeCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: arcColor.withOpacity(0.15)),
             ),
-            child: Text(label, style: GoogleFonts.inter(
+            child: Text(label, style: context.af(
                 fontSize: 12, fontWeight: FontWeight.w500, color: arcColor)),
           ),
         ],
@@ -530,20 +538,25 @@ class _VehicleCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Current Vehicle',
-              style: GoogleFonts.inter(fontSize: 11, color: Colors.white54,
-                  letterSpacing: 0.2)),
-          const SizedBox(height: 8),
-          Text(hasTrip ? truck : 'No Vehicle',
-              style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800,
-                  color: Colors.white, letterSpacing: -0.3)),
-          const SizedBox(height: 16),
-          Row(children: [
-            const Icon(Icons.local_shipping_outlined, size: 15, color: Colors.white54),
-            const SizedBox(width: 6),
-            Text(hasTrip ? 'Active' : 'Standby',
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.white60)),
-          ]),
+          Builder(builder: (ctx) {
+            final s = ctx.read<LocaleProvider>().s;
+            return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(s.currentVehicle,
+                  style: context.af(fontSize: 11, color: Colors.white54,
+                      letterSpacing: 0.2)),
+              const SizedBox(height: 8),
+              Text(hasTrip ? truck : s.noVehicle,
+                  style: context.af(fontSize: 22, fontWeight: FontWeight.w800,
+                      color: Colors.white, letterSpacing: -0.3)),
+              const SizedBox(height: 16),
+              Row(children: [
+                const Icon(Icons.local_shipping_outlined, size: 15, color: Colors.white54),
+                const SizedBox(width: 6),
+                Text(hasTrip ? s.active : s.standby,
+                    style: context.af(fontSize: 13, color: Colors.white60)),
+              ]),
+            ]);
+          }),
         ],
       ),
     );
@@ -563,7 +576,7 @@ class _RouteStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (activeTrip == null) return _emptyState();
+    if (activeTrip == null) return _emptyState(context);
 
     String _loc(Map trip, List<String> cityKeys, List<String> stateKeys, String? addressKey) {
       final city  = cityKeys.map((k) => trip[k] as String? ?? '').firstWhere((s) => s.isNotEmpty, orElse: () => '');
@@ -622,17 +635,23 @@ class _RouteStatusCard extends StatelessWidget {
                         decoration: const BoxDecoration(
                             color: Color(0xFF22C55E), shape: BoxShape.circle)),
                     const SizedBox(width: 5),
-                    Text('LIVE ROUTE', style: GoogleFonts.inter(
-                        fontSize: 9, fontWeight: FontWeight.w700,
-                        color: Colors.white70, letterSpacing: 0.8)),
+                    Builder(builder: (ctx) {
+                      final s = ctx.read<LocaleProvider>().s;
+                      return Text(s.liveRoute, style: context.af(
+                          fontSize: 9, fontWeight: FontWeight.w700,
+                          color: Colors.white70, letterSpacing: 0.8));
+                    }),
                   ]),
                 ),
                 const SizedBox(width: 8),
                 Row(children: [
                   const Icon(Icons.touch_app_rounded, size: 10, color: Colors.white30),
                   const SizedBox(width: 3),
-                  Text('Tap for details', style: GoogleFonts.inter(
-                      fontSize: 9, color: Colors.white30)),
+                  Builder(builder: (ctx) {
+                    final s = ctx.read<LocaleProvider>().s;
+                    return Text(s.tapForDetails, style: context.af(
+                        fontSize: 9, color: Colors.white30));
+                  }),
                 ]),
                 const Spacer(),
                 // Miles remaining pill
@@ -645,11 +664,14 @@ class _RouteStatusCard extends StatelessWidget {
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Text(remaining.toStringAsFixed(0),
-                        style: GoogleFonts.inter(fontSize: 20,
+                        style: context.af(fontSize: 20,
                             fontWeight: FontWeight.w900, color: Colors.white)),
                     const SizedBox(width: 4),
-                    Text('mi left', style: GoogleFonts.inter(fontSize: 10,
-                        fontWeight: FontWeight.w600, color: Colors.white60)),
+                    Builder(builder: (ctx) {
+                      final s = ctx.read<LocaleProvider>().s;
+                      return Text(s.miLeft, style: context.af(fontSize: 10,
+                          fontWeight: FontWeight.w600, color: Colors.white60));
+                    }),
                   ]),
                 ),
               ]),
@@ -657,16 +679,19 @@ class _RouteStatusCard extends StatelessWidget {
               // From → To
               Row(children: [
                 // Origin
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('FROM', style: GoogleFonts.inter(
-                      fontSize: 9, fontWeight: FontWeight.w700,
-                      color: Colors.white38, letterSpacing: 0.8)),
-                  const SizedBox(height: 3),
-                  Text(from.isNotEmpty ? from : '—',
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700,
-                          color: Colors.white),
-                      maxLines: 3, overflow: TextOverflow.ellipsis),
-                ])),
+                Builder(builder: (ctx) {
+                  final s = ctx.read<LocaleProvider>().s;
+                  return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(s.fromLabel, style: context.af(
+                        fontSize: 9, fontWeight: FontWeight.w700,
+                        color: Colors.white38, letterSpacing: 0.8)),
+                    const SizedBox(height: 3),
+                    Text(from.isNotEmpty ? from : '—',
+                        style: context.af(fontSize: 12, fontWeight: FontWeight.w700,
+                            color: Colors.white),
+                        maxLines: 3, overflow: TextOverflow.ellipsis),
+                  ]));
+                }),
                 // Arrow connector
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -679,17 +704,20 @@ class _RouteStatusCard extends StatelessWidget {
                   ]),
                 ),
                 // Destination
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                  Text('TO', style: GoogleFonts.inter(
-                      fontSize: 9, fontWeight: FontWeight.w700,
-                      color: Colors.white38, letterSpacing: 0.8)),
-                  const SizedBox(height: 3),
-                  Text(to.isNotEmpty ? to : '—',
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700,
-                          color: Colors.white),
-                      maxLines: 3, overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.right),
-                ])),
+                Builder(builder: (ctx) {
+                  final s = ctx.read<LocaleProvider>().s;
+                  return Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    Text(s.toLabel, style: context.af(
+                        fontSize: 9, fontWeight: FontWeight.w700,
+                        color: Colors.white38, letterSpacing: 0.8)),
+                    const SizedBox(height: 3),
+                    Text(to.isNotEmpty ? to : '—',
+                        style: context.af(fontSize: 12, fontWeight: FontWeight.w700,
+                            color: Colors.white),
+                        maxLines: 3, overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right),
+                  ]));
+                }),
               ]),
               const SizedBox(height: 20),
               // Progress bar with glow
@@ -710,30 +738,36 @@ class _RouteStatusCard extends StatelessWidget {
                 ),
               ]),
               const SizedBox(height: 8),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('$pct% completed', style: GoogleFonts.inter(
-                    fontSize: 10, color: Colors.white38)),
-                Text('${drivenMi.toStringAsFixed(0)} / ${totalMi.toStringAsFixed(0)} mi',
-                    style: GoogleFonts.inter(fontSize: 10, color: Colors.white38)),
-              ]),
+              Builder(builder: (ctx) {
+                final s = ctx.read<LocaleProvider>().s;
+                return Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                  Text('$pct% ${s.completed}', style: context.af(
+                      fontSize: 10, color: Colors.white38)),
+                  Text('${drivenMi.toStringAsFixed(0)} / ${totalMi.toStringAsFixed(0)} ${s.miles.toLowerCase()}',
+                      style: context.af(fontSize: 10, color: Colors.white38)),
+                ]);
+              }),
               // ── Break / Rest alert banners ─────────────────────────────
-              if (hosAlerts.isNotEmpty) ..._buildAlertBanners(),
+              if (hosAlerts.isNotEmpty) ..._buildAlertBanners(context),
             ]),
           ),
           // ── Light stats bottom section ─────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
             color: Colors.white,
-            child: Row(children: [
-              _StatChip(Icons.play_circle_outline_rounded, 'Started',
-                  startDate.isNotEmpty ? startDate : '—'),
-              _divider(),
-              _StatChip(Icons.flag_rounded, 'ETA',
-                  endDate.isNotEmpty ? endDate : '—'),
-              _divider(),
-              _StatChip(Icons.local_shipping_outlined, 'Miles',
-                  totalMi > 0 ? '${totalMi.toStringAsFixed(0)} mi' : '—'),
-            ]),
+            child: Builder(builder: (ctx) {
+              final s = ctx.read<LocaleProvider>().s;
+              return Row(children: [
+                _StatChip(Icons.play_circle_outline_rounded, s.started,
+                    startDate.isNotEmpty ? startDate : '—'),
+                _divider(),
+                _StatChip(Icons.flag_rounded, s.eta,
+                    endDate.isNotEmpty ? endDate : '—'),
+                _divider(),
+                _StatChip(Icons.local_shipping_outlined, s.miles,
+                    totalMi > 0 ? '${totalMi.toStringAsFixed(0)} mi' : '—'),
+              ]);
+            }),
           ),
         ]),
       ),
@@ -741,7 +775,7 @@ class _RouteStatusCard extends StatelessWidget {
   }
 
   /// Build compact alert banners shown inside the dark route card header.
-  List<Widget> _buildAlertBanners() {
+  List<Widget> _buildAlertBanners(BuildContext context) {
     // Show at most 2 most-important alerts (danger first)
     final sorted = [...hosAlerts]..sort((a, b) {
       final order = {'danger': 0, 'warning': 1};
@@ -767,9 +801,9 @@ class _RouteStatusCard extends StatelessWidget {
             Icon(icon, color: col, size: 15),
             const SizedBox(width: 7),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(rule, style: GoogleFonts.inter(
+              Text(rule, style: context.af(
                   fontSize: 10, fontWeight: FontWeight.w800, color: col)),
-              Text(msg, style: GoogleFonts.inter(
+              Text(msg, style: context.af(
                   fontSize: 9, color: col.withOpacity(0.85)), maxLines: 2,
                   overflow: TextOverflow.ellipsis),
             ])),
@@ -782,7 +816,7 @@ class _RouteStatusCard extends StatelessWidget {
   Widget _divider() => Container(width: 1, height: 32,
       color: const Color(0xFFE2E8F0), margin: const EdgeInsets.symmetric(horizontal: 8));
 
-  Widget _emptyState() => Container(
+  Widget _emptyState(BuildContext context) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       gradient: LinearGradient(
@@ -802,11 +836,16 @@ class _RouteStatusCard extends StatelessWidget {
             color: Color(0xFF0453CD), size: 22)),
       const SizedBox(width: 14),
       Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('No Active Route', style: GoogleFonts.inter(
-            fontSize: 14, fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E293B))),
-        Text('Your trip will appear here', style: GoogleFonts.inter(
-            fontSize: 12, color: Colors.grey)),
+        Builder(builder: (ctx) {
+          final s = ctx.read<LocaleProvider>().s;
+          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(s.noActiveRoute, style: context.af(
+                fontSize: 14, fontWeight: FontWeight.w700,
+                color: const Color(0xFF1E293B))),
+            Text(s.tripWillAppearHere, style: context.af(
+                fontSize: 12, color: Colors.grey)),
+          ]);
+        }),
       ]),
     ]),
   );
@@ -830,9 +869,9 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) => Expanded(child: Column(children: [
     Icon(icon, size: 16, color: const Color(0xFF0453CD)),
     const SizedBox(height: 3),
-    Text(value, style: GoogleFonts.inter(fontSize: 12,
+    Text(value, style: context.af(fontSize: 12,
         fontWeight: FontWeight.w800, color: const Color(0xFF1E293B))),
-    Text(label, style: GoogleFonts.inter(fontSize: 9, color: Colors.grey)),
+    Text(label, style: context.af(fontSize: 9, color: Colors.grey)),
   ]));
 }
 
@@ -849,41 +888,47 @@ class _QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      Row(children: [
-        Expanded(child: _ActionBtn(
-          icon: Icons.route_outlined, label: 'My Trips',
-          primary: true, onTap: onTripsTap,
-        )),
-        const SizedBox(width: 10),
-        Expanded(child: _ActionBtn(
-          icon: Icons.local_gas_station_outlined, label: 'Log Fuel',
-          primary: false, onTap: onFuelTap,
-        )),
-        const SizedBox(width: 10),
-        Expanded(child: _ActionBtn(
-          icon: Icons.person_outline_rounded, label: 'Profile',
-          primary: false, onTap: onProfileTap,
-        )),
-      ]),
+      Builder(builder: (ctx) {
+        final s = ctx.read<LocaleProvider>().s;
+        return Row(children: [
+          Expanded(child: _ActionBtn(
+            icon: Icons.route_outlined, label: s.myTrips,
+            primary: true, onTap: onTripsTap,
+          )),
+          const SizedBox(width: 10),
+          Expanded(child: _ActionBtn(
+            icon: Icons.local_gas_station_outlined, label: s.logFuel,
+            primary: false, onTap: onFuelTap,
+          )),
+          const SizedBox(width: 10),
+          Expanded(child: _ActionBtn(
+            icon: Icons.person_outline_rounded, label: s.profile,
+            primary: false, onTap: onProfileTap,
+          )),
+        ]);
+      }),
       const SizedBox(height: 10),
       // Inspection row: Start + History side by side
-      Row(children: [
-        Expanded(
-          flex: 3,
-          child: _ActionBtn(
-            icon: Icons.fact_check_outlined, label: 'Start Inspection',
-            primary: true, onTap: onInspectTap, fullWidth: true,
+      Builder(builder: (ctx) {
+        final s = ctx.read<LocaleProvider>().s;
+        return Row(children: [
+          Expanded(
+            flex: 3,
+            child: _ActionBtn(
+              icon: Icons.fact_check_outlined, label: s.startInspection,
+              primary: true, onTap: onInspectTap, fullWidth: true,
+            ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          flex: 2,
-          child: _ActionBtn(
-            icon: Icons.history_rounded, label: 'History',
-            primary: false, onTap: onHistoryTap, fullWidth: true,
+          const SizedBox(width: 10),
+          Expanded(
+            flex: 2,
+            child: _ActionBtn(
+              icon: Icons.history_rounded, label: s.history,
+              primary: false, onTap: onHistoryTap, fullWidth: true,
+            ),
           ),
-        ),
-      ]),
+        ]);
+      }),
     ]);
   }
 }
@@ -912,7 +957,7 @@ class _ActionBtn extends StatelessWidget {
       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
         Icon(icon, size: 20, color: primary ? Colors.white : AppColors.onSurface),
         const SizedBox(width: 6),
-        Text(label, style: GoogleFonts.inter(
+        Text(label, style: context.af(
             fontSize: 13, fontWeight: FontWeight.w600,
             color: primary ? Colors.white : AppColors.onSurface)),
       ]),
@@ -959,7 +1004,7 @@ class _DeadlinesList extends StatelessWidget {
         child: Row(children: [
           const Icon(Icons.check_circle_outline, color: AppColors.success, size: 22),
           const SizedBox(width: 12),
-          Text('No upcoming deadlines', style: GoogleFonts.inter(
+          Text('No upcoming deadlines', style: context.af(
               fontSize: 14, color: AppColors.onSurfaceVariant)),
         ]),
       );
@@ -1002,10 +1047,10 @@ class _DeadlineRow extends StatelessWidget {
       const SizedBox(width: 14),
       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(item['title'] as String,
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600,
+            style: context.af(fontSize: 14, fontWeight: FontWeight.w600,
                 color: AppColors.onSurface)),
         Text(item['sub'] as String,
-            style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant)),
+            style: context.af(fontSize: 12, color: AppColors.onSurfaceVariant)),
       ])),
       const Icon(Icons.chevron_right, size: 18, color: AppColors.onSurfaceVariant),
     ]),
@@ -1028,7 +1073,7 @@ class _RecentTrips extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.outline.withOpacity(0.5))),
         child: Center(child: Text('No trips yet.',
-            style: GoogleFonts.inter(
+            style: context.af(
                 color: AppColors.onSurfaceVariant, fontSize: 14))),
       );
     }
@@ -1097,7 +1142,7 @@ class _TripRow extends StatelessWidget {
               Expanded(
                 child: Text(
                   from.isNotEmpty && to.isNotEmpty ? '$from → $to' : 'Trip #${trip["id"]}',
-                  style: GoogleFonts.inter(fontSize: 13,
+                  style: context.af(fontSize: 13,
                       fontWeight: FontWeight.w600, color: const Color(0xFF1E293B)),
                   maxLines: 1, overflow: TextOverflow.ellipsis,
                 ),
@@ -1107,7 +1152,7 @@ class _TripRow extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.10),
                   borderRadius: BorderRadius.circular(20)),
-                child: Text(label, style: GoogleFonts.inter(
+                child: Text(label, style: context.af(
                     fontSize: 10, fontWeight: FontWeight.w700, color: color)),
               ),
             ]),
@@ -1116,12 +1161,12 @@ class _TripRow extends StatelessWidget {
               Icon(Icons.straighten_rounded, size: 11, color: AppColors.onSurfaceVariant),
               const SizedBox(width: 3),
               Text('${miles.toStringAsFixed(0)} mi',
-                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.onSurfaceVariant)),
+                  style: context.af(fontSize: 11, color: AppColors.onSurfaceVariant)),
               if (date.isNotEmpty) ...[
                 const SizedBox(width: 10),
                 Icon(Icons.calendar_today_outlined, size: 11, color: AppColors.onSurfaceVariant),
                 const SizedBox(width: 3),
-                Text(date, style: GoogleFonts.inter(
+                Text(date, style: context.af(
                     fontSize: 11, color: AppColors.onSurfaceVariant)),
               ],
             ]),
@@ -1146,7 +1191,7 @@ class _RecentFuel extends StatelessWidget {
         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.outline.withOpacity(0.5))),
         child: Center(child: Text('No fuel logs yet.',
-            style: GoogleFonts.inter(color: AppColors.onSurfaceVariant, fontSize: 14))),
+            style: context.af(color: AppColors.onSurfaceVariant, fontSize: 14))),
       );
     }
     return Column(children: fuel.map<Widget>((f) => _FuelRow(fuel: f as Map)).toList());
@@ -1182,14 +1227,14 @@ class _FuelRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(station, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600,
+          Text(station, style: context.af(fontSize: 14, fontWeight: FontWeight.w600,
               color: AppColors.primary)),
           Text('$dateStr • ${gallons.toStringAsFixed(1)} Gal • $state',
-              style: GoogleFonts.inter(fontSize: 12, color: AppColors.onSurfaceVariant)),
+              style: context.af(fontSize: 12, color: AppColors.onSurfaceVariant)),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
           Text('\$${cost.toStringAsFixed(2)}',
-              style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w700,
+              style: context.af(fontSize: 15, fontWeight: FontWeight.w700,
                   color: AppColors.primary)),
           const Icon(Icons.chevron_right, size: 18, color: AppColors.onSurfaceVariant),
         ]),

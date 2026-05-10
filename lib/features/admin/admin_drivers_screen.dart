@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 import 'add_driver_screen.dart';
 
 // ─── Palette ─────────────────────────────────────────────────────────────────
@@ -78,6 +80,7 @@ class _AdminDriversScreenState extends State<AdminDriversScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
     return Scaffold(
       backgroundColor: _bg,
       body: NestedScrollView(
@@ -113,8 +116,8 @@ class _AdminDriversScreenState extends State<AdminDriversScreen> {
                     const Icon(Icons.person_add_alt_1_rounded,
                         color: Colors.white, size: 16),
                     const SizedBox(width: 6),
-                    Text('Add Driver',
-                        style: GoogleFonts.inter(
+                    Text(s.addDriver,
+                        style: context.af(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: Colors.white)),
@@ -141,11 +144,10 @@ class _AdminDriversScreenState extends State<AdminDriversScreen> {
               // Search
               TextField(
                 onChanged: (q) { _search = q; _applyFilter(); },
-                style: GoogleFonts.inter(fontSize: 14),
+                style: context.af(fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Search by name…',
-                  hintStyle: GoogleFonts.inter(
-                      fontSize: 14, color: Colors.grey.shade400),
+                  hintText: s.searchByName,
+                  hintStyle: context.af(fontSize: 14, color: Colors.grey.shade400),
                   prefixIcon: Icon(Icons.search_rounded,
                       color: Colors.grey.shade400, size: 20),
                   filled: true,
@@ -172,13 +174,13 @@ class _AdminDriversScreenState extends State<AdminDriversScreen> {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    _Chip(label: 'All',      value: 'all',      current: _filter,
+                    _Chip(label: s.allDrivers, value: 'all',      current: _filter,
                         onTap: (v) { _filter = v; _applyFilter(); }),
-                    _Chip(label: 'Active',   value: 'active',   current: _filter,
+                    _Chip(label: s.active,     value: 'active',   current: _filter,
                         onTap: (v) { _filter = v; _applyFilter(); }),
-                    _Chip(label: 'Inactive', value: 'inactive', current: _filter,
+                    _Chip(label: s.inactive,   value: 'inactive', current: _filter,
                         onTap: (v) { _filter = v; _applyFilter(); }),
-                    _Chip(label: 'On Leave', value: 'on_leave', current: _filter,
+                    _Chip(label: s.onLeave,    value: 'on_leave', current: _filter,
                         onTap: (v) { _filter = v; _applyFilter(); }),
                   ],
                 ),
@@ -190,8 +192,8 @@ class _AdminDriversScreenState extends State<AdminDriversScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
             child: Row(children: [
-              Text('${_filtered.length} driver${_filtered.length == 1 ? '' : 's'}',
-                  style: GoogleFonts.inter(
+              Text('${s.drivers} ${_filtered.length}',
+                  style: context.af(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: _slate)),
@@ -234,6 +236,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -242,7 +245,6 @@ class _Header extends StatelessWidget {
         ),
       ),
       child: Stack(children: [
-        // Decorative orb top-right
         Positioned(top: -30, right: -30,
           child: Container(width: 130, height: 130,
             decoration: BoxDecoration(
@@ -269,21 +271,20 @@ class _Header extends StatelessWidget {
                     child: const Icon(Icons.people_alt_rounded,
                         color: Colors.white, size: 20)),
                   const SizedBox(width: 10),
-                  Text('Drivers',
-                      style: GoogleFonts.inter(
+                  Text(s.drivers,
+                      style: context.af(
                           fontSize: 22, fontWeight: FontWeight.w800,
                           color: Colors.white)),
                 ]),
                 const SizedBox(height: 16),
-                // Stats row
                 Row(children: [
-                  _StatBubble(label: 'Total',    value: '$total',    color: Colors.white),
+                  _StatBubble(label: s.leave,    value: '$onLeave',  color: const Color(0xFFFBBF24)),
                   const SizedBox(width: 8),
-                  _StatBubble(label: 'Active',   value: '$active',   color: const Color(0xFF4ADE80)),
+                  _StatBubble(label: s.inactive, value: '$inactive', color: const Color(0xFFF87171)),
                   const SizedBox(width: 8),
-                  _StatBubble(label: 'Inactive', value: '$inactive', color: const Color(0xFFF87171)),
+                  _StatBubble(label: s.active,   value: '$active',   color: const Color(0xFF4ADE80)),
                   const SizedBox(width: 8),
-                  _StatBubble(label: 'Leave',    value: '$onLeave',  color: const Color(0xFFFBBF24)),
+                  _StatBubble(label: s.total,    value: '$total',    color: Colors.white),
                 ]),
               ],
             ),
@@ -310,11 +311,11 @@ class _StatBubble extends StatelessWidget {
       ),
       child: Column(children: [
         Text(value,
-            style: GoogleFonts.inter(
+            style: context.af(
                 fontSize: 20, fontWeight: FontWeight.w900, color: color)),
         const SizedBox(height: 2),
         Text(label,
-            style: GoogleFonts.inter(
+            style: context.af(
                 fontSize: 10, fontWeight: FontWeight.w500,
                 color: Colors.white.withOpacity(0.60))),
       ]),
@@ -345,7 +346,7 @@ class _Chip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(label,
-            style: GoogleFonts.inter(
+            style: context.af(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: active ? Colors.white : _slate)),
@@ -369,11 +370,12 @@ class _DriverCard extends StatelessWidget {
     }
   }
 
-  String get _statusLabel {
+  String _statusLabel(BuildContext context) {
+    final s = context.read<LocaleProvider>().s;
     switch (driver['status']) {
-      case 'active':   return 'Active';
-      case 'inactive': return 'Inactive';
-      case 'on_leave': return 'On Leave';
+      case 'active':   return s.active;
+      case 'inactive': return s.inactive;
+      case 'on_leave': return s.onLeave;
       default:         return (driver['status'] ?? '—').toString();
     }
   }
@@ -423,7 +425,7 @@ class _DriverCard extends StatelessWidget {
             ),
             child: Center(
               child: Text(initials,
-                  style: GoogleFonts.inter(
+                  style: context.af(
                       fontSize: 16, fontWeight: FontWeight.w900,
                       color: Colors.white)),
             ),
@@ -435,7 +437,7 @@ class _DriverCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(name,
-                  style: GoogleFonts.inter(
+                  style: context.af(
                       fontSize: 15, fontWeight: FontWeight.w700,
                       color: const Color(0xFF1E293B))),
               const SizedBox(height: 4),
@@ -465,8 +467,8 @@ class _DriverCard extends StatelessWidget {
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(_statusIcon, size: 11, color: _statusColor),
                 const SizedBox(width: 4),
-                Text(_statusLabel,
-                    style: GoogleFonts.inter(
+                Text(_statusLabel(context),
+                    style: context.af(
                         fontSize: 11, fontWeight: FontWeight.w700,
                         color: _statusColor)),
               ]),
@@ -489,8 +491,7 @@ class _InfoChip extends StatelessWidget {
     children: [
       Icon(icon, size: 11, color: Colors.grey.shade400),
       const SizedBox(width: 3),
-      Text(label,
-          style: GoogleFonts.inter(fontSize: 11, color: _slate)),
+      Text(label, style: context.af(fontSize: 11, color: _slate)),
     ],
   );
 }
@@ -501,27 +502,28 @@ class _Empty extends StatelessWidget {
   const _Empty({required this.searching});
 
   @override
-  Widget build(BuildContext context) => Center(
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: 72, height: 72,
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFF6FF),
-          borderRadius: BorderRadius.circular(20)),
-        child: const Icon(Icons.people_outline_rounded,
-            size: 36, color: _blue)),
-      const SizedBox(height: 16),
-      Text(
-        searching ? 'No drivers match your search'
-                  : 'No drivers yet',
-        style: GoogleFonts.inter(
-            fontSize: 15, fontWeight: FontWeight.w700,
-            color: const Color(0xFF1E293B))),
-      const SizedBox(height: 6),
-      if (!searching)
-        Text('Tap "Add Driver" to get started',
-            style: GoogleFonts.inter(fontSize: 13, color: _slate)),
-    ]),
-  );
+  Widget build(BuildContext context) {
+    final s = context.watch<LocaleProvider>().s;
+    return Center(
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Container(
+          width: 72, height: 72,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(20)),
+          child: const Icon(Icons.people_outline_rounded,
+              size: 36, color: _blue)),
+        const SizedBox(height: 16),
+        Text(
+          searching ? s.noDriversMatchSearch : s.noDriversYet,
+          style: context.af(
+              fontSize: 15, fontWeight: FontWeight.w700,
+              color: const Color(0xFF1E293B))),
+        const SizedBox(height: 6),
+        if (!searching)
+          Text(s.tapAddDriverToStart,
+              style: context.af(fontSize: 13, color: _slate)),
+      ]),
+    );
+  }
 }
-

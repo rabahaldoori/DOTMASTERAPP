@@ -83,4 +83,86 @@ class AppTheme {
       ),
     );
   }
+
+  /// Arabic variant — uses Cairo font for proper Arabic rendering
+  static ThemeData get arabic {
+    const _cairo = TextStyle(fontFamily: 'Cairo');
+    final cairoTextTheme = const TextTheme(
+      displayLarge:  TextStyle(fontFamily: 'Cairo'),
+      displayMedium: TextStyle(fontFamily: 'Cairo'),
+      displaySmall:  TextStyle(fontFamily: 'Cairo'),
+      headlineLarge: TextStyle(fontFamily: 'Cairo'),
+      headlineMedium:TextStyle(fontFamily: 'Cairo'),
+      headlineSmall: TextStyle(fontFamily: 'Cairo'),
+      titleLarge:    TextStyle(fontFamily: 'Cairo'),
+      titleMedium:   TextStyle(fontFamily: 'Cairo'),
+      titleSmall:    TextStyle(fontFamily: 'Cairo'),
+      bodyLarge:     TextStyle(fontFamily: 'Cairo'),
+      bodyMedium:    TextStyle(fontFamily: 'Cairo'),
+      bodySmall:     TextStyle(fontFamily: 'Cairo'),
+      labelLarge:    TextStyle(fontFamily: 'Cairo'),
+      labelMedium:   TextStyle(fontFamily: 'Cairo'),
+      labelSmall:    TextStyle(fontFamily: 'Cairo'),
+    );
+    return ThemeData(
+      useMaterial3: true,
+      fontFamily: 'Cairo',
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.accent,
+        brightness: Brightness.light,
+        primary: AppColors.accent,
+        surface: AppColors.surface,
+      ),
+      scaffoldBackgroundColor: AppColors.surface,
+      textTheme: cairoTextTheme,
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        centerTitle: false,
+        iconTheme: const IconThemeData(color: AppColors.onSurface),
+        titleTextStyle: const TextStyle(
+          fontFamily: 'Cairo',
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          color: AppColors.onSurface,
+        ),
+      ),
+      cardTheme: CardTheme(
+        color: AppColors.surfaceCard,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.outline, width: 0.8),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.surfaceCard,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.outline),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.outline),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: AppColors.onPrimary,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          textStyle: const TextStyle(
+              fontFamily: 'Cairo', fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
 }

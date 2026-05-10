@@ -1,14 +1,16 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/biometric_service.dart';
 import '../../core/theme.dart';
 import '../../core/onesignal_service.dart';
+import '../../core/l10n/locale_provider.dart';
+import '../../core/font_ext.dart';
 
 // ── Brand colours ──────────────────────────────────────────────────────────────
 const _navy    = Color(0xFF020F22);
@@ -106,10 +108,12 @@ class _LoginScreenState extends State<LoginScreen>
       // Use the dedicated biometric refresh token (survives logout)
       final bioRefreshToken = await _bio.getStoredRefreshToken();
       if (bioRefreshToken == null) {
+        if (!mounted) return;
+        final s = context.read<LocaleProvider>().s;
         setState(() {
           _bioLoading = false;
           _bioVisible = false;
-          _error = 'Session expired. Please sign in with your password.';
+          _error = s.sessionExpiredPleaseSignIn;
         });
         return;
       }
@@ -117,10 +121,12 @@ class _LoginScreenState extends State<LoginScreen>
       // Exchange biometric refresh token for a new access token
       final refreshed = await ApiClient.refreshWithToken(bioRefreshToken);
       if (!refreshed) {
+        if (!mounted) return;
+        final s = context.read<LocaleProvider>().s;
         setState(() {
           _bioLoading = false;
           _bioVisible = false;
-          _error = 'Session expired. Please sign in with your password.';
+          _error = s.sessionExpiredPleaseSignIn;
         });
         return;
       }
@@ -140,10 +146,10 @@ class _LoginScreenState extends State<LoginScreen>
       if (role != null && mounted) {
         context.go(role == 'driver' ? '/driver-dashboard' : '/dashboard');
       } else {
-        if (mounted) setState(() => _error = 'Could not restore session. Please sign in again.');
+        if (mounted) setState(() => _error = context.read<LocaleProvider>().s.couldNotRestoreSession);
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Biometric authentication failed. Try again.');
+      if (mounted) setState(() => _error = context.read<LocaleProvider>().s.biometricFailed);
     } finally {
       if (mounted) setState(() => _bioLoading = false);
     }
@@ -183,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen>
       }
     } catch (e) {
       setState(() {
-        _error = 'Invalid credentials. Contact your fleet manager if you need help.';
+        _error = context.read<LocaleProvider>().s.invalidCredentials;
       });
     } finally {
       if (mounted) setState(() { _loading = false; });
@@ -231,13 +237,13 @@ class _LoginScreenState extends State<LoginScreen>
               child: Icon(bioIcon, color: _cyan, size: 32),
             ),
             const SizedBox(height: 16),
-            Text('Enable $bioLabel?', style: GoogleFonts.inter(
-                fontSize: 20, fontWeight: FontWeight.w800, color: _white)),
+            Text('${context.read<LocaleProvider>().s.enableBiometricTitle} $bioLabel?',
+                style: context.af(fontSize: 20, fontWeight: FontWeight.w800, color: _white)),
             const SizedBox(height: 8),
             Text(
-              'Sign in faster next time using $bioLabel.\nYou can change this anytime in your profile.',
+              context.read<LocaleProvider>().s.enableBiometricBody,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(fontSize: 13, color: Colors.white54, height: 1.5),
+              style: context.af(fontSize: 13, color: Colors.white54, height: 1.5),
             ),
             const SizedBox(height: 24),
             Row(children: [
@@ -249,8 +255,8 @@ class _LoginScreenState extends State<LoginScreen>
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: Colors.white.withOpacity(0.15)),
                   ),
-                  child: Center(child: Text('Not Now', style: GoogleFonts.inter(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white60))),
+                  child: Center(child: Text(context.read<LocaleProvider>().s.notNow,
+                      style: context.af(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white60))),
                 ),
               )),
               const SizedBox(width: 12),
@@ -265,8 +271,8 @@ class _LoginScreenState extends State<LoginScreen>
                     boxShadow: [BoxShadow(color: _blue.withOpacity(0.4),
                         blurRadius: 14, offset: const Offset(0, 4))],
                   ),
-                  child: Center(child: Text('Enable', style: GoogleFonts.inter(
-                      fontSize: 14, fontWeight: FontWeight.w700, color: _white))),
+                  child: Center(child: Text(context.read<LocaleProvider>().s.enable,
+                      style: context.af(fontSize: 14, fontWeight: FontWeight.w700, color: _white))),
                 ),
               )),
             ]),
@@ -307,12 +313,12 @@ class _LoginScreenState extends State<LoginScreen>
               child: const Icon(Icons.lock_reset_rounded, color: _cyan, size: 24),
             ),
             const SizedBox(height: 14),
-            Text('Reset Password', style: GoogleFonts.inter(
-                fontSize: 18, fontWeight: FontWeight.w700, color: _white)),
+            Text(context.read<LocaleProvider>().s.resetPassword,
+                style: context.af(fontSize: 18, fontWeight: FontWeight.w700, color: _white)),
             const SizedBox(height: 6),
-            Text('Enter your email and we\'ll send a reset link.',
+            Text(context.read<LocaleProvider>().s.resetPasswordSubtitle,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.inter(fontSize: 13, color: Colors.white54)),
+                style: context.af(fontSize: 13, color: Colors.white54)),
             const SizedBox(height: 20),
             _GlassField(
               controller: emailCtrl,
@@ -323,20 +329,20 @@ class _LoginScreenState extends State<LoginScreen>
             const SizedBox(height: 20),
             Row(children: [
               Expanded(child: _OutlineBtn(
-                label: 'Cancel',
+                label: context.read<LocaleProvider>().s.cancel,
                 onTap: () => Navigator.pop(ctx),
               )),
               const SizedBox(width: 10),
               Expanded(child: _SolidBtn(
-                label: 'Send Link',
+                label: context.read<LocaleProvider>().s.sendLink,
                 onTap: () async {
                   Navigator.pop(ctx);
                   try {
                     await ApiClient.forgotPassword(emailCtrl.text.trim());
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Reset link sent if that email is registered.',
-                            style: GoogleFonts.inter(color: _white)),
+                        content: Text(context.read<LocaleProvider>().s.resetLinkSent,
+                            style: context.af(color: _white)),
                         backgroundColor: const Color(0xFF16A34A),
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
@@ -396,12 +402,17 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
 
                         // Title
-                        Text('Welcome back', style: GoogleFonts.inter(
-                            fontSize: 11, fontWeight: FontWeight.w600,
-                            color: _cyan, letterSpacing: 1.4)),
-                        const SizedBox(height: 4),
-                        Text('Sign in to your account', style: GoogleFonts.inter(
-                            fontSize: 22, fontWeight: FontWeight.w800, color: _white)),
+                        Builder(builder: (ctx) {
+                          final s = ctx.watch<LocaleProvider>().s;
+                          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Text(s.welcomeBack, style: ctx.af(
+                                fontSize: 11, fontWeight: FontWeight.w600,
+                                color: _cyan, letterSpacing: 1.4)),
+                            const SizedBox(height: 4),
+                            Text(s.signInToAccount, style: ctx.af(
+                                fontSize: 22, fontWeight: FontWeight.w800, color: _white)),
+                          ]);
+                        }),
                         const SizedBox(height: 24),
 
                         // Error banner
@@ -419,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   color: Color(0xFFEF4444), size: 17),
                               const SizedBox(width: 8),
                               Expanded(child: Text(_error!,
-                                  style: GoogleFonts.inter(
+                                  style: context.af(
                                       fontSize: 12, color: const Color(0xFFFCA5A5)))),
                             ]),
                           ),
@@ -427,7 +438,7 @@ class _LoginScreenState extends State<LoginScreen>
                         ],
 
                         // Email
-                        _FieldLabel('Email Address'),
+                        _FieldLabel(context.watch<LocaleProvider>().s.emailAddress),
                         const SizedBox(height: 8),
                         _GlassField(
                           controller: _emailCtrl,
@@ -439,11 +450,11 @@ class _LoginScreenState extends State<LoginScreen>
 
                         // Password
                         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                          _FieldLabel('Password'),
+                          _FieldLabel(context.watch<LocaleProvider>().s.password),
                           GestureDetector(
                             onTap: _forgotPassword,
-                            child: Text('Forgot?', style: GoogleFonts.inter(
-                                fontSize: 12, color: _cyan, fontWeight: FontWeight.w600)),
+                            child: Text(context.watch<LocaleProvider>().s.forgotQ,
+                                style: context.af(fontSize: 12, color: _cyan, fontWeight: FontWeight.w600)),
                           ),
                         ]),
                         const SizedBox(height: 8),
@@ -485,8 +496,8 @@ class _LoginScreenState extends State<LoginScreen>
                                   : null,
                             ),
                             const SizedBox(width: 10),
-                            Text('Remember this device', style: GoogleFonts.inter(
-                                fontSize: 13, color: Colors.white70)),
+                            Text(context.watch<LocaleProvider>().s.rememberDevice,
+                                style: context.af(fontSize: 13, color: Colors.white70)),
                           ]),
                         ),
                         const SizedBox(height: 24),
@@ -504,7 +515,7 @@ class _LoginScreenState extends State<LoginScreen>
                             color: Colors.white.withOpacity(0.08))),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 14),
-                          child: Text('OR', style: GoogleFonts.inter(
+                          child: Text('OR', style: context.af(
                               fontSize: 10, color: Colors.white30,
                               fontWeight: FontWeight.w600, letterSpacing: 1)),
                         ),
@@ -625,13 +636,18 @@ class _LogoBlock extends StatelessWidget {
       ),
     ]),
     const SizedBox(height: 4),
-    Text('DOT Comply', style: GoogleFonts.inter(
-        fontSize: 30, fontWeight: FontWeight.w900, color: _white,
-        letterSpacing: -0.5)),
-    const SizedBox(height: 6),
-    Text('Fuel & compliance for precision logistics',
-        textAlign: TextAlign.center,
-        style: GoogleFonts.inter(fontSize: 13, color: Colors.white38)),
+    Builder(builder: (ctx) {
+      final s = ctx.watch<LocaleProvider>().s;
+      return Column(children: [
+        Text('DOT Comply', style: ctx.af(
+            fontSize: 30, fontWeight: FontWeight.w900, color: _white,
+            letterSpacing: -0.5)),
+        const SizedBox(height: 6),
+        Text(s.fuelComplianceSubtitle,
+            textAlign: TextAlign.center,
+            style: ctx.af(fontSize: 13, color: Colors.white38)),
+      ]);
+    }),
   ]);
 }
 
@@ -640,7 +656,7 @@ class _FieldLabel extends StatelessWidget {
   final String text;
   const _FieldLabel(this.text);
   @override
-  Widget build(BuildContext context) => Text(text, style: GoogleFonts.inter(
+  Widget build(BuildContext context) => Text(text, style: context.af(
       fontSize: 12, fontWeight: FontWeight.w600,
       color: Colors.white60, letterSpacing: 0.4));
 }
@@ -671,11 +687,11 @@ class _GlassField extends StatelessWidget {
     obscureText: obscure,
     keyboardType: keyboardType,
     onSubmitted: onSubmitted,
-    style: GoogleFonts.inter(color: _white, fontSize: 14),
+    style: context.af(color: _white, fontSize: 14),
     cursorColor: _cyan,
     decoration: InputDecoration(
       hintText: hint,
-      hintStyle: GoogleFonts.inter(color: Colors.white24, fontSize: 14),
+      hintStyle: context.af(color: Colors.white24, fontSize: 14),
       prefixIcon: Icon(icon, color: Colors.white38, size: 18),
       suffixIcon: suffix,
       filled: true,
@@ -723,8 +739,8 @@ class _SignInButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                     color: Colors.white, strokeWidth: 2))
             : Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text('Sign In', style: GoogleFonts.inter(
-                    fontSize: 15, fontWeight: FontWeight.w700,
+                Text(context.read<LocaleProvider>().s.signIn,
+                    style: context.af(fontSize: 15, fontWeight: FontWeight.w700,
                     color: _white)),
                 const SizedBox(width: 8),
                 const Icon(Icons.arrow_forward_rounded,
@@ -745,7 +761,8 @@ class _FaceIdButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFace = biometricType != BiometricType.fingerprint;
-    final label  = isFace ? 'Sign in with Face ID' : 'Sign in with Fingerprint';
+    final s = context.watch<LocaleProvider>().s;
+    final label  = isFace ? s.signInWithFaceId : s.signInWithFingerprint;
 
     return GestureDetector(
       onTap: loading ? null : () { HapticFeedback.lightImpact(); onTap(); },
@@ -789,7 +806,7 @@ class _FaceIdButton extends StatelessWidget {
                       color: Colors.white, size: 26),
                 const SizedBox(width: 10),
                 Text(label,
-                    style: GoogleFonts.inter(
+                    style: context.af(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Colors.white)),
@@ -888,7 +905,7 @@ class _OutlineBtn extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withOpacity(0.15)),
       ),
-      child: Center(child: Text(label, style: GoogleFonts.inter(
+      child: Center(child: Text(label, style: context.af(
           fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white60))),
     ),
   );
@@ -909,7 +926,7 @@ class _SolidBtn extends StatelessWidget {
         gradient: const LinearGradient(
           colors: [Color(0xFF0A5FE8), Color(0xFF031DAA)]),
       ),
-      child: Center(child: Text(label, style: GoogleFonts.inter(
+      child: Center(child: Text(label, style: context.af(
           fontSize: 13, fontWeight: FontWeight.w600, color: _white))),
     ),
   );
