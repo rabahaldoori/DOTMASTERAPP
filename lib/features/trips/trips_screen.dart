@@ -361,24 +361,18 @@ class _TripCard extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(child: Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('TRUCK-${truckId.toString().toUpperCase()}',
                   style: context.af(fontSize: 13,
                       fontWeight: FontWeight.w800, color: _navy)),
-              Row(children: [
-                if (tripNum.isNotEmpty) ...[
-                  Text('Trip #$tripNum', style: context.af(
-                      fontSize: 11, color: _grey)),
-                  const SizedBox(width: 6),
-                  Container(width: 3, height: 3,
-                      decoration: BoxDecoration(
-                          color: _grey.withOpacity(0.4),
-                          shape: BoxShape.circle)),
-                  const SizedBox(width: 6),
-                ],
-                Text(startDate, style: context.af(
-                    fontSize: 11, color: _grey)),
-              ]),
+              if (tripNum.isNotEmpty)
+                Text('Trip #$tripNum',
+                    style: context.af(fontSize: 11, color: _grey),
+                    overflow: TextOverflow.ellipsis, maxLines: 1),
+              Text(startDate,
+                  style: context.af(fontSize: 11, color: _grey),
+                  overflow: TextOverflow.ellipsis, maxLines: 1),
             ])),
             // Status + miles
             Column(crossAxisAlignment: CrossAxisAlignment.end, children: [

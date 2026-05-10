@@ -255,7 +255,10 @@ class _DriverMaintenanceFormScreenState
           ),
         ),
       ),
-      body: Column(
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
         children: [
           // ── Top Bar ─────────────────────────────────────────────────────
           Container(
@@ -581,7 +584,8 @@ class _DriverMaintenanceFormScreenState
             ),
           ),
         ],
-      ),
+      ),   // Column
+    ),     // GestureDetector
     );
   }
 }
