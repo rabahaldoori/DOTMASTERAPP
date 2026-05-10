@@ -22,9 +22,14 @@ import '../features/about/about_screen.dart';
 import '../features/driver/inspection/inspection_checklist_screen.dart';
 import '../features/driver/inspection/issue_report_screen.dart';
 import '../features/driver/inspection/review_submit_screen.dart';
+import '../features/driver/inspection/inspection_history_screen.dart';
+import '../features/driver/inspection/inspection_detail_screen.dart';
 import '../features/driver/driver_maintenance_screen.dart';
 import '../features/driver/driver_maintenance_form_screen.dart';
 import '../features/maintenance/admin_maintenance_screen.dart';
+import '../features/inspection_template/inspection_template_screen.dart';
+import '../features/admin/admin_drivers_screen.dart';
+import '../features/admin/add_driver_screen.dart';
 import '../core/api_client.dart';
 
 final router = GoRouter(
@@ -92,6 +97,14 @@ final router = GoRouter(
         GoRoute(path: '/profile',     builder: (_, __) => const ProfileScreen()),
         GoRoute(path: '/about',       builder: (_, __) => const AboutScreen()),
         GoRoute(path: '/maintenance', builder: (_, __) => const AdminMaintenanceScreen()),
+        GoRoute(path: '/inspection-template',
+            builder: (_, __) => const InspectionTemplateScreen()),
+        GoRoute(path: '/inspection-history',
+            builder: (_, __) => const InspectionHistoryScreen(isAdmin: true)),
+        GoRoute(path: '/admin/drivers',
+            builder: (_, __) => const AdminDriversScreen()),
+        GoRoute(path: '/admin/drivers/add',
+            builder: (_, __) => const AddDriverScreen()),
         GoRoute(
           path: '/maintenance/add',
           builder: (_, __) => const DriverMaintenanceFormScreen(
@@ -126,7 +139,16 @@ final router = GoRouter(
         builder: (_, __) => const IssueReportScreen()),
     GoRoute(path: '/driver-inspection/review',
         builder: (_, __) => const ReviewSubmitScreen()),
+    GoRoute(path: '/driver-inspection/history',
+        builder: (_, __) => const InspectionHistoryScreen(isAdmin: false)),
+    GoRoute(path: '/inspection-detail',
+        builder: (_, state) {
+          final insp = state.extra as Map<String, dynamic>? ?? {};
+          return InspectionDetailScreen(insp: insp);
+        }),
     GoRoute(path: '/driver-notifications',
+        builder: (_, __) => const DriverNotificationsScreen()),
+    GoRoute(path: '/notifications',
         builder: (_, __) => const DriverNotificationsScreen()),
 
     // ── Maintenance Form (full-screen, no nav bar) ─────────────────────────

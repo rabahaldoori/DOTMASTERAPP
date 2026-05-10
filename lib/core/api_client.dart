@@ -84,6 +84,8 @@ class ApiClient {
 
   // ── Drivers ───────────────────────────────────────────────────────────────
   static Future<Response> getDrivers() => _dio.get(ApiEndpoints.drivers);
+  static Future<Response> hireDriver(Map<String, dynamic> data) =>
+      _dio.post(ApiEndpoints.hireDriver, data: data);
 
   static Future<Response> adminResetDriverPassword(int driverId, String newPassword) =>
       _dio.post(ApiEndpoints.driverResetPassword(driverId), data: {'new_password': newPassword});
@@ -332,11 +334,50 @@ class ApiClient {
   static Future<Response> listInspections() =>
       _dio.get('/api/inspections/mobile/');
 
+  static Future<Response> listAdminInspections({
+    int? driverId, int? truckId, String? statusFilter,
+  }) =>
+      _dio.get('/api/inspections/', queryParameters: {
+        if (driverId != null)    'driver': driverId,
+        if (truckId != null)     'truck':  truckId,
+        if (statusFilter != null) 'status': statusFilter,
+      });
+
   static Future<Response> getTodayInspection({String type = 'pre_trip'}) =>
       _dio.get('/api/inspections/mobile/today/', queryParameters: {'type': type});
 
   static Future<Response> updateInspection(int id, Map<String, dynamic> data) =>
       _dio.patch('/api/inspections/mobile/$id/edit/', data: data);
+
+
+  // ── Inspection Checklist Template (admin-managed) ──────────────────────────
+  /// Returns the company's custom checklist template (drivers + admins).
+  static Future<Response> getInspectionTemplate() =>
+      _dio.get('/api/inspections/checklist-template/');
+
+  /// Admin: create a new category in the template.
+  static Future<Response> createInspectionCategory(Map<String, dynamic> data) =>
+      _dio.post('/api/inspections/checklist-template/categories/', data: data);
+
+  /// Admin: update an existing category.
+  static Future<Response> updateInspectionCategory(int id, Map<String, dynamic> data) =>
+      _dio.patch('/api/inspections/checklist-template/categories/$id/', data: data);
+
+  /// Admin: delete a category (and all its items).
+  static Future<Response> deleteInspectionCategory(int id) =>
+      _dio.delete('/api/inspections/checklist-template/categories/$id/');
+
+  /// Admin: add an item to a category.
+  static Future<Response> createInspectionItem(Map<String, dynamic> data) =>
+      _dio.post('/api/inspections/checklist-template/items/', data: data);
+
+  /// Admin: update an item label.
+  static Future<Response> updateInspectionItem(int id, Map<String, dynamic> data) =>
+      _dio.patch('/api/inspections/checklist-template/items/$id/', data: data);
+
+  /// Admin: delete an item.
+  static Future<Response> deleteInspectionItem(int id) =>
+      _dio.delete('/api/inspections/checklist-template/items/$id/');
 
   // ── Trucks ────────────────────────────────────────────────────────────────────────
   static Future<Response> getTruck(int truckId) =>

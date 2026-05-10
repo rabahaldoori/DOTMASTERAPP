@@ -106,167 +106,183 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
           slivers: [
             // ── Pinned SliverAppBar ──────────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 190,
+              expandedHeight: 272,
               pinned: true,
               backgroundColor: const Color(0xFF031634),
               systemOverlayStyle: SystemUiOverlayStyle.light,
               automaticallyImplyLeading: false,
-              titleSpacing: 12,
-              // ── Collapsed bar: avatar + name + bell ──────────────────────
+              titleSpacing: 16,
+              elevation: 0,
+              // ── Collapsed bar: logo + company + bell + avatar ──────────
               title: Row(children: [
-                GestureDetector(
-                  onTap: () => context.go('/driver-profile'),
-                  child: Stack(children: [
-                    Container(
-                      width: 32, height: 32,
+                Image.asset('assets/images/logo.png',
+                    width: 50, height: 50, fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 36, height: 36,
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFF0453CD), width: 1.5)),
-                    ),
-                    Positioned.fill(child: Padding(
-                      padding: const EdgeInsets.all(2),
-                      child: CircleAvatar(
-                        backgroundColor: const Color(0xFF1A2B4A),
-                        backgroundImage: _userPhoto != null ? NetworkImage(_userPhoto!) : null,
-                        child: _userPhoto == null
-                            ? Text(
-                                _userName.split(' ').where((w) => w.isNotEmpty)
-                                    .map((w) => w[0]).take(2).join().toUpperCase(),
-                                style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11))
-                            : null,
-                      ),
-                    )),
-                    Positioned(right: 0, bottom: 0,
-                      child: Container(width: 8, height: 8,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF22C55E),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                              color: const Color(0xFF031634), width: 1.5)))),
-                  ]),
-                ),
+                        color: const Color(0xFF0453CD).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.local_shipping_rounded,
+                          color: Color(0xFF0453CD), size: 20))),
                 const SizedBox(width: 8),
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(_companyName, style: GoogleFonts.inter(
-                      fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
-                  Text('Driver Portal', style: GoogleFonts.inter(
-                      fontSize: 10, color: Colors.white38)),
-                ]),
+                Text('DOT Master', style: GoogleFonts.inter(
+                    fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
                 const Spacer(),
+                // Notification bell
                 GestureDetector(
                   onTap: () => context.push('/driver-notifications'),
                   child: Stack(children: [
                     Container(
-                      width: 34, height: 34,
+                      width: 36, height: 36,
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: Colors.white.withOpacity(0.12))),
                       child: const Icon(Icons.notifications_outlined,
                           color: Colors.white, size: 18)),
-                    Positioned(top: 6, right: 6,
+                    Positioned(top: 7, right: 7,
                       child: Container(width: 7, height: 7,
                         decoration: BoxDecoration(
                           color: const Color(0xFFEF4444),
                           shape: BoxShape.circle,
-                          border: Border.all(
-                              color: const Color(0xFF031634), width: 1.5)))),
+                          border: Border.all(color: const Color(0xFF031634), width: 1.5)))),
                   ]),
                 ),
+                const SizedBox(width: 10),
+                // Avatar pill — same as admin
+                Builder(builder: (ctx) {
+                  final initials = _userName.split(' ')
+                      .where((w) => w.isNotEmpty).map((w) => w[0]).take(2).join().toUpperCase();
+                  return Stack(children: [
+                    CircleAvatar(
+                      radius: 17, backgroundColor: const Color(0xFF0453CD),
+                      backgroundImage: _userPhoto != null ? NetworkImage(_userPhoto!) : null,
+                      child: _userPhoto == null
+                          ? Text(initials, style: GoogleFonts.inter(
+                              color: Colors.white, fontWeight: FontWeight.w800, fontSize: 12))
+                          : null,
+                    ),
+                    Positioned(bottom: 0, right: 0,
+                      child: Container(width: 8, height: 8,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF22C55E), shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFF031634), width: 1.5)))),
+                  ]);
+                }),
               ]),
-              // ── Expanded: greeting + status + stats strip ─────────────────
+              // ── Expanded hero ─────────────────────────────────────────────
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.parallax,
                 background: Builder(builder: (ctx) {
-                  final hasTrip  = _data?['activeTrip'] != null;
-                  final cdlDays  = _data?['cdlDaysLeft'] as int? ?? 999;
+                  final hasTrip   = _data?['activeTrip'] != null;
+                  final cdlDays   = _data?['cdlDaysLeft'] as int? ?? 999;
                   final compliant = cdlDays > 90;
+                  final initials  = _userName.split(' ')
+                      .where((w) => w.isNotEmpty)
+                      .map((w) => w[0])
+                      .take(2).join().toUpperCase();
                   return Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft, end: Alignment.bottomRight,
-                        colors: [Color(0xFF031634), Color(0xFF0D2952)],
+                        colors: [Color(0xFF031634), Color(0xFF0A2347), Color(0xFF0453CD)],
+                        stops: [0.0, 0.55, 1.0],
                       ),
                     ),
                     child: Stack(children: [
-                      Positioned(right: -30, top: -30, child: Container(
-                        width: 160, height: 160,
-                        decoration: BoxDecoration(shape: BoxShape.circle,
+                      // Decorative circles
+                      Positioned(right: -40, top: -40, child: Container(
+                        width: 180, height: 180,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
                           color: Colors.white.withOpacity(0.04)))),
-                      Positioned(right: 50, top: 70, child: Container(
-                        width: 70, height: 70,
-                        decoration: BoxDecoration(shape: BoxShape.circle,
-                          color: const Color(0xFF0453CD).withOpacity(0.18)))),
+                      Positioned(right: 60, top: 80, child: Container(
+                        width: 80, height: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF0453CD).withOpacity(0.20)))),
+                      Positioned(left: -20, bottom: 40, child: Container(
+                        width: 100, height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.03)))),
                       SafeArea(
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, kToolbarHeight + 4, 16, 10),
+                          padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 4, 20, 0),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Greeting + status chip
-                              Row(children: [
+                              // ── Greeting row (matches admin layout) ─────
+                              Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
                                 Expanded(child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Good ${_greeting()},', style: GoogleFonts.inter(
-                                        fontSize: 12, color: Colors.white54)),
-                                    const SizedBox(height: 1),
-                                    Text(_firstName().toUpperCase(), style: GoogleFonts.inter(
-                                        fontSize: 20, fontWeight: FontWeight.w800,
-                                        color: Colors.white, letterSpacing: -0.5)),
+                                    Text('Good ${_greeting()}', style: GoogleFonts.inter(
+                                        fontSize: 11, fontWeight: FontWeight.w500,
+                                        color: Colors.white54, letterSpacing: 0.3)),
+                                    const SizedBox(height: 2),
+                                    Text(_userName.isNotEmpty ? _userName.toUpperCase() : 'DRIVER',
+                                        style: GoogleFonts.inter(
+                                            fontSize: 18, fontWeight: FontWeight.w800,
+                                            color: Colors.white, letterSpacing: -0.3)),
+                                    const SizedBox(height: 2),
+                                    Text(_companyName, style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        color: const Color(0xFF06B6D4).withOpacity(0.9),
+                                        fontWeight: FontWeight.w600)),
                                   ],
                                 )),
+                                // Date badge — same as admin
                                 Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 10, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: hasTrip
-                                        ? const Color(0xFF16A34A).withOpacity(0.20)
-                                        : Colors.white.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: hasTrip
-                                        ? const Color(0xFF22C55E).withOpacity(0.40)
-                                        : Colors.white.withOpacity(0.15)),
-                                  ),
-                                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                                    Container(width: 5, height: 5,
-                                      decoration: BoxDecoration(
-                                        color: hasTrip
-                                            ? const Color(0xFF22C55E)
-                                            : Colors.white38,
-                                        shape: BoxShape.circle)),
-                                    const SizedBox(width: 4),
-                                    Text(hasTrip ? 'On Duty' : 'Off Duty',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 10, fontWeight: FontWeight.w600,
-                                          color: hasTrip
-                                              ? const Color(0xFF86EFAC)
-                                              : Colors.white54)),
-                                  ]),
+                                    color: Colors.white.withOpacity(0.10),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: Colors.white.withOpacity(0.15))),
+                                  child: Text(
+                                    _dateLabel(),
+                                    style: GoogleFonts.inter(
+                                        fontSize: 11, fontWeight: FontWeight.w600,
+                                        color: Colors.white)),
                                 ),
                               ]),
-                              const SizedBox(height: 8),
-                              // Stats strip
-                              Row(children: [
-                                _HeroStat(
-                                    value: '${_data?["tripCount"] ?? 0}',
-                                    label: 'Trips',
-                                    icon: Icons.route_outlined),
-                                _HeroDivider(),
-                                _HeroStat(
-                                    value: compliant ? 'OK' : '⚠',
-                                    label: 'CDL Status',
-                                    icon: Icons.verified_outlined),
-                                _HeroDivider(),
-                                _HeroStat(
-                                    value: '${(_data?["totalMiles"] as double? ?? 0).toStringAsFixed(0)}',
-                                    label: 'Miles',
-                                    icon: Icons.speed_outlined),
-                              ]),
+                              const SizedBox(height: 10),
+                              // ── Glassy stats strip ───────────────────────
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                                ),
+                                child: IntrinsicHeight(
+                                  child: Row(children: [
+                                    _HeroStat(
+                                        value: '${_data?["tripCount"] ?? 0}',
+                                        label: 'Trips',
+                                        icon: Icons.route_rounded,
+                                        color: const Color(0xFF06B6D4)),
+                                    VerticalDivider(width: 1,
+                                        color: Colors.white.withOpacity(0.12)),
+                                    _HeroStat(
+                                        value: compliant ? 'OK' : '⚠',
+                                        label: 'CDL Status',
+                                        icon: Icons.verified_rounded,
+                                        color: compliant
+                                            ? const Color(0xFF22C55E)
+                                            : const Color(0xFFF97316)),
+                                    VerticalDivider(width: 1,
+                                        color: Colors.white.withOpacity(0.12)),
+                                    _HeroStat(
+                                        value: '${(_data?["totalMiles"] as double? ?? 0).toStringAsFixed(0)}',
+                                        label: 'Miles',
+                                        icon: Icons.speed_rounded,
+                                        color: const Color(0xFFF97316)),
+                                  ]),
+                                ),
+                              ),
+                              const SizedBox(height: 28),
                             ],
                           ),
                         ),
@@ -316,16 +332,11 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
                       onTripsTap: () => context.go('/driver-trips'),
                       onFuelTap: () => context.go('/driver-fuel'),
                       onProfileTap: () => context.go('/driver-profile'),
-                      onInspectTap: () => context.push('/driver-inspection')),
+                      onInspectTap: () => context.push('/driver-inspection'),
+                      onHistoryTap: () => context.push('/driver-inspection/history')),
                   const SizedBox(height: 24),
 
-                  // ── Upcoming Deadlines ────────────────────────────────
-                  Text('UPCOMING DEADLINES',
-                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w700,
-                          color: AppColors.onSurfaceVariant, letterSpacing: 0.8)),
-                  const SizedBox(height: 12),
-                  _DeadlinesList(data: _data),
-                  const SizedBox(height: 24),
+
 
                   // ── Recent Trips ──────────────────────────────────────
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -379,6 +390,14 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 
   String _firstName() => _userName.split(' ').first;
 
+  String _dateLabel() {
+    final now = DateTime.now();
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const months = ['','Jan','Feb','Mar','Apr','May','Jun',
+        'Jul','Aug','Sep','Oct','Nov','Dec'];
+    return '${days[now.weekday - 1]}, ${months[now.month]} ${now.day}';
+  }
+
   String _subGreeting() {
     final activeTrip = _data?['activeTrip'] as Map?;
     if (activeTrip != null) {
@@ -395,18 +414,30 @@ class _DriverDashboardScreenState extends State<DriverDashboardScreen> {
 class _HeroStat extends StatelessWidget {
   final String value, label;
   final IconData icon;
-  const _HeroStat({required this.value, required this.label, required this.icon});
+  final Color color;
+  const _HeroStat({
+    required this.value,
+    required this.label,
+    required this.icon,
+    this.color = Colors.white,
+  });
 
   @override
   Widget build(BuildContext context) => Expanded(
-    child: Column(children: [
-      Icon(icon, size: 16, color: Colors.white38),
-      const SizedBox(height: 4),
-      Text(value, style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800,
-          color: Colors.white)),
-      const SizedBox(height: 2),
-      Text(label, style: GoogleFonts.inter(fontSize: 10, color: Colors.white38,
-          letterSpacing: 0.2)),
+    child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Container(
+        width: 30, height: 30,
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(8)),
+        child: Icon(icon, size: 15, color: color),
+      ),
+      const SizedBox(height: 5),
+      Text(value, style: GoogleFonts.inter(
+          fontSize: 15, fontWeight: FontWeight.w900, color: Colors.white)),
+      const SizedBox(height: 1),
+      Text(label, style: GoogleFonts.inter(
+          fontSize: 9, color: Colors.white38, letterSpacing: 0.2)),
     ]),
   );
 }
@@ -808,10 +839,11 @@ class _StatChip extends StatelessWidget {
 
 // ── Quick Actions ─────────────────────────────────────────────────────────────
 class _QuickActions extends StatelessWidget {
-  final VoidCallback onTripsTap, onFuelTap, onProfileTap, onInspectTap;
+  final VoidCallback onTripsTap, onFuelTap, onProfileTap, onInspectTap, onHistoryTap;
   const _QuickActions({
     required this.onTripsTap, required this.onFuelTap,
     required this.onProfileTap, required this.onInspectTap,
+    required this.onHistoryTap,
   });
 
   @override
@@ -834,11 +866,24 @@ class _QuickActions extends StatelessWidget {
         )),
       ]),
       const SizedBox(height: 10),
-      // Inspection — full width secondary action
-      _ActionBtn(
-        icon: Icons.fact_check_outlined, label: 'Start Inspection',
-        primary: false, onTap: onInspectTap, fullWidth: true,
-      ),
+      // Inspection row: Start + History side by side
+      Row(children: [
+        Expanded(
+          flex: 3,
+          child: _ActionBtn(
+            icon: Icons.fact_check_outlined, label: 'Start Inspection',
+            primary: true, onTap: onInspectTap, fullWidth: true,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 2,
+          child: _ActionBtn(
+            icon: Icons.history_rounded, label: 'History',
+            primary: false, onTap: onHistoryTap, fullWidth: true,
+          ),
+        ),
+      ]),
     ]);
   }
 }

@@ -50,6 +50,7 @@ class ApiEndpoints {
 
   // ── Drivers ────────────────────────────────────────────────────────────────
   static const String drivers        = "$apiUrl/drivers/";
+  static const String hireDriver     = "$apiUrl/drivers/hire/";
   static String driverDetail(int id)         => "$apiUrl/drivers/$id/";
   static String driverPhoto(int id)          => "$apiUrl/drivers/$id/photo/";
   static String driverResetPassword(int id)  => "$apiUrl/drivers/$id/reset-password/";

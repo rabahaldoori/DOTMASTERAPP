@@ -126,24 +126,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
             title: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(children: [
-                Image.asset('assets/images/logo.png', width: 38, height: 38, fit: BoxFit.contain),
+                Image.asset('assets/images/logo.png', width: 50, height: 50, fit: BoxFit.contain),
                 const SizedBox(width: 8),
                 Text('DOT Master', style: GoogleFonts.inter(
                     fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white)),
                 const Spacer(),
-                Container(
-                  width: 36, height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.10),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                GestureDetector(
+                  onTap: () => context.push('/notifications'),
+                  child: Container(
+                    width: 36, height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.10),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withOpacity(0.15)),
+                    ),
+                    child: Stack(alignment: Alignment.center, children: [
+                      const Icon(Icons.notifications_outlined, color: Colors.white, size: 18),
+                      Positioned(top: 7, right: 7,
+                        child: Container(width: 6, height: 6,
+                          decoration: const BoxDecoration(color: Color(0xFFF97316), shape: BoxShape.circle))),
+                    ]),
                   ),
-                  child: Stack(alignment: Alignment.center, children: [
-                    const Icon(Icons.notifications_outlined, color: Colors.white, size: 18),
-                    Positioned(top: 7, right: 7,
-                      child: Container(width: 6, height: 6,
-                        decoration: const BoxDecoration(color: Color(0xFFF97316), shape: BoxShape.circle))),
-                  ]),
                 ),
                 const SizedBox(width: 10),
                 Stack(children: [
@@ -179,18 +182,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-                          Stack(children: [
-                            CircleAvatar(
-                              radius: 28, backgroundColor: _blue,
-                              backgroundImage: _avatarUrl.isNotEmpty ? NetworkImage(_avatarUrl) : null,
-                              child: _avatarUrl.isEmpty ? Text(_initials, style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 20)) : null,
-                            ),
-                            Positioned(bottom: 1, right: 1,
-                              child: Container(width: 11, height: 11,
-                                decoration: BoxDecoration(color: const Color(0xFF22C55E), shape: BoxShape.circle,
-                                  border: Border.all(color: _navy, width: 2)))),
-                          ]),
-                          const SizedBox(width: 14),
                           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                             Text(_greeting(), style: GoogleFonts.inter(
                                 fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white54, letterSpacing: 0.3)),
@@ -299,9 +290,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _MaintenanceSummaryCard(
                   onTap: () => context.go('/maintenance'),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 0),
 
-                // ── Active trip ─────────────────────────────────────────────
+                // ── Admin Quick Action Grid ──────────────────────────────────
+                _AdminGridCards(data: _data, context: context),
+                const SizedBox(height: 4),
+
+                // ── Active trip ───────────────────────────────────────────
                 Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                   Text('Active Trip', style: GoogleFonts.inter(
                       fontSize: 17, fontWeight: FontWeight.w700,
@@ -1016,4 +1011,181 @@ class _MaintStat extends StatelessWidget {
                   fontWeight: FontWeight.w600)),
         ]),
       );
+}
+
+
+
+// ── Admin Quick-Action Grid (2-column squares) ─────────────────────────────
+class _AdminGridCards extends StatelessWidget {
+  final Map<String, dynamic>? data;
+  final BuildContext context;
+  const _AdminGridCards({this.data, required this.context});
+
+  int _nextIftaDays() {
+    final now  = DateTime.now();
+    final q    = ((now.month - 1) ~/ 3) + 1;
+    final year = q == 4 ? now.year + 1 : now.year;
+    final mon  = (q % 4) * 3 + 1;
+    return DateTime(year, mon, 31).difference(now).inDays;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reports = (data?['reports'] as List?) ?? [];
+    final pending = reports.where((r) => r['status'] != 'filed').length;
+    final days    = _nextIftaDays();
+
+    final cards = [
+      _GCard(
+        gradient: const LinearGradient(
+            colors: [Color(0xFF0453CD), Color(0xFF1D6AF5)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
+        icon: Icons.description_outlined,
+        label: 'IFTA Filing',
+        value: '$days days',
+        sub: 'until due',
+        onTap: () => context.go('/reports'),
+      ),
+      _GCard(
+        gradient: const LinearGradient(
+            colors: [Color(0xFF0891B2), Color(0xFF06B6D4)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
+        icon: Icons.assignment_late_outlined,
+        label: 'Pending Reports',
+        value: '$pending',
+        sub: pending == 0 ? 'all filed ✓' : 'report${pending == 1 ? '' : 's'} unfiled',
+        onTap: () => context.go('/reports'),
+      ),
+      _GCard(
+        gradient: const LinearGradient(
+            colors: [Color(0xFF6D28D9), Color(0xFF7C3AED)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
+        icon: Icons.fact_check_rounded,
+        label: 'Templates',
+        value: 'Manage',
+        sub: 'checklist builder',
+        onTap: () => context.push('/inspection-template'),
+      ),
+      _GCard(
+        gradient: const LinearGradient(
+            colors: [Color(0xFF065F46), Color(0xFF059669)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
+        icon: Icons.history_rounded,
+        label: 'Inspections',
+        value: 'History',
+        sub: 'all vehicle records',
+        onTap: () => context.push('/inspection-history'),
+      ),
+      _GCard(
+        gradient: const LinearGradient(
+            colors: [Color(0xFFB45309), Color(0xFFF59E0B)],
+            begin: Alignment.topLeft, end: Alignment.bottomRight),
+        icon: Icons.people_alt_rounded,
+        label: 'Drivers',
+        value: 'Manage',
+        sub: 'team & accounts',
+        onTap: () => context.push('/admin/drivers'),
+      ),
+    ];
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const SizedBox(height: 16),
+      Text('Quick Actions',
+          style: GoogleFonts.inter(fontSize: 17, fontWeight: FontWeight.w700,
+              color: const Color(0xFF1E293B))),
+      const SizedBox(height: 8),
+      GridView.count(
+        crossAxisCount: 2,
+        crossAxisSpacing: 6,
+        mainAxisSpacing: 6,
+        childAspectRatio: 2.3,
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        physics: const NeverScrollableScrollPhysics(),
+        children: cards,
+      ),
+    ]);
+  }
+}
+
+class _GCard extends StatelessWidget {
+  final Gradient gradient;
+  final IconData icon;
+  final String label, value, sub;
+  final VoidCallback onTap;
+  const _GCard({
+    required this.gradient, required this.icon,
+    required this.label, required this.value,
+    required this.sub, required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [BoxShadow(
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 10, offset: const Offset(0, 4))]),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(children: [
+            // Top gloss shimmer
+            Positioned(top: 0, left: 0, right: 0,
+              child: Container(
+                height: 36,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.white.withOpacity(0.18),
+                             Colors.white.withOpacity(0.00)],
+                    begin: Alignment.topCenter, end: Alignment.bottomCenter)),
+              ),
+            ),
+            // Decorative orb bottom-right
+            Positioned(right: -20, bottom: -20,
+              child: Container(
+                width: 70, height: 70,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.10)))),
+            // Content: horizontal layout
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                // Icon badge
+                Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.22),
+                    borderRadius: BorderRadius.circular(11)),
+                  child: Icon(icon, color: Colors.white, size: 19)),
+                const SizedBox(width: 12),
+                // Text column
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(label, style: GoogleFonts.inter(
+                        fontSize: 10, fontWeight: FontWeight.w600,
+                        color: Colors.white.withOpacity(0.72),
+                        letterSpacing: 0.2)),
+                    const SizedBox(height: 1),
+                    Text(value, style: GoogleFonts.inter(
+                        fontSize: 20, fontWeight: FontWeight.w900,
+                        color: Colors.white, height: 1.1),
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(sub, style: GoogleFonts.inter(
+                        fontSize: 10, color: Colors.white.withOpacity(0.62))),
+                  ],
+                )),
+              ]),
+            ),
+          ]),
+        ),
+      ),
+    );
+  }
 }
