@@ -46,7 +46,7 @@ class AppTheme {
           color: AppColors.onSurface,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surfaceCard,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -86,8 +86,7 @@ class AppTheme {
 
   /// Arabic variant — uses Cairo font for proper Arabic rendering
   static ThemeData get arabic {
-    const _cairo = TextStyle(fontFamily: 'Cairo');
-    final cairoTextTheme = const TextTheme(
+    const cairoTextTheme = TextTheme(
       displayLarge:  TextStyle(fontFamily: 'Cairo'),
       displayMedium: TextStyle(fontFamily: 'Cairo'),
       displaySmall:  TextStyle(fontFamily: 'Cairo'),
@@ -115,19 +114,19 @@ class AppTheme {
       ),
       scaffoldBackgroundColor: AppColors.surface,
       textTheme: cairoTextTheme,
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surface,
         elevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: AppColors.onSurface),
-        titleTextStyle: const TextStyle(
+        iconTheme: IconThemeData(color: AppColors.onSurface),
+        titleTextStyle: TextStyle(
           fontFamily: 'Cairo',
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: AppColors.onSurface,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surfaceCard,
         elevation: 0,
         shape: RoundedRectangleBorder(

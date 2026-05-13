@@ -507,8 +507,11 @@ class ApiClient {
 
   /// POST /api/company/stripe/payment-sheet/
   /// Returns { customer_id, ephemeral_key_secret, client_secret, publishable_key }
-  static Future<Response> getPaymentSheetData(String planSlug) =>
-      _dio.post('/api/company/stripe/payment-sheet/', data: {'plan': planSlug});
+  static Future<Response> getPaymentSheetData(String planSlug, {String? couponCode}) =>
+      _dio.post('/api/company/stripe/payment-sheet/', data: {
+        'plan': planSlug,
+        if (couponCode != null && couponCode.isNotEmpty) 'coupon_code': couponCode,
+      });
 
   /// POST /api/company/stripe/confirm-payment/
   /// Called after Stripe.instance.confirmPayment() succeeds on the client.
@@ -519,6 +522,18 @@ class ApiClient {
   }) =>
       _dio.post('/api/company/stripe/confirm-payment/', data: {
         'payment_intent_id': paymentIntentId,
+        'plan': plan,
+      });
+
+  /// POST /api/company/stripe/validate-coupon/
+  /// Body: { "code": "PROMO20", "plan": "starter" }
+  /// Returns discount details or { valid: false, detail: '...' }.
+  static Future<Response> validateCoupon({
+    required String code,
+    required String plan,
+  }) =>
+      _dio.post('/api/company/stripe/validate-coupon/', data: {
+        'code': code,
         'plan': plan,
       });
 
