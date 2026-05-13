@@ -12,10 +12,10 @@ const String appVersion = "1.0.0";
 // For local development on physical device:   http://<your-mac-ip>  (e.g. http://192.168.1.100)
 // For production:                             https://yourdomain.com
 
-const String _kDebugBaseUrl = "http://localhost"; // ← Mac LAN IP — required for physical device (NOT localhost)
+const String _kDebugBaseUrl = "https://dotmaster.app"; // ← Mac LAN IP — required for physical device (NOT localhost)
                                                          //   iOS Simulator: use http://localhost
                                                          //   Android Emulator: use http://10.0.2.2
-const String _kProductionBaseUrl = "http://localhost"; // Production — update before release
+const String _kProductionBaseUrl = "https://dotmaster.app"; // Production — update before release
 
 /// Resolves to production URL in release builds, debug URL in debug/profile builds.
 const String baseUrl = bool.fromEnvironment('dart.vm.product')

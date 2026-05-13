@@ -237,9 +237,21 @@ class _AddTripPageState extends State<AddTripPage> {
                 backgroundColor: _navy,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                  onPressed: () => Navigator.of(context).pop(),
+                leading: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(30),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withAlpha(80), width: 1.2),
+                      ),
+                      child: const Icon(Icons.chevron_left_rounded,
+                          color: Colors.white, size: 22),
+                    ),
+                  ),
                 ),
                 title: Row(children: [
                   const Icon(Icons.local_shipping_rounded, size: 15, color: Colors.white70),
