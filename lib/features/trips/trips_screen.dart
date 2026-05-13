@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/api_client.dart';
 import '../../core/l10n/locale_provider.dart';
 import '../../core/font_ext.dart';
+import 'add_trip_sheet.dart';
 
 const _navy = Color(0xFF031634);
 const _blue = Color(0xFF3B82F6);
@@ -112,10 +113,22 @@ class _TripsScreenState extends State<TripsScreen> {
               title: Text(s.navTrips, style: context.af(
                   fontWeight: FontWeight.w800, color: Colors.white, fontSize: 17)),
               actions: [
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
-                  onPressed: () {},
-                  tooltip: s.newTrip,
+                FutureBuilder<String?>(
+                  future: ApiClient.getUserRole(),
+                  builder: (ctx, snap) {
+                    final role = snap.data ?? '';
+                    final isAdmin = role == 'admin' || role == 'manager' || role == 'owner';
+                    if (!isAdmin) return const SizedBox.shrink();
+                    return IconButton(
+                      icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white),
+                      tooltip: s.newTrip,
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => AddTripPage(onCreated: _load),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(

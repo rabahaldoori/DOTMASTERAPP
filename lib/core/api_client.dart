@@ -155,6 +155,26 @@ class ApiClient {
   static Future<Response> getTripById(int id) =>
       _dio.get(ApiEndpoints.tripDetail(id));
 
+  /// Create a new trip — POST /api/trips/
+  static Future<Response> createTrip(Map<String, dynamic> data) =>
+      _dio.post(ApiEndpoints.trips, data: data);
+
+  /// Google Places autocomplete proxy — GET /api/trips/places-autocomplete/?q=<query>
+  /// Returns [{description, place_id}] — API key stays server-side.
+  static Future<List<String>> placesAutocomplete(String query) async {
+    if (query.length < 2) return [];
+    try {
+      final res = await _dio.get(
+        '${ApiEndpoints.trips}places-autocomplete/',
+        queryParameters: {'q': query},
+      );
+      final list = res.data as List? ?? [];
+      return list.map((e) => e['description'].toString()).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
   // ── Fuel Purchases ────────────────────────────────────────────────────────
   static Future<Response> getFuelLogs({int page = 1, String? search}) => _dio.get(
         ApiEndpoints.fuelPurchases,

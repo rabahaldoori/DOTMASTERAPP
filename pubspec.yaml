@@ -51,6 +51,7 @@ dependencies:
   webview_flutter: ^4.13.0
   flutter_stripe: 11.4.0
   http: ^1.6.0
+  flutter_typeahead: ^6.0.0
 
 dev_dependencies:
   flutter_test:
