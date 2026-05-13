@@ -163,11 +163,13 @@ class _AddTripPageState extends State<AddTripPage> {
     if (_selectedTruckId == null) { _showErr('Please select a truck.'); return; }
     if (_selectedDriverId == null) { _showErr('Please select a driver.'); return; }
 
-    // Build start datetime string
-    final st = _startTime ?? TimeOfDay.now();
-    final startDt = DateTime(_startDate!.year, _startDate!.month, _startDate!.day, st.hour, st.minute);
-    final startStr = DateFormat("yyyy-MM-dd'T'HH:mm:ss").format(startDt);
-    final endStr   = _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : null;
+    // Build date / time strings that match the backend model:
+    // start_date → DateField  →  "YYYY-MM-DD"
+    // departure_time → TimeField → "HH:MM:SS"
+    final startDateStr = DateFormat('yyyy-MM-dd').format(_startDate!);
+    final st = _startTime ?? const TimeOfDay(hour: 8, minute: 0);
+    final departureTimeStr = '${st.hour.toString().padLeft(2, '0')}:${st.minute.toString().padLeft(2, '0')}:00';
+    final endStr = _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : null;
 
     final milesState = _routeResult?['miles_by_state'] as Map? ?? {};
     final totalMiles = (_routeResult?['total_miles'] ?? 0.0).toDouble();
@@ -179,7 +181,8 @@ class _AddTripPageState extends State<AddTripPage> {
       'origin_state':        _routeResult?['origin_state'] ?? '',
       'destination_city':    _routeResult?['destination_city'] ?? '',
       'destination_state':   _routeResult?['destination_state'] ?? '',
-      'start_date':          startStr,
+      'start_date':          startDateStr,       // "YYYY-MM-DD" — DateField
+      'departure_time':      departureTimeStr,   // "HH:MM:SS"   — TimeField
       if (endStr != null) 'end_date': endStr,
       'truck':               _selectedTruckId,
       'driver':              _selectedDriverId,

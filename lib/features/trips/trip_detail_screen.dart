@@ -162,10 +162,8 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
                 ),
               ),
 
-              title: Text('Trip #$_tripNum',
-                  style: context.af(
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white, fontSize: 16)),
+              // No title here — title lives inside FlexibleSpaceBar to avoid
+              // rendering in both expanded and collapsed states simultaneously.
 
               actions: [
                 Container(
@@ -185,6 +183,13 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               // ── Expanded header ─────────────────────────────────────
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.parallax,
+                // This title shows ONLY in the collapsed app bar (via Flutter's
+                // built-in animation). It hides when the space is expanded.
+                titlePadding: const EdgeInsets.fromLTRB(52, 0, 16, 14),
+                title: Text('Trip #$_tripNum',
+                    style: context.af(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white, fontSize: 14)),
                 background: Container(
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
