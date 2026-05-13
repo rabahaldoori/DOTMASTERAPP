@@ -271,10 +271,13 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF0F4F8),
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF0F4F8),
+          body: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
           slivers: [
 
             // ── Hero app bar ────────────────────────────────────────────────
@@ -408,8 +411,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             ),
           ],
         ),
-      ),
-    );
+      ),  // Scaffold
+      ),  // GestureDetector
+    );  // AnnotatedRegion
   }
 }
 

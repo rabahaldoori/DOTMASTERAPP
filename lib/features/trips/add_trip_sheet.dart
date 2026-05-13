@@ -226,10 +226,15 @@ class _AddTripPageState extends State<AddTripPage> {
   // ── Build ────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    final bottomPad = MediaQuery.of(context).padding.bottom;
+    final bottomPad  = MediaQuery.of(context).padding.bottom;
+    final keyboardHt = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
       backgroundColor: const Color(0xFFF0F4FF),
-      body: Stack(
+      resizeToAvoidBottomInset: false, // We handle it manually below
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Stack(
         children: [
           // ── Scrollable body ───────────────────────────────────────────────
           CustomScrollView(
@@ -320,7 +325,7 @@ class _AddTripPageState extends State<AddTripPage> {
                 child: Form(
                   key: _formKey,
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad + 90),
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad + keyboardHt + 90),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -570,7 +575,7 @@ class _AddTripPageState extends State<AddTripPage> {
 
           // ── Sticky bottom Create Trip button ─────────────────────────────
           Positioned(
-            bottom: 0, left: 0, right: 0,
+            bottom: keyboardHt, left: 0, right: 0,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -613,7 +618,8 @@ class _AddTripPageState extends State<AddTripPage> {
             ),
           ),
         ],
-      ),
+        ),  // Stack
+      ),    // GestureDetector
     );
   }
 

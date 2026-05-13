@@ -181,96 +181,102 @@ class _TripDetailScreenState extends State<TripDetailScreen> {
               ],
 
               // ── Expanded header ─────────────────────────────────────
-              flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.parallax,
-                // This title shows ONLY in the collapsed app bar (via Flutter's
-                // built-in animation). It hides when the space is expanded.
-                titlePadding: const EdgeInsets.fromLTRB(52, 0, 16, 14),
-                title: Text('Trip #$_tripNum',
-                    style: context.af(
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white, fontSize: 14)),
-                background: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft, end: Alignment.bottomRight,
-                      colors: [Color(0xFF031634), Color(0xFF0D2952)],
-                    ),
-                  ),
-                  child: _trip == null
-                      ? const SizedBox()
-                      : SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 10, 20, 20),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Truck row
-                                Row(children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.09),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.white.withOpacity(0.15)),
-                                    ),
-                                    child: const Icon(Icons.local_shipping_rounded,
-                                        size: 22, color: Colors.white),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(_truckLabel,
-                                          style: context.af(fontSize: 19,
-                                              fontWeight: FontWeight.w900, color: Colors.white)),
-                                      Text(_fmtDate(_trip!['start_date']),
-                                          style: context.af(
-                                              fontSize: 12, color: Colors.white54)),
-                                    ],
-                                  )),
-                                ]),
-                                const SizedBox(height: 16),
+              flexibleSpace: LayoutBuilder(
+                builder: (context, constraints) {
+                  final collapsed = constraints.maxHeight <
+                      kToolbarHeight + MediaQuery.of(context).padding.top + 30;
+                  return FlexibleSpaceBar(
+                    collapseMode: CollapseMode.parallax,
+                    titlePadding: const EdgeInsets.fromLTRB(52, 0, 16, 14),
+                    title: collapsed
+                        ? Text('Trip #$_tripNum',
+                            style: context.af(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white, fontSize: 14))
+                        : null,
+                    background: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft, end: Alignment.bottomRight,
+                          colors: [Color(0xFF031634), Color(0xFF0D2952)],
+                        ),
+                      ),
+                      child: _trip == null
+                          ? const SizedBox()
+                          : SafeArea(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(20, kToolbarHeight + 10, 20, 20),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Truck row
+                                    Row(children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.09),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: Colors.white.withOpacity(0.15)),
+                                        ),
+                                        child: const Icon(Icons.local_shipping_rounded,
+                                            size: 22, color: Colors.white),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(_truckLabel,
+                                              style: context.af(fontSize: 19,
+                                                  fontWeight: FontWeight.w900, color: Colors.white)),
+                                          Text(_fmtDate(_trip!['start_date']),
+                                              style: context.af(
+                                                  fontSize: 12, color: Colors.white54)),
+                                        ],
+                                      )),
+                                    ]),
+                                    const SizedBox(height: 16),
 
-                                // Origin → Destination
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.07),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: Colors.white.withOpacity(0.12)),
-                                  ),
-                                  child: Row(children: [
-                                    Expanded(child: _HdrLoc(
-                                      label: s.from,
-                                      city: _originFull,
-                                      state: '',
-                                    )),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                                      child: Column(children: [
-                                        Container(width: 20, height: 1, color: Colors.white24),
-                                        const SizedBox(height: 2),
-                                        const Icon(Icons.arrow_forward_rounded,
-                                            size: 14, color: Colors.white54),
-                                        const SizedBox(height: 2),
-                                        Container(width: 20, height: 1, color: Colors.white24),
+                                    // Origin → Destination
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.07),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: Colors.white.withOpacity(0.12)),
+                                      ),
+                                      child: Row(children: [
+                                        Expanded(child: _HdrLoc(
+                                          label: s.from,
+                                          city: _originFull,
+                                          state: '',
+                                        )),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                                          child: Column(children: [
+                                            Container(width: 20, height: 1, color: Colors.white24),
+                                            const SizedBox(height: 2),
+                                            const Icon(Icons.arrow_forward_rounded,
+                                                size: 14, color: Colors.white54),
+                                            const SizedBox(height: 2),
+                                            Container(width: 20, height: 1, color: Colors.white24),
+                                          ]),
+                                        ),
+                                        Expanded(child: _HdrLoc(
+                                          label: s.to,
+                                          city: _destFull,
+                                          state: '',
+                                          align: CrossAxisAlignment.end,
+                                        )),
                                       ]),
                                     ),
-                                    Expanded(child: _HdrLoc(
-                                      label: s.to,
-                                      city: _destFull,
-                                      state: '',
-                                      align: CrossAxisAlignment.end,
-                                    )),
-                                  ]),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                ),
+                    ),
+                  );
+                },
               ),
             ),
 
